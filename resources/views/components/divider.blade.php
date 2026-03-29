@@ -1,0 +1,3 @@
+<div @if(!empty($data['id']))id="{{ $data['id'] }}"@endif class="flex justify-center {{ \Webkernel\Builders\Website\View\BaseView::visibilityClasses($data['hide_on'] ?? []) }} {{ $data['class'] ?? '' }}" style="padding: {{ $data['spacing'] ?? '1rem' }} 0; {{ \Webkernel\Builders\Website\View\BaseView::buildInlineStyles($data) }}" {!! \Webkernel\Builders\Website\View\BaseView::animationAttributes($data) !!}>
+    <hr class="border-0" style="width: {{ $data['width'] ?? '100%' }}; border-top: {{ $data['weight'] ?? '1px' }} {{ $data['style'] ?? 'solid' }} {{ $data['color'] ?? '#e5e7eb' }};" />
+</div>

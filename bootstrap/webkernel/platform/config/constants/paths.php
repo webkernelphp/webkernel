@@ -1,0 +1,20 @@
+<?php declare(strict_types=1);
+
+defined('WEBKERNEL_CACHE_PATH')            || define('WEBKERNEL_CACHE_PATH',            BASE_PATH . '/storage/webkernel/cache');
+defined('WEBKERNEL_CACHE_PATH_MANIFEST')   || define('WEBKERNEL_CACHE_PATH_MANIFEST',   WEBKERNEL_CACHE_PATH . '/core.manifest.php');
+defined('WEBKERNEL_MODULES_CACHE')         || define('WEBKERNEL_MODULES_CACHE',         WEBKERNEL_CACHE_PATH . '/modules.php');
+defined('WEBKERNEL_MODULES_LOCK')          || define('WEBKERNEL_MODULES_LOCK',          WEBKERNEL_CACHE_PATH . '/.modules.lock');
+defined('WEBKERNEL_MODULES_ROOT')          || define('WEBKERNEL_MODULES_ROOT',          BASE_PATH  . '/modules');
+defined('WEBKERNEL_INSTANCE_FILE')         || define('WEBKERNEL_INSTANCE_FILE',         BASE_PATH  . '/storage/webkernel/instance.json');
+defined('WEBKERNEL_PHP_RELEASES_CACHE')    || define('WEBKERNEL_PHP_RELEASES_CACHE',    WEBKERNEL_CACHE_PATH . '/php-releases.json');
+defined('WEBKERNEL_HELPERS_ROOT')          || define('WEBKERNEL_HELPERS_ROOT',          WEBKERNEL_PATH . '/platform/config/helpers');
+defined('WEBKERNEL_DIST_ROOT')             || define('WEBKERNEL_DIST_ROOT',             WEBKERNEL_PATH . '/runtime/dist');
+defined('WEBKERNEL_STATIC_ROOT')           || define('WEBKERNEL_STATIC_ROOT',           WEBKERNEL_PATH . '/runtime/static');
+defined('WEBKERNEL_APTITUDES_ROOT')        || define('WEBKERNEL_APTITUDES_ROOT',        WEBKERNEL_PATH . '/platform/src/aptitudes');
+defined('WEBKERNEL_ARCANES_ROOT')          || define('WEBKERNEL_ARCANES_ROOT',          WEBKERNEL_PATH . '/platform/src/arcanes');
+
+defined('SVG_COLLECTION_PATHS') || define('SVG_COLLECTION_PATHS', [
+    'bootstrap/webkernel/runtime/dist/export-svg/custom',
+    'bootstrap/webkernel/runtime/dist/export-svg/lucide',
+    'bootstrap/webkernel/runtime/dist/export-svg/simple-icons',
+]);
