@@ -5,18 +5,18 @@ defined('BASE_PATH')      || define('BASE_PATH',      dirname(__DIR__, 2));
 defined('WEBKERNEL_PATH') || define('WEBKERNEL_PATH', __DIR__);
 
 // ── Release data — stamped by Makefile release|patch|minor|major|info ─────────
-define('WEBKERNEL_VERSION','1.8.1');
-define('WEBKERNEL_BUILD',63);
-define('WEBKERNEL_SEMVER','1.8.1+63');
-define('WEBKERNEL_CODENAME','waterfall');
-define('WEBKERNEL_CHANNEL','stable');
-define('WEBKERNEL_RELEASED_AT','2026-03-27');
-define('WEBKERNEL_COMMIT','47d4300');
-define('WEBKERNEL_COMMIT_FULL','47d43000ad00f68b43aa0389793f0b0142b68b95');
-define('WEBKERNEL_BRANCH','main');
-define('WEBKERNEL_TAG','1.8.0+62');
+defined('WEBKERNEL_VERSION')       || define('WEBKERNEL_VERSION','1.8.1');
+defined('WEBKERNEL_BUILD')         || define('WEBKERNEL_BUILD',63);
+defined('WEBKERNEL_SEMVER')        || define('WEBKERNEL_SEMVER','1.8.1+63');
+defined('WEBKERNEL_CODENAME')      || define('WEBKERNEL_CODENAME','waterfall');
+defined('WEBKERNEL_CHANNEL')       || define('WEBKERNEL_CHANNEL','stable');
+defined('WEBKERNEL_RELEASED_AT')   || define('WEBKERNEL_RELEASED_AT','2026-03-27');
+defined('WEBKERNEL_COMMIT')        || define('WEBKERNEL_COMMIT','47d4300');
+defined('WEBKERNEL_COMMIT_FULL')   || define('WEBKERNEL_COMMIT_FULL','47d43000ad00f68b43aa0389793f0b0142b68b95');
+defined('WEBKERNEL_BRANCH')        || define('WEBKERNEL_BRANCH','main');
+defined('WEBKERNEL_TAG')           || define('WEBKERNEL_TAG','1.8.0+62');
 
-define('WEBKERNEL_REQUIRES', [
+defined('WEBKERNEL_REQUIRES') || define('WEBKERNEL_REQUIRES', [
     'php'       => '8.4.16',
     'laravel'   => '13.1.1',
     'filament'  => '5.4.1',
@@ -24,7 +24,7 @@ define('WEBKERNEL_REQUIRES', [
     'composer'  => '2.9.5',
 ]);
 
-define('WEBKERNEL_COMPATIBLE_WITH', [
+defined('WEBKERNEL_COMPATIBLE_WITH') || define('WEBKERNEL_COMPATIBLE_WITH', [
     'php'       => '8.3.0',
     'laravel'   => '13.0.0',
     'filament'  => '5.0.0',
@@ -33,7 +33,7 @@ define('WEBKERNEL_COMPATIBLE_WITH', [
 ]);
 
 // ── Constants --------------───────────────────────────────────────────────────
-$_wc = WEBKERNEL_PATH . '/platform/config/';
+$_wc = WEBKERNEL_PATH . '/config/';
 require $_wc . 'constants/paths.php';
 require $_wc . 'constants/registry.php';
 require $_wc . 'constants/runtime.php';
@@ -70,13 +70,13 @@ spl_autoload_register(static function (string $class): void {
     static $prefixes = null;
     $prefixes ??= array_merge(
         [
-            'App\\Models\\'          => WEBKERNEL_PATH . '/platform/src/app-models',
-            'Webkernel\\System\\'    => WEBKERNEL_PATH . '/platform/src/assessors/system',
-            'Webkernel\\Arcanes\\'   => WEBKERNEL_PATH . '/platform/src/arcanes',
-            'Webkernel\\Panel\\'     => WEBKERNEL_PATH . '/platform/src/panel',
-            'Webkernel\\Pages\\'     => WEBKERNEL_PATH . '/platform/src/pages',
-            'Webkernel\\Widgets\\'     => WEBKERNEL_PATH . '/platform/src/widgets',
-            'Webkernel\\Aptitudes\\' => WEBKERNEL_PATH . '/platform/src/aptitudes',
+            'App\\Models\\'          => WEBKERNEL_PATH . '/platform/app-models',
+            'Webkernel\\System\\'    => WEBKERNEL_PATH . '/platform/assessors/system',
+            'Webkernel\\Arcanes\\'   => WEBKERNEL_PATH . '/platform/arcanes',
+            'Webkernel\\Panel\\'     => WEBKERNEL_PATH . '/platform/panel',
+            'Webkernel\\Pages\\'     => WEBKERNEL_PATH . '/platform/pages',
+            'Webkernel\\Widgets\\'     => WEBKERNEL_PATH . '/platform/widgets',
+            'Webkernel\\Aptitudes\\' => WEBKERNEL_PATH . '/platform/aptitudes',
         ],
         WEBKERNEL_DEV_NAMESPACES,
         [

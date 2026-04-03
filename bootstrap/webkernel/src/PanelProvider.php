@@ -1,9 +1,5 @@
-<?php
-
-declare(strict_types=1);
-
+<?php declare(strict_types=1);
 namespace Webkernel;
-
 use Filament\Facades\Filament;
 use Filament\Panel as BasePanel;
 use Illuminate\Support\ServiceProvider;
@@ -17,6 +13,7 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+/* --- Webkernel Imports ------------*------------*------------ */
 use Webkernel\Panel\Concerns\RemoteComponentRegistry;
 use Webkernel\Panel\DTO\PanelDTO;
 use Webkernel\Panel\Store\PanelConfigStore;

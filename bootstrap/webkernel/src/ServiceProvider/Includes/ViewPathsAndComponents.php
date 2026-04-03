@@ -12,7 +12,7 @@ class ViewPathsAndComponents
 
     public function boot(): void
     {
-        $webkernelViewsPath      = WEBKERNEL_PATH . '/platform/resources/view/views';
+        $webkernelViewsPath      = WEBKERNEL_PATH . '/runtime/dist/view/views';
         $webkernelComponentsPath = $webkernelViewsPath . '/components';
         $svgExportPath           = WEBKERNEL_PATH . '/runtime/dist/export-svg';
         $layupViewsPath          = resource_path('views');

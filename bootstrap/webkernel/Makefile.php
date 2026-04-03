@@ -19,7 +19,7 @@ use Webkernel\Process;
 require __DIR__ . '/../../vendor/autoload.php';
 require __DIR__ . '/fast-boot.php';
 const BOOT            = __DIR__ . '/fast-boot.php';
-const BUILD_FILE      = __DIR__ . '/platform/.build-number';
+const BUILD_FILE      = __DIR__ . '/config/.build-number';
 const COMPOSER_JSON   = __DIR__ . '/../composer.json';
 const COMPOSER_LOCK   = __DIR__ . '/../../composer.lock';
 const DEV_TOOLS       = __DIR__ . '/../../dev-tools.php';

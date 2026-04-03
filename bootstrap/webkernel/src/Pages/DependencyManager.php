@@ -11,6 +11,7 @@ use Illuminate\Support\Collection;
 use Webkernel\Process;
 use Webkernel\Query\QueryModules;
 use Webkernel\UI\Concerns\HasSelfResolvedView;
+use BackedEnum;
 
 class DependencyManager extends Page implements HasForms
 {
@@ -29,10 +30,11 @@ class DependencyManager extends Page implements HasForms
     // ──────────────────────────────────────────────────────────────
     //  Navigation
     // ──────────────────────────────────────────────────────────────
-//    protected static ?string $navigationIcon  = 'heroicon-o-cube-transparent';
-//    protected static ?string $navigationGroup = 'System';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-cube-transparent';
     protected static ?string $navigationLabel = 'Dependencies';
     protected static ?int    $navigationSort  = 10;
+
+
 
     // ──────────────────────────────────────────────────────────────
     //  UI state

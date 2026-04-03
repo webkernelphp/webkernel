@@ -34,6 +34,9 @@
     $hasSwap = $sysRam->hasSwap();
     $swapPct = $hasSwap ? $sysRam->swapPercentage() : 0.0;
 
+    // /proc availability: RAM total > 0 is a reliable proxy (returns 0 when /proc is blocked)
+    $procAvailable = $sysRam->total() > 0;
+
     $phpIniSnippet = implode("\n", [
         '; Enable FFI extension',
         'extension=ffi',
@@ -78,7 +81,9 @@
             <x-filament::badge color="gray" >PHP {{ webkernel()->instance()->php()->version() }}</x-filament::badge>
             <x-filament::badge color="gray" >{{ strtoupper(webkernel()->runtime()->sapi()->value) }}</x-filament::badge>
             <x-filament::badge color="gray" >{{ webkernel()->os()->family() }}</x-filament::badge>
-            <x-filament::badge color="gray" >up {{ webkernel()->host()->uptime()->human() }}</x-filament::badge>
+            @if ($procAvailable)
+                <x-filament::badge color="gray" >up {{ webkernel()->host()->uptime()->human() }}</x-filament::badge>
+            @endif
         </div>
         <div style="display:inline-flex;align-items:center;gap:.35rem;font-variant-numeric:tabular-nums;color:rgb(var(--gray-500));font-size:.8rem;">
             <x-filament::icon icon="heroicon-m-clock" style="width:.875rem;height:.875rem;color:rgb(var(--gray-400));flex-shrink:0;" />
@@ -195,55 +200,71 @@
 
         {{-- CPU --}}
         @php
-            $cpuPct   = webkernel()->host()->cpu()->usage();
-            $cpuTone  = $cpuPct > 90 ? 'red' : ($cpuPct > 75 ? 'amber' : 'emerald');
-            $cpuColor = $css($cpuPct);
-            $cpuWidth = $logW($cpuPct);
+            $cpuPct   = $procAvailable ? webkernel()->host()->cpu()->usage() : 0.0;
+            $cpuTone  = $procAvailable ? ($cpuPct > 90 ? 'red' : ($cpuPct > 75 ? 'amber' : 'emerald')) : 'gray';
+            $cpuColor = $procAvailable ? $css($cpuPct) : 'rgb(var(--gray-400))';
+            $cpuWidth = $procAvailable ? $logW($cpuPct) : 0.0;
         @endphp
-        <x-webkernel::card compact  :tone="$cpuTone">
+        <x-webkernel::card compact  :tone="$cpuTone" :disabled="!$procAvailable">
             <x-slot name="header">
                 <span style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgb(var(--gray-400));">CPU</span>
             </x-slot>
 
-            <div style="height:3px;background:rgb(var(--gray-200));border-radius:9999px;overflow:hidden;margin:.15rem 0;">
-                <div style="height:100%;width:{{ $cpuWidth }}%;background:{{ $cpuColor }};border-radius:9999px;transition:width .65s cubic-bezier(.4,0,.2,1);"></div>
-            </div>
-            <div style="font-size:.72rem;color:rgb(var(--gray-400));font-variant-numeric:tabular-nums;">
-                load {{ webkernel()->host()->cpu()->loadAvg1() }} / {{ webkernel()->host()->cpu()->loadAvg5() }} / {{ webkernel()->host()->cpu()->loadAvg15() }}
-                &middot; {{ webkernel()->host()->cpu()->cores() }} cores
-            </div>
+            @if ($procAvailable)
+                <div style="height:3px;background:rgb(var(--gray-200));border-radius:9999px;overflow:hidden;margin:.15rem 0;">
+                    <div style="height:100%;width:{{ $cpuWidth }}%;background:{{ $cpuColor }};border-radius:9999px;transition:width .65s cubic-bezier(.4,0,.2,1);"></div>
+                </div>
+                <div style="font-size:.72rem;color:rgb(var(--gray-400));font-variant-numeric:tabular-nums;">
+                    load {{ webkernel()->host()->cpu()->loadAvg1() }} / {{ webkernel()->host()->cpu()->loadAvg5() }} / {{ webkernel()->host()->cpu()->loadAvg15() }}
+                    &middot; {{ webkernel()->host()->cpu()->cores() }} cores
+                </div>
+            @else
+                <x-filament::badge color="gray" style="margin-top:.25rem;">unavailable</x-filament::badge>
+            @endif
 
             <x-slot name="meta">
-                <span style="font-weight:700;font-variant-numeric:tabular-nums;color:{{ $cpuColor }};font-size:1.1rem;">{{ number_format($cpuPct,1) }}%</span>
+                @if ($procAvailable)
+                    <span style="font-weight:700;font-variant-numeric:tabular-nums;color:{{ $cpuColor }};font-size:1.1rem;">{{ number_format($cpuPct,1) }}%</span>
+                @else
+                    <span style="font-size:.7rem;color:rgb(var(--gray-400));">/proc restricted</span>
+                @endif
             </x-slot>
         </x-webkernel::card compact >
 
         {{-- System RAM --}}
         @php
-            $ramPct   = $sysRam->percentage();
-            $ramTone  = $ramPct > 90 ? 'red' : ($ramPct > 75 ? 'amber' : 'emerald');
-            $ramColor = $css($ramPct);
-            $ramWidth = $logW($ramPct);
+            $ramPct   = $procAvailable ? $sysRam->percentage() : 0.0;
+            $ramTone  = $procAvailable ? ($ramPct > 90 ? 'red' : ($ramPct > 75 ? 'amber' : 'emerald')) : 'gray';
+            $ramColor = $procAvailable ? $css($ramPct) : 'rgb(var(--gray-400))';
+            $ramWidth = $procAvailable ? $logW($ramPct) : 0.0;
         @endphp
-        <x-webkernel::card compact  :tone="$ramTone">
+        <x-webkernel::card compact  :tone="$ramTone" :disabled="!$procAvailable">
             <x-slot name="header">
                 <span style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgb(var(--gray-400));">SYS RAM</span>
             </x-slot>
 
-            <div style="height:3px;background:rgb(var(--gray-200));border-radius:9999px;overflow:hidden;margin:.15rem 0;">
-                <div style="height:100%;width:{{ $ramWidth }}%;background:{{ $ramColor }};border-radius:9999px;transition:width .65s cubic-bezier(.4,0,.2,1);"></div>
-            </div>
-            <div style="font-size:.72rem;color:rgb(var(--gray-400));font-variant-numeric:tabular-nums;">
-                {{ $sysRam->humanUsed() }} / {{ $sysRam->humanTotal() }}
-            </div>
+            @if ($procAvailable)
+                <div style="height:3px;background:rgb(var(--gray-200));border-radius:9999px;overflow:hidden;margin:.15rem 0;">
+                    <div style="height:100%;width:{{ $ramWidth }}%;background:{{ $ramColor }};border-radius:9999px;transition:width .65s cubic-bezier(.4,0,.2,1);"></div>
+                </div>
+                <div style="font-size:.72rem;color:rgb(var(--gray-400));font-variant-numeric:tabular-nums;">
+                    {{ $sysRam->humanUsed() }} / {{ $sysRam->humanTotal() }}
+                </div>
+            @else
+                <x-filament::badge color="gray" style="margin-top:.25rem;">unavailable</x-filament::badge>
+            @endif
 
             <x-slot name="meta">
-                <span style="font-weight:700;font-variant-numeric:tabular-nums;color:{{ $ramColor }};font-size:1.1rem;">{{ number_format($ramPct,1) }}%</span>
-                @unless (webkernel()->security()->isProduction())
-                    @if ($sysRam->cached() > 0)
-                        <span style="font-size:.68rem;color:rgb(var(--gray-400));">{{ \Webkernel\System\Support\ByteFormatter::format($sysRam->cached()) }} cached</span>
-                    @endif
-                @endunless
+                @if ($procAvailable)
+                    <span style="font-weight:700;font-variant-numeric:tabular-nums;color:{{ $ramColor }};font-size:1.1rem;">{{ number_format($ramPct,1) }}%</span>
+                    @unless (webkernel()->security()->isProduction())
+                        @if ($sysRam->cached() > 0)
+                            <span style="font-size:.68rem;color:rgb(var(--gray-400));">{{ \Webkernel\System\Support\ByteFormatter::format($sysRam->cached()) }} cached</span>
+                        @endif
+                    @endunless
+                @else
+                    <span style="font-size:.7rem;color:rgb(var(--gray-400));">/proc restricted</span>
+                @endif
             </x-slot>
         </x-webkernel::card compact >
 
@@ -398,10 +419,17 @@
                 <span style="font-size:.78rem;font-weight:600;color:rgb(var(--gray-700));">Processes</span>
             </x-slot>
             <div class="wk-info-table">
-                <div class="wk-info-row"><span>Total</span><x-filament::badge color="gray" >{{ webkernel()->host()->processes()->count() }}</x-filament::badge></div>
+                @if ($procAvailable)
+                    <div class="wk-info-row"><span>Total</span><x-filament::badge color="gray" >{{ webkernel()->host()->processes()->count() }}</x-filament::badge></div>
+                @endif
                 <div class="wk-info-row"><span>CPU cores</span><x-filament::badge color="gray" >{{ webkernel()->host()->cpu()->cores() }}</x-filament::badge></div>
-                <div class="wk-info-row"><span>Uptime</span><x-filament::badge color="success" >{{ webkernel()->host()->uptime()->human() }}</x-filament::badge></div>
-                @php $entropyBits = webkernel()->host()->entropy(); @endphp
+                @if ($procAvailable)
+                    @php $uptimeHuman = webkernel()->host()->uptime()->human(); @endphp
+                    @if ($uptimeHuman !== '')
+                        <div class="wk-info-row"><span>Uptime</span><x-filament::badge color="success" >{{ $uptimeHuman }}</x-filament::badge></div>
+                    @endif
+                @endif
+                @php $entropyBits = $procAvailable ? webkernel()->host()->entropy() : 0; @endphp
                 @if ($entropyBits > 0)
                     <div class="wk-info-row">
                         <span>Entropy</span>

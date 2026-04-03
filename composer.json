@@ -117,6 +117,11 @@
             "@php artisan queue:clear",
             "composer dump-autoload"
         ],
+        "w-clear-sudo": [
+            "@php bootstrap/webkernel/installer-guard.php ensure-storage-dirs",
+            "@php bootstrap/webkernel/installer-guard.php fix-permissions",
+            "@php bootstrap/webkernel/installer-guard.php run-as-owner composer w-clear"
+        ],
         "ws-clear": [
             "composer w-clear",
             "@php artisan filament:optimize",
