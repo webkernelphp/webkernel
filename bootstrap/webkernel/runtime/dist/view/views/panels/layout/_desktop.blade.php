@@ -30,14 +30,6 @@
         --wds-sidebar-height: calc(100vh - var(--wds-content-offset-with-toggle));
     }
 
-    /* ── Main panel: fixed height, scrolls internally ────────────────────── */
-    .fi-main-ctn .fi-main {
-        height: calc(100vh - var(--wds-content-offset)) !important;
-        max-height: calc(100vh - var(--wds-content-offset)) !important;
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-    }
-
     /* ── Sidebar toggle container ────────────────────────────────────────── */
     .fi-layout-sidebar-toggle-btn-ctn {
         position: sticky !important;
