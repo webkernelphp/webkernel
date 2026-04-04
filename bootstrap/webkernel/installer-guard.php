@@ -5,6 +5,22 @@ declare(strict_types=1);
  *
  * Place this file at: bootstrap/webkernel/installer-guard.php
  *
+ * # default (package:discover)
+ *  php bootstrap/webkernel/installer-guard.php
+ *  php bootstrap/webkernel/installer-guard.php package:discover [args...]
+ *
+ *  # fix permissions
+ *  php bootstrap/webkernel/installer-guard.php fix-permissions
+ *
+ *  # ensure storage dirs
+ *  php bootstrap/webkernel/installer-guard.php ensure-storage-dirs
+ *
+ *  # run command as project owner
+ *  php bootstrap/webkernel/installer-guard.php run-as-owner <cmd> [args...]
+ *
+ *  # skip artisan via env
+ *  WEBKERNEL_INSTALLER_MODE=1 php bootstrap/webkernel/installer-guard.php
+ *
  * Called by composer.json post-autoload-dump instead of calling artisan directly:
  *
  *   "post-autoload-dump": [
