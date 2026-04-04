@@ -35,7 +35,7 @@ final class OsDetectionService
             kernelRelease: $this->resolveKernelRelease(),
             architecture:  php_uname('m'),
             hostname:      php_uname('n'),
-            hasProcFs:     $family->isLinux() && is_dir('/proc') && is_readable('/proc'),
+            hasProcFs:     $family->isLinux() && @is_dir('/proc') && @is_readable('/proc'),
             ffiAvailable:  $this->resolveFfiAvailable(),
         );
     }
@@ -59,7 +59,7 @@ final class OsDetectionService
     private function resolveKernelRelease(): string
     {
         // Prefer /proc/sys/kernel/osrelease (Linux) — most reliable
-        if (is_readable('/proc/sys/kernel/osrelease')) {
+        if (@is_readable('/proc/sys/kernel/osrelease')) {
             $v = trim((string) (@file_get_contents('/proc/sys/kernel/osrelease') ?: ''));
             if ($v !== '') {
                 return $v;
@@ -75,7 +75,7 @@ final class OsDetectionService
      */
     private function parseOsRelease(string $key): string
     {
-        if (! is_readable('/etc/os-release')) {
+        if (! @is_readable('/etc/os-release')) {
             return '';
         }
 

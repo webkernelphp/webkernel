@@ -71,7 +71,7 @@ spl_autoload_register(static function (string $class): void {
     $prefixes ??= array_merge(
         [
             'App\\Models\\'          => WEBKERNEL_PATH . '/platform/app-models',
-            'Webkernel\\System\\'    => WEBKERNEL_PATH . '/platform/assessors/system',
+//            'Webkernel\\System\\'    => WEBKERNEL_PATH . '/platform/assessors/system',
             'Webkernel\\Arcanes\\'   => WEBKERNEL_PATH . '/platform/arcanes',
             'Webkernel\\Panel\\'     => WEBKERNEL_PATH . '/platform/panel',
             'Webkernel\\Pages\\'     => WEBKERNEL_PATH . '/platform/pages',
