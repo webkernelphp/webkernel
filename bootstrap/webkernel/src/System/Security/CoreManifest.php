@@ -31,6 +31,7 @@ final class CoreManifest
         '.git',
         'bootstrap/.git',
         'bootstrap/cache',
+        'bootstrap/webkernel/runtime',
         'modules',
         'storage/webkernel/cache',
     ];
