@@ -40,8 +40,12 @@ final class Modules extends ServiceProvider
                 continue;
             }
             foreach ($entry['providers'] ?? [] as $provider) {
-                if (class_exists($provider)) {
-                    $this->app->register($provider);
+                try {
+                    if (class_exists($provider)) {
+                        $this->app->register($provider);
+                    }
+                } catch (\Throwable $e) {
+                    $this->warn("Provider [{$provider}] failed to load: " . $e->getMessage());
                 }
             }
         }

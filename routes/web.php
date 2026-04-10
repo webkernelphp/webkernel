@@ -2,11 +2,11 @@
 
 use Webkernel\Aptitudes\System\Presentation\Controllers\RootController;
 
-Route::get('/', RootController::class)->name('webkernel.root');
-
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/', RootController::class)->name('webkernel.root');
+
 
 Route::get('waterfall', function () {
     return view('release.waterfall');

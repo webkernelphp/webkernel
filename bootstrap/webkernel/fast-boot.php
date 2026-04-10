@@ -108,6 +108,9 @@ spl_autoload_register(static function (string $class): void {
 // ── Critical helper ───────────────────────────────────────────────────────────
 require WEBKERNEL_HELPERS_ROOT . '/renderCriticalErrorHtml.php';
 
+// ── First-boot guard (.env + SQLite) ─────────────────────────────────────────
+require WEBKERNEL_PATH . '/config/setup_env.php';
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 return fn (): \Webkernel\WebApp =>
     \Webkernel\WebApp::configure(basePath: BASE_PATH, version: WEBKERNEL_VERSION)->create();

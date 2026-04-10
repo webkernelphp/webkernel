@@ -78,6 +78,22 @@ final class SystemManagerServiceProvider extends ServiceProvider
             'webkernel-auth',
         );
 
+        // ── Auto-migrate on fresh install ─────────────────────────────────────
+        // Idempotent: Schema::hasTable() is a near-instant no-op once done.
+        // Runs after all providers are booted so Artisan::call() is fully safe.
+        // Skipped during artisan CLI to avoid re-entrant migrate calls.
+        if (!$this->app->runningInConsole()) {
+            $this->app->booted(static function (): void {
+                try {
+                    if (!\Illuminate\Support\Facades\Schema::hasTable('sessions')) {
+                        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+                    }
+                } catch (\Throwable) {
+                    // DB unreachable or not yet configured — skip silently
+                }
+            });
+        }
+
         // ── Artisan commands ──────────────────────────────────────────────────
         // Registered unconditionally so Artisan::call() works from web requests
         // (e.g. the installer panel calling webkernel:install).

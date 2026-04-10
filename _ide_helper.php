@@ -5,7 +5,7 @@
 
 /**
  * A helper file for Laravel, to provide autocomplete information to your IDE
- * Generated for Laravel 13.2.0.
+ * Generated for Laravel 13.4.0.
  *
  * This file should not be included in your code, only analyzed by your IDE!
  *
@@ -5464,7 +5464,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function lock($name, $seconds = 0, $owner = null)
         {
-            /** @var \Illuminate\Cache\FileStore $instance */
+            /** @var \Illuminate\Cache\DatabaseStore $instance */
             return $instance->lock($name, $seconds, $owner);
         }
 
@@ -5478,8 +5478,21 @@ namespace Illuminate\Support\Facades {
          */
         public static function restoreLock($name, $owner)
         {
-            /** @var \Illuminate\Cache\FileStore $instance */
+            /** @var \Illuminate\Cache\DatabaseStore $instance */
             return $instance->restoreLock($name, $owner);
+        }
+
+        /**
+         * Remove an item from the cache if it is expired.
+         *
+         * @param string $key
+         * @return bool
+         * @static
+         */
+        public static function forgetIfExpired($key)
+        {
+            /** @var \Illuminate\Cache\DatabaseStore $instance */
+            return $instance->forgetIfExpired($key);
         }
 
         /**
@@ -5490,71 +5503,58 @@ namespace Illuminate\Support\Facades {
          */
         public static function flush()
         {
-            /** @var \Illuminate\Cache\FileStore $instance */
+            /** @var \Illuminate\Cache\DatabaseStore $instance */
             return $instance->flush();
         }
 
         /**
-         * Get the full path for the given cache key.
+         * Get the underlying database connection.
          *
-         * @param string $key
-         * @return string
+         * @return \Illuminate\Database\SQLiteConnection
          * @static
          */
-        public static function path($key)
+        public static function getConnection()
         {
-            /** @var \Illuminate\Cache\FileStore $instance */
-            return $instance->path($key);
+            /** @var \Illuminate\Cache\DatabaseStore $instance */
+            return $instance->getConnection();
         }
 
         /**
-         * Get the Filesystem instance.
+         * Set the underlying database connection.
          *
-         * @return \Illuminate\Filesystem\Filesystem
+         * @param \Illuminate\Database\ConnectionInterface $connection
+         * @return \Illuminate\Cache\DatabaseStore
          * @static
          */
-        public static function getFilesystem()
+        public static function setConnection($connection)
         {
-            /** @var \Illuminate\Cache\FileStore $instance */
-            return $instance->getFilesystem();
+            /** @var \Illuminate\Cache\DatabaseStore $instance */
+            return $instance->setConnection($connection);
         }
 
         /**
-         * Get the working directory of the cache.
+         * Get the connection used to manage locks.
          *
-         * @return string
+         * @return \Illuminate\Database\SQLiteConnection
          * @static
          */
-        public static function getDirectory()
+        public static function getLockConnection()
         {
-            /** @var \Illuminate\Cache\FileStore $instance */
-            return $instance->getDirectory();
+            /** @var \Illuminate\Cache\DatabaseStore $instance */
+            return $instance->getLockConnection();
         }
 
         /**
-         * Set the working directory of the cache.
+         * Specify the connection that should be used to manage locks.
          *
-         * @param string $directory
-         * @return \Illuminate\Cache\FileStore
+         * @param \Illuminate\Database\ConnectionInterface $connection
+         * @return \Illuminate\Cache\DatabaseStore
          * @static
          */
-        public static function setDirectory($directory)
+        public static function setLockConnection($connection)
         {
-            /** @var \Illuminate\Cache\FileStore $instance */
-            return $instance->setDirectory($directory);
-        }
-
-        /**
-         * Set the cache directory where locks should be stored.
-         *
-         * @param string|null $lockDirectory
-         * @return \Illuminate\Cache\FileStore
-         * @static
-         */
-        public static function setLockDirectory($lockDirectory)
-        {
-            /** @var \Illuminate\Cache\FileStore $instance */
-            return $instance->setLockDirectory($lockDirectory);
+            /** @var \Illuminate\Cache\DatabaseStore $instance */
+            return $instance->setLockConnection($connection);
         }
 
         /**
@@ -5565,8 +5565,21 @@ namespace Illuminate\Support\Facades {
          */
         public static function getPrefix()
         {
-            /** @var \Illuminate\Cache\FileStore $instance */
+            /** @var \Illuminate\Cache\DatabaseStore $instance */
             return $instance->getPrefix();
+        }
+
+        /**
+         * Set the cache key prefix.
+         *
+         * @param string $prefix
+         * @return void
+         * @static
+         */
+        public static function setPrefix($prefix)
+        {
+            /** @var \Illuminate\Cache\DatabaseStore $instance */
+            $instance->setPrefix($prefix);
         }
 
         /**
@@ -5577,7 +5590,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function hasSeparateLockStore()
         {
-            /** @var \Illuminate\Cache\FileStore $instance */
+            /** @var \Illuminate\Cache\DatabaseStore $instance */
             return $instance->hasSeparateLockStore();
         }
 
@@ -10407,7 +10420,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Get all of the created "drivers".
          *
-         * @return array
+         * @return array<string, mixed>
          * @static
          */
         public static function getDrivers()
@@ -10491,7 +10504,7 @@ namespace Illuminate\Support\Facades {
      * @method static \Illuminate\Http\Client\PendingRequest withMiddleware(callable $middleware)
      * @method static \Illuminate\Http\Client\PendingRequest withRequestMiddleware(callable $middleware)
      * @method static \Illuminate\Http\Client\PendingRequest withResponseMiddleware(callable $middleware)
-     * @method static \Illuminate\Http\Client\PendingRequest withAttributes(array $attributes)
+     * @method static \Illuminate\Http\Client\PendingRequest withAttributes(array<array-key, mixed> $attributes)
      * @method static \Illuminate\Http\Client\PendingRequest beforeSending(callable $callback)
      * @method static \Illuminate\Http\Client\PendingRequest afterResponse(callable|null $callback)
      * @method static \Illuminate\Http\Client\PendingRequest throw(callable|null $callback = null)
@@ -10505,7 +10518,7 @@ namespace Illuminate\Support\Facades {
      * @method static \Illuminate\Http\Client\Response|\GuzzleHttp\Promise\PromiseInterface patch(string $url, array|\JsonSerializable|\Illuminate\Contracts\Support\Arrayable $data = [])
      * @method static \Illuminate\Http\Client\Response|\GuzzleHttp\Promise\PromiseInterface put(string $url, array|\JsonSerializable|\Illuminate\Contracts\Support\Arrayable $data = [])
      * @method static \Illuminate\Http\Client\Response|\GuzzleHttp\Promise\PromiseInterface delete(string $url, array|\JsonSerializable|\Illuminate\Contracts\Support\Arrayable $data = [])
-     * @method static array pool(callable $callback, int|null $concurrency = 0)
+     * @method static array<array-key, \Illuminate\Http\Client\Response|\Throwable> pool(callable $callback, int|null $concurrency = 0)
      * @method static \Illuminate\Http\Client\Batch batch(callable $callback)
      * @method static \Illuminate\Http\Client\Response|\Illuminate\Http\Client\Promises\LazyPromise send(string $method, string $url, array $options = [])
      * @method static \GuzzleHttp\Client buildClient()
@@ -10519,9 +10532,9 @@ namespace Illuminate\Support\Facades {
      * @method static array mergeOptions(array ...$options)
      * @method static \Illuminate\Http\Client\PendingRequest stub(callable $callback)
      * @method static bool isAllowedRequestUrl(string $url)
-     * @method static \Illuminate\Http\Client\PendingRequest async(bool $async = true)
+     * @method static \Illuminate\Http\Client\PendingRequest<bool> async(bool $async = true)
      * @method static \GuzzleHttp\Promise\PromiseInterface|null getPromise()
-     * @method static \Illuminate\Http\Client\PendingRequest truncateExceptionsAt(int $length)
+     * @method static \Illuminate\Http\Client\PendingRequest truncateExceptionsAt(int<int, mixed> $length)
      * @method static \Illuminate\Http\Client\PendingRequest dontTruncateExceptions()
      * @method static \Illuminate\Http\Client\PendingRequest setClient(\GuzzleHttp\Client $client)
      * @method static \Illuminate\Http\Client\PendingRequest setHandler(callable $handler)
@@ -11369,7 +11382,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Get a log channel instance.
          *
-         * @param string|null $channel
+         * @param \UnitEnum|string|null $channel
          * @return \Psr\Log\LoggerInterface
          * @static
          */
@@ -11382,7 +11395,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Get a log driver instance.
          *
-         * @param string|null $driver
+         * @param \UnitEnum|string|null $driver
          * @return \Psr\Log\LoggerInterface
          * @static
          */
@@ -12281,7 +12294,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Get all of the created "drivers".
          *
-         * @return array
+         * @return array<string, mixed>
          * @static
          */
         public static function getDrivers()
@@ -12645,7 +12658,7 @@ namespace Illuminate\Support\Facades {
 
             }
     /**
-     * @method static \Illuminate\Process\PendingProcess command(array|string $command)
+     * @method static \Illuminate\Process\PendingProcess command(array<array-key, string>|string $command)
      * @method static \Illuminate\Process\PendingProcess path(string $path)
      * @method static \Illuminate\Process\PendingProcess timeout(\Carbon\CarbonInterval|int $timeout)
      * @method static \Illuminate\Process\PendingProcess idleTimeout(\Carbon\CarbonInterval|int $timeout)
@@ -12655,8 +12668,8 @@ namespace Illuminate\Support\Facades {
      * @method static \Illuminate\Process\PendingProcess quietly()
      * @method static \Illuminate\Process\PendingProcess tty(bool $tty = true)
      * @method static \Illuminate\Process\PendingProcess options(array $options)
-     * @method static \Illuminate\Contracts\Process\ProcessResult run(array|string|null $command = null, callable|null $output = null)
-     * @method static \Illuminate\Process\InvokedProcess start(array|string|null $command = null, callable|null $output = null)
+     * @method static \Illuminate\Contracts\Process\ProcessResult run(array<array-key, string>|string|null $command = null, callable|null $output = null)
+     * @method static \Illuminate\Process\InvokedProcess start(array<array-key, string>|string|null $command = null, callable|null $output = null)
      * @method static bool supportsTty()
      * @method static \Illuminate\Process\PendingProcess withFakeHandlers(array $fakeHandlers)
      * @method static \Illuminate\Process\PendingProcess|mixed when(\Closure|mixed|null $value = null, callable|null $callback = null, callable|null $default = null)
@@ -13082,7 +13095,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Determine if the driver is connected.
          *
-         * @param string|null $name
+         * @param \UnitEnum|string|null $name
          * @return bool
          * @static
          */
@@ -13095,7 +13108,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Resolve a queue connection instance.
          *
-         * @param string|null $name
+         * @param \UnitEnum|string|null $name
          * @return \Illuminate\Contracts\Queue\Queue
          * @static
          */
@@ -13547,6 +13560,45 @@ namespace Illuminate\Support\Facades {
         {
             /** @var \Illuminate\Support\Testing\Fakes\QueueFake $instance */
             return $instance->reservedSize($queue);
+        }
+
+        /**
+         * Get the pending jobs for the given queue.
+         *
+         * @param string|null $queue
+         * @return \Illuminate\Support\Collection<int, \Illuminate\Queue\Jobs\InspectedJob>
+         * @static
+         */
+        public static function pendingJobs($queue = null)
+        {
+            /** @var \Illuminate\Support\Testing\Fakes\QueueFake $instance */
+            return $instance->pendingJobs($queue);
+        }
+
+        /**
+         * Get the delayed jobs for the given queue.
+         *
+         * @param string|null $queue
+         * @return \Illuminate\Support\Collection
+         * @static
+         */
+        public static function delayedJobs($queue = null)
+        {
+            /** @var \Illuminate\Support\Testing\Fakes\QueueFake $instance */
+            return $instance->delayedJobs($queue);
+        }
+
+        /**
+         * Get the reserved jobs for the given queue.
+         *
+         * @param string|null $queue
+         * @return \Illuminate\Support\Collection
+         * @static
+         */
+        public static function reservedJobs($queue = null)
+        {
+            /** @var \Illuminate\Support\Testing\Fakes\QueueFake $instance */
+            return $instance->reservedJobs($queue);
         }
 
         /**
@@ -14424,7 +14476,7 @@ namespace Illuminate\Support\Facades {
 
             }
     /**
-     * @method static \BackedEnum|(\BackedEnum|null enum(string $key, string $enumClass, \BackedEnum|null $default = null)
+     * @method static \BackedEnum|(\BackedEnum|null enum(string $key, string<\BackedEnum> $enumClass, \BackedEnum|null $default = null)
      * @see \Illuminate\Http\Request
      */
     class Request {
@@ -18506,7 +18558,7 @@ namespace Illuminate\Support\Facades {
 
             }
     /**
-     * @method static \Illuminate\Console\Scheduling\PendingEventAttributes withoutOverlapping(int $expiresAt = 1440)
+     * @method static \Illuminate\Console\Scheduling\PendingEventAttributes withoutOverlapping(int $expiresAt = 1440, bool $releaseOnTerminationSignals = true)
      * @method static void mergeAttributes(\Illuminate\Console\Scheduling\Event $event)
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes user(string $user)
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes environments(mixed $environments)
@@ -18537,7 +18589,7 @@ namespace Illuminate\Support\Facades {
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes everyFifteenMinutes()
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes everyThirtyMinutes()
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes hourly()
-     * @method static \Illuminate\Console\Scheduling\PendingEventAttributes hourlyAt(array|string|int|int[] $offset)
+     * @method static \Illuminate\Console\Scheduling\PendingEventAttributes hourlyAt(array|string|int<int, int>|int<int, int>[] $offset)
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes everyOddHour(array|string|int $offset = 0)
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes everyTwoHours(array|string|int $offset = 0)
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes everyThreeHours(array|string|int $offset = 0)
@@ -18546,8 +18598,8 @@ namespace Illuminate\Support\Facades {
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes daily()
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes at(string $time)
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes dailyAt(string $time)
-     * @method static \Illuminate\Console\Scheduling\PendingEventAttributes twiceDaily(int $first = 1, int $second = 13)
-     * @method static \Illuminate\Console\Scheduling\PendingEventAttributes twiceDailyAt(int $first = 1, int $second = 13, int $offset = 0)
+     * @method static \Illuminate\Console\Scheduling\PendingEventAttributes twiceDaily(int<int, int> $first = 1, int<int, int> $second = 13)
+     * @method static \Illuminate\Console\Scheduling\PendingEventAttributes twiceDailyAt(int<int, int> $first = 1, int<int, int> $second = 13, int<int, int> $offset = 0)
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes weekdays()
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes weekends()
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes mondays()
@@ -18560,14 +18612,14 @@ namespace Illuminate\Support\Facades {
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes weekly()
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes weeklyOn(mixed $dayOfWeek, string $time = '0:0')
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes monthly()
-     * @method static \Illuminate\Console\Scheduling\PendingEventAttributes monthlyOn(int $dayOfMonth = 1, string $time = '0:0')
-     * @method static \Illuminate\Console\Scheduling\PendingEventAttributes twiceMonthly(int $first = 1, int $second = 16, string $time = '0:0')
+     * @method static \Illuminate\Console\Scheduling\PendingEventAttributes monthlyOn(int<int, int> $dayOfMonth = 1, string $time = '0:0')
+     * @method static \Illuminate\Console\Scheduling\PendingEventAttributes twiceMonthly(int<int, int> $first = 1, int<int, int> $second = 16, string $time = '0:0')
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes lastDayOfMonth(string $time = '0:0')
-     * @method static \Illuminate\Console\Scheduling\PendingEventAttributes daysOfMonth(array|int ...$days)
+     * @method static \Illuminate\Console\Scheduling\PendingEventAttributes daysOfMonth(array<int<int, int>>|int<int, int> ...$days)
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes quarterly()
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes quarterlyOn(int $dayOfQuarter = 1, string $time = '0:0')
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes yearly()
-     * @method static \Illuminate\Console\Scheduling\PendingEventAttributes yearlyOn(int $month = 1, int|string $dayOfMonth = 1, string $time = '0:0')
+     * @method static \Illuminate\Console\Scheduling\PendingEventAttributes yearlyOn(int $month = 1, int<int, int>|string $dayOfMonth = 1, string $time = '0:0')
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes days(mixed $days)
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes timezone(\UnitEnum|\DateTimeZone|string $timezone)
      * @see \Illuminate\Console\Scheduling\Schedule
@@ -19625,7 +19677,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Get all of the created "drivers".
          *
-         * @return array
+         * @return array<string, mixed>
          * @static
          */
         public static function getDrivers()
@@ -20409,7 +20461,7 @@ namespace Illuminate\Support\Facades {
     /**
      * @method static bool has(string $location)
      * @method static string read(string $location)
-     * @method static \League\Flysystem\DirectoryListing listContents(string $location, bool $deep = false)
+     * @method static \League\Flysystem\DirectoryListing<\League\Flysystem\StorageAttributes> listContents(string $location, bool $deep = false)
      * @method static int fileSize(string $path)
      * @method static string visibility(string $path)
      * @method static void write(string $location, string $contents, array $config = [])
@@ -29123,6 +29175,34 @@ namespace  {
         }
 
         /**
+         * Increment the given column's values by the given amounts.
+         *
+         * @param array<string, float|int|numeric-string> $columns
+         * @param array<string, mixed> $extra
+         * @return int
+         * @static
+         */
+        public static function incrementEach($columns, $extra = [])
+        {
+            /** @var \Illuminate\Database\Eloquent\Builder $instance */
+            return $instance->incrementEach($columns, $extra);
+        }
+
+        /**
+         * Decrement the given column's values by the given amounts.
+         *
+         * @param array<string, float|int|numeric-string> $columns
+         * @param array<string, mixed> $extra
+         * @return int
+         * @static
+         */
+        public static function decrementEach($columns, $extra = [])
+        {
+            /** @var \Illuminate\Database\Eloquent\Builder $instance */
+            return $instance->decrementEach($columns, $extra);
+        }
+
+        /**
          * Register a replacement for the default delete function.
          *
          * @param \Closure $callback
@@ -33296,36 +33376,6 @@ namespace  {
         {
             /** @var \Illuminate\Database\Query\Builder $instance */
             return $instance->updateOrInsert($attributes, $values);
-        }
-
-        /**
-         * Increment the given column's values by the given amounts.
-         *
-         * @param array<string, float|int|numeric-string> $columns
-         * @param array<string, mixed> $extra
-         * @return int<0, max>
-         * @throws \InvalidArgumentException
-         * @static
-         */
-        public static function incrementEach($columns, $extra = [])
-        {
-            /** @var \Illuminate\Database\Query\Builder $instance */
-            return $instance->incrementEach($columns, $extra);
-        }
-
-        /**
-         * Decrement the given column's values by the given amounts.
-         *
-         * @param array<string, float|int|numeric-string> $columns
-         * @param array<string, mixed> $extra
-         * @return int<0, max>
-         * @throws \InvalidArgumentException
-         * @static
-         */
-        public static function decrementEach($columns, $extra = [])
-        {
-            /** @var \Illuminate\Database\Query\Builder $instance */
-            return $instance->decrementEach($columns, $extra);
         }
 
         /**
