@@ -50,6 +50,14 @@ composer.lock
 .phpactor.json
 
 # -----------------------------
+# Dev. Work Artifacts (El Moumen Yassine)
+# -----------------------------
+merge.txt
+merged-data-*.txt
+merged-data-*.zip
+merge-specs.txt
+
+# -----------------------------
 # Storage and Build Artifacts
 # -----------------------------
 /public/build
@@ -70,9 +78,6 @@ merged.txt
 **/caddy
 frankenphp
 frankenphp-worker.php
-merge.txt
-merged-data-*.txt
-merged-data-*.zip
 .licence
 .licence*
 .licence-backup*
