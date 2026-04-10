@@ -15,13 +15,22 @@ use Webkernel\System\Dto\FpmInfo;
 use Webkernel\System\Dto\HostMemoryInfo;
 use Webkernel\System\Dto\ProcessInfo;
 use Webkernel\System\Dto\UptimeInfo;
-use Webkernel\System\Support\ProcReader;
+use Webkernel\System\Support\CapabilityMap;
+use Webkernel\System\Support\HostMetricsCache;
+use Webkernel\System\Support\HostReadStrategy;
+use Webkernel\System\Support\StaticDataCache;
 
 /**
  * Machine-level context metrics manager.
  *
- * Reads /proc on Linux or falls back to PHP built-ins on other OS families.
- * All DTOs are memoised after first construction within a single instance.
+ * Three-tier read strategy:
+ *   - CapabilityMap decides which reader to use (built once per worker)
+ *   - HostMetricsCache (Tier B) caches slow-changing data to a file with TTL
+ *   - Per-instance memo (Tier A shortcut) avoids repeated cache reads within a request
+ *
+ * On shared hosting where /proc is blocked and host_metrics_enabled = false,
+ * all DTOs return available() = false and zero values — Blade checks isAvailable()
+ * before rendering widgets.
  *
  * @internal  Resolved from the container. Type-hint HostManagerInterface.
  */
@@ -40,13 +49,25 @@ final class HostManager implements HostManagerInterface
             return $this->cpu;
         }
 
-        [$load1, $load5, $load15] = ProcReader::loadavg();
+        $cap = CapabilityMap::get();
 
-        return $this->cpu = new CpuInfo(
-            loadAvg1:  $load1,
-            loadAvg5:  $load5,
-            loadAvg15: $load15,
-            cores:     ProcReader::cpuCores(),
+        if (!$cap->hostMetricsEnabled) {
+            return $this->cpu = CpuInfo::unavailable();
+        }
+
+        return $this->cpu = HostMetricsCache::remember(
+            'cpu',
+            $cap->hostMetricsTtl,
+            function () use ($cap): CpuInfo {
+                [$load1, $load5, $load15] = HostReadStrategy::loadAvg();
+                return new CpuInfo(
+                    loadAvg1:      $load1,
+                    loadAvg5:      $load5,
+                    loadAvg15:     $load15,
+                    cores:         StaticDataCache::remember('cpu.cores', fn() => HostReadStrategy::cpuCores()),
+                    dataAvailable: true,
+                );
+            }
         );
     }
 
@@ -56,15 +77,30 @@ final class HostManager implements HostManagerInterface
             return $this->memory;
         }
 
-        $map = ProcReader::meminfo();
+        $cap = CapabilityMap::get();
 
-        return $this->memory = new HostMemoryInfo(
-            total:     ($map['MemTotal']     ?? 0) * 1024,
-            available: ($map['MemAvailable'] ?? 0) * 1024,
-            cached:    ($map['Cached']       ?? 0) * 1024,
-            buffers:   ($map['Buffers']      ?? 0) * 1024,
-            swapTotal: ($map['SwapTotal']    ?? 0) * 1024,
-            swapFree:  ($map['SwapFree']     ?? 0) * 1024,
+        if (!$cap->hostMetricsEnabled) {
+            return $this->memory = HostMemoryInfo::unavailable();
+        }
+
+        return $this->memory = HostMetricsCache::remember(
+            'memory',
+            $cap->hostMetricsTtl,
+            function (): HostMemoryInfo {
+                $map = HostReadStrategy::meminfo();
+                if (empty($map)) {
+                    return HostMemoryInfo::unavailable();
+                }
+                return new HostMemoryInfo(
+                    total:         ($map['MemTotal']     ?? 0) * 1024,
+                    available:     ($map['MemAvailable'] ?? 0) * 1024,
+                    cached:        ($map['Cached']       ?? 0) * 1024,
+                    buffers:       ($map['Buffers']      ?? 0) * 1024,
+                    swapTotal:     ($map['SwapTotal']    ?? 0) * 1024,
+                    swapFree:      ($map['SwapFree']     ?? 0) * 1024,
+                    dataAvailable: true,
+                );
+            }
         );
     }
 
@@ -74,16 +110,49 @@ final class HostManager implements HostManagerInterface
             return $this->disk;
         }
 
-        return $this->disk = new DiskInfo(
-            path:  '/',
-            total: (int) (@disk_total_space('/') ?: 0),
-            free:  (int) (@disk_free_space('/')  ?: 0),
+        $cap = CapabilityMap::get();
+
+        return $this->disk = HostMetricsCache::remember(
+            'disk',
+            $cap->hostMetricsTtl,
+            function (): DiskInfo {
+                $stats = HostReadStrategy::diskStats('/');
+                if ($stats['total'] === 0) {
+                    return DiskInfo::unavailable();
+                }
+                return new DiskInfo(
+                    path:          '/',
+                    total:         $stats['total'],
+                    free:          $stats['free'],
+                    dataAvailable: true,
+                );
+            }
         );
     }
 
     public function uptime(): UptimeInfoInterface
     {
-        return $this->uptime ??= new UptimeInfo(ProcReader::uptimeSeconds());
+        if ($this->uptime !== null) {
+            return $this->uptime;
+        }
+
+        $cap = CapabilityMap::get();
+
+        if (!$cap->hostMetricsEnabled) {
+            return $this->uptime = UptimeInfo::unavailable();
+        }
+
+        return $this->uptime = HostMetricsCache::remember(
+            'uptime',
+            $cap->hostMetricsTtl,
+            function (): UptimeInfo {
+                $seconds = HostReadStrategy::uptimeSeconds();
+                return new UptimeInfo(
+                    seconds:       $seconds,
+                    dataAvailable: $seconds > 0,
+                );
+            }
+        );
     }
 
     public function fpm(): FpmInfoInterface
@@ -92,22 +161,49 @@ final class HostManager implements HostManagerInterface
             return $this->fpm;
         }
 
-        [$active, $total] = ProcReader::fpmWorkers();
+        $cap = CapabilityMap::get();
 
-        return $this->fpm = new FpmInfo(
-            available: $total !== null,
-            active:    $active,
-            total:     $total,
+        return $this->fpm = HostMetricsCache::remember(
+            'fpm',
+            $cap->hostMetricsTtl,
+            function (): FpmInfo {
+                [$active, $total] = HostReadStrategy::fpmWorkers();
+                return new FpmInfo(
+                    available: $total !== null,
+                    active:    $active,
+                    total:     $total,
+                );
+            }
         );
     }
 
     public function processes(): ProcessInfoInterface
     {
-        return $this->processes ??= new ProcessInfo(ProcReader::processCount());
+        if ($this->processes !== null) {
+            return $this->processes;
+        }
+
+        $cap = CapabilityMap::get();
+
+        if (!$cap->processMetricsEnabled) {
+            return $this->processes = ProcessInfo::unavailable();
+        }
+
+        return $this->processes = HostMetricsCache::remember(
+            'processes',
+            $cap->hostMetricsTtl,
+            function (): ProcessInfo {
+                $count = HostReadStrategy::processCount();
+                return new ProcessInfo(
+                    count:         $count,
+                    dataAvailable: CapabilityMap::get()->hasProcFs,
+                );
+            }
+        );
     }
 
     public function entropy(): int
     {
-        return ProcReader::entropyAvailable();
+        return HostReadStrategy::entropyAvailable();
     }
 }

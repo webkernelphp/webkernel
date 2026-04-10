@@ -4,6 +4,7 @@ namespace Webkernel\System\Services;
 
 use Webkernel\System\Dto\OsInfo;
 use Webkernel\System\Enums\OsFamily;
+use Webkernel\System\Support\StaticDataCache;
 
 /**
  * Detects and caches the host OS identity for the worker lifetime.
@@ -16,11 +17,9 @@ use Webkernel\System\Enums\OsFamily;
  */
 final class OsDetectionService
 {
-    private ?OsInfo $cache = null;
-
     public function detect(): OsInfo
     {
-        return $this->cache ??= $this->build();
+        return StaticDataCache::remember('os.info', fn() => $this->build());
     }
 
     // ── Private ───────────────────────────────────────────────────────────────

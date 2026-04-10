@@ -9,6 +9,15 @@ namespace Webkernel\System\Contracts\Info;
  */
 interface HostMemoryInfoInterface
 {
+    /**
+     * Whether host memory data was successfully read.
+     * False on shared hosting where /proc is blocked.
+     * Check this before rendering metric widgets.
+     *
+     * Note: named isAvailable() to avoid collision with available(): int below.
+     */
+    public function isAvailable(): bool;
+
     // -- RAM ------------------------------------------------------------------
 
     /** Total physical RAM in bytes. */

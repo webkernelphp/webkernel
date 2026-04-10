@@ -13,13 +13,34 @@ use Webkernel\System\Support\ByteFormatter;
 final readonly class HostMemoryInfo implements HostMemoryInfoInterface
 {
     public function __construct(
-        private int $total,
-        private int $available,
-        private int $cached,
-        private int $buffers,
-        private int $swapTotal,
-        private int $swapFree,
+        private int  $total,
+        private int  $available,
+        private int  $cached,
+        private int  $buffers,
+        private int  $swapTotal,
+        private int  $swapFree,
+        private bool $dataAvailable = true,
     ) {}
+
+    public static function unavailable(): self
+    {
+        return new self(0, 0, 0, 0, 0, 0, dataAvailable: false);
+    }
+
+    public function isAvailable(): bool
+    {
+        return $this->dataAvailable;
+    }
+
+    public function humanUsedOrUnavailable(string $fallback = '—'): string
+    {
+        return $this->dataAvailable ? $this->humanUsed() : $fallback;
+    }
+
+    public function humanTotalOrUnavailable(string $fallback = '—'): string
+    {
+        return $this->dataAvailable ? $this->humanTotal() : $fallback;
+    }
 
     public function total(): int
     {

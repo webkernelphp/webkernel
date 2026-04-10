@@ -9,6 +9,12 @@ namespace Webkernel\System\Contracts\Info;
  */
 interface CpuInfoInterface
 {
+    /**
+     * Whether CPU metrics were successfully read.
+     * False on shared hosting where /proc and shell_exec are both unavailable.
+     */
+    public function available(): bool;
+
     /** 1-minute load average. */
     public function loadAvg1(): float;
 

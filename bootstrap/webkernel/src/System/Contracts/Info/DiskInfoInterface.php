@@ -9,6 +9,12 @@ namespace Webkernel\System\Contracts\Info;
  */
 interface DiskInfoInterface
 {
+    /**
+     * Whether disk metrics were successfully read.
+     * False when disk_total_space() is blocked by open_basedir or returns 0.
+     */
+    public function available(): bool;
+
     /** Mount path measured (always "/" at this level). */
     public function path(): string;
 

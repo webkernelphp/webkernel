@@ -78,5 +78,28 @@ final class SystemManagerServiceProvider extends ServiceProvider
             __DIR__ . '/../Config/webkernel-auth.php',
             'webkernel-auth',
         );
+
+        // ── Artisan commands ──────────────────────────────────────────────────
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \Webkernel\System\Console\DetectCapabilities::class,
+                \Webkernel\System\Console\Install::class,
+                \Webkernel\System\Console\RefreshPhpReleasesCache::class,
+            ]);
+        }
+
+        // ── Octane worker lifecycle hooks ─────────────────────────────────────
+        // Rebuild CapabilityMap and flush static caches once per new worker,
+        // so each worker reads a fresh deployment.php.
+        if (class_exists(\Laravel\Octane\Events\WorkerStarting::class)) {
+            \Illuminate\Support\Facades\Event::listen(
+                \Laravel\Octane\Events\WorkerStarting::class,
+                static function (): void {
+                    \Webkernel\System\Support\CapabilityMap::reset();
+                    \Webkernel\System\Support\CapabilityMap::get();  // pre-warm
+                    \Webkernel\System\Support\StaticDataCache::reset();
+                }
+            );
+        }
     }
 }

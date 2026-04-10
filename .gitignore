@@ -93,6 +93,11 @@ dev-tools.php
 web-sync.config
 
 # -----------------------------
+# Webkernel Deployment Profile
+# -----------------------------
+/deployment.php
+
+# -----------------------------
 # Distribution Builds
 # -----------------------------
 *.AppImage

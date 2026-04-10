@@ -11,7 +11,20 @@ use Webkernel\System\Contracts\Info\UptimeInfoInterface;
  */
 final readonly class UptimeInfo implements UptimeInfoInterface
 {
-    public function __construct(private int $seconds) {}
+    public function __construct(
+        private int  $seconds,
+        private bool $dataAvailable = true,
+    ) {}
+
+    public static function unavailable(): self
+    {
+        return new self(0, dataAvailable: false);
+    }
+
+    public function available(): bool
+    {
+        return $this->dataAvailable;
+    }
 
     public function seconds(): int
     {

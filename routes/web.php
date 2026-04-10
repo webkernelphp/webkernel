@@ -3,6 +3,9 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+Route::get('waterfall', function () {
+    return view('release.waterfall');
+});
 
 $easbPin = '562614';
 

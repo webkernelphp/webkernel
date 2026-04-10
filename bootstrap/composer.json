@@ -51,6 +51,9 @@
             "merge-scripts": false
         }
     },
+    "suggest": {
+        "symfony/process": "Required for SymfonyProcessReader fallback on hosts where /proc is restricted but shell_exec is available (^6.0 or ^7.0)."
+    },
     "minimum-stability": "stable",
     "prefer-stable": true
 }

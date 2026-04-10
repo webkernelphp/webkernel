@@ -16,7 +16,18 @@ final readonly class CpuInfo implements CpuInfoInterface
         private float $loadAvg5,
         private float $loadAvg15,
         private int   $cores,
+        private bool  $dataAvailable = true,
     ) {}
+
+    public static function unavailable(): self
+    {
+        return new self(0.0, 0.0, 0.0, 0, dataAvailable: false);
+    }
+
+    public function available(): bool
+    {
+        return $this->dataAvailable;
+    }
 
     public function loadAvg1(): float
     {

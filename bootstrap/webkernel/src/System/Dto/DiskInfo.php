@@ -16,7 +16,28 @@ final readonly class DiskInfo implements DiskInfoInterface
         private string $path,
         private int    $total,
         private int    $free,
+        private bool   $dataAvailable = true,
     ) {}
+
+    public static function unavailable(): self
+    {
+        return new self('/', 0, 0, dataAvailable: false);
+    }
+
+    public function available(): bool
+    {
+        return $this->dataAvailable;
+    }
+
+    public function humanUsedOrUnavailable(string $fallback = '—'): string
+    {
+        return $this->dataAvailable ? $this->humanUsed() : $fallback;
+    }
+
+    public function humanTotalOrUnavailable(string $fallback = '—'): string
+    {
+        return $this->dataAvailable ? $this->humanTotal() : $fallback;
+    }
 
     public function path(): string
     {

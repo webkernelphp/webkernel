@@ -9,6 +9,12 @@ namespace Webkernel\System\Contracts\Info;
  */
 interface UptimeInfoInterface
 {
+    /**
+     * Whether uptime data was successfully read.
+     * False on shared hosting where /proc/uptime is inaccessible.
+     */
+    public function available(): bool;
+
     /** Total uptime in seconds. Returns 0 when /proc/uptime is unreadable. */
     public function seconds(): int;
 
