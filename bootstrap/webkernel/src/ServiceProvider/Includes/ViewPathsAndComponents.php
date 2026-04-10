@@ -48,6 +48,6 @@ class ViewPathsAndComponents
             ->in($svgExportPath, compile: true, memo: false, fold: false)
             ->in($webkernelComponentsPath, compile: true, memo: false, fold: false);
 
-        Blaze::debug();
+       // Blaze::debug();
     }
 }

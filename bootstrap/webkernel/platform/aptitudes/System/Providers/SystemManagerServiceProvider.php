@@ -24,7 +24,6 @@ use Webkernel\System\Managers\InstanceManager;
 use Webkernel\System\Managers\OsManager;
 use Webkernel\System\Managers\RuntimeManager;
 use Webkernel\System\Managers\SecurityManager;
-
 /**
  * Binds all Webkernel manager interfaces to their concrete implementations.
  *
@@ -80,13 +79,13 @@ final class SystemManagerServiceProvider extends ServiceProvider
         );
 
         // ── Artisan commands ──────────────────────────────────────────────────
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                \Webkernel\System\Console\DetectCapabilities::class,
-                \Webkernel\System\Console\Install::class,
-                \Webkernel\System\Console\RefreshPhpReleasesCache::class,
-            ]);
-        }
+        // Registered unconditionally so Artisan::call() works from web requests
+        // (e.g. the installer panel calling webkernel:install).
+        $this->commands([
+            \Webkernel\System\Console\DetectCapabilities::class,
+            \Webkernel\System\Console\Install::class,
+            \Webkernel\System\Console\RefreshPhpReleasesCache::class,
+        ]);
 
         // ── Octane worker lifecycle hooks ─────────────────────────────────────
         // Rebuild CapabilityMap and flush static caches once per new worker,
