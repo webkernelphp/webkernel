@@ -107,3 +107,4 @@ web-sync.config
 # -----------------------------
 modules/*
 !modules/.gitignore
+.claude/
