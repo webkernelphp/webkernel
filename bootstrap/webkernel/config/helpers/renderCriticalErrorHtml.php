@@ -532,8 +532,7 @@ final class EmergencyPageBuilder
             $stepsHtml .= '</div>';
         }
 
-        // ── Escape core strings ───────────────────────────────────
-        $eMessage  = htmlspecialchars($this->message,   ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        // ── Escape structural strings (not message — developer-controlled HTML) ──
         $eSeverity = htmlspecialchars($this->severity,  ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $eTitle    = htmlspecialchars($this->title,     ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $eState    = htmlspecialchars($resolvedState,   ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -553,8 +552,11 @@ final class EmergencyPageBuilder
         }
 
         $extraHtml = implode("\n", $this->htmlComponents);
-        $msgBlock  = $eMessage !== ''
-            ? "<div class=\"msg-block\">{$eMessage}</div>"
+
+        // Message is developer-controlled — rendered as raw HTML so that
+        // callers can use <b>, <br>, <a> etc. without double-escaping.
+        $msgBlock  = $this->message !== ''
+            ? "<div class=\"msg-block\">{$this->message}</div>"
             : '';
 
         // ── Emit ──────────────────────────────────────────────────

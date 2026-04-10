@@ -1,34 +1,32 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
 
 /**
  * ═══════════════════════════════════════════════════════════════════
  *  WebKernel — Pre-boot Environment Guard
  * ═══════════════════════════════════════════════════════════════════
  *
- *  Runs before Laravel loads .env. When setup is needed the entire
- *  progress page — prerequisites, steps, and the "Open Application"
- *  button — is expressed as a single EmergencyPageBuilder chain.
+ *  Two-phase setup — nothing is written until the user confirms.
  *
- *  Flow:
- *    1. Fast-path: both files exist → return immediately.
- *    2. Prerequisite guards → render a CRITICAL error page and stop
- *       if the server itself is misconfigured (wrong PHP, missing PDO,
- *       unwritable directory, no entropy source).
- *    3. Setup builder → each setup action is a ->step() closure.
- *       Closures run at ->render() time.
- *    4. ->submitStep('Open Application', '/') → emits a plain <a>
- *       link when every step passed; a neutral blocked notice when
- *       any step failed. No JS reload. No auto-refresh meta tag.
- *       The user clicks the link when they are ready.
- *    5. ->render() → sends the HTTP 200 setup page and terminates.
- *       The next request hits Laravel normally; migrations run via
- *       SystemManagerServiceProvider::boot().
+ *  Phase 1  GET /
+ *    All steps shown as ⋯ pending. No files touched.
+ *    submitStep → "Proceed with Setup" → /?webkernel_setup=1
+ *
+ *  Phase 2  GET /?webkernel_setup=1
+ *    Step closures execute in order. Results shown (✓ / ✕).
+ *    submitStep → "Open Application" → / (RootController takes over)
+ *
+ *  RootController is the master once Laravel boots: it redirects to
+ *  /installer (not fully installed) or /system (installed).
+ *  setup_env.php only ensures the minimum pre-boot requirements exist
+ *  (.env with APP_KEY, empty database.sqlite) so that Laravel can
+ *  actually reach RootController in the first place.
+ *
+ *  Prerequisite guards run in both phases. A hard server error
+ *  (wrong PHP, missing PDO, unwritable base path) renders a CRITICAL
+ *  page immediately — the setup page would be misleading in that case.
  *
  *  Requirements:
- *    - BASE_PATH defined before inclusion.
- *    - EmergencyPageBuilder available (loaded in fast-boot.php).
- *
+ *    BASE_PATH defined · EmergencyPageBuilder loaded (fast-boot.php)
  * ═══════════════════════════════════════════════════════════════════
  */
 
@@ -38,16 +36,16 @@ declare(strict_types=1);
     $dbPath  = BASE_PATH . '/database/database.sqlite';
 
     // ── §A Fast-path ──────────────────────────────────────────────
-    // Both files exist → environment is ready → boot normally.
+    // Both pre-boot files exist → let Laravel boot normally.
+    // RootController decides what happens next.
 
     if (is_file($envPath) && is_file($dbPath)) {
         return;
     }
 
     // ── §B Prerequisite guards ────────────────────────────────────
-    // These checks run before the setup page opens. A failure here
-    // means the server itself is misconfigured — the setup page would
-    // be misleading, so we emit a CRITICAL error page instead.
+    // Hard server conditions checked before showing any setup page.
+    // These represent problems the setup wizard cannot fix itself.
 
     $prerequisites = [
         'PHP 8.1 or newer is required'
@@ -56,10 +54,10 @@ declare(strict_types=1);
         'The pdo_sqlite extension must be enabled'
             => static fn(): bool => extension_loaded('pdo_sqlite'),
 
-        'BASE_PATH must exist and be writable by the web server'
+        'The application root must be writable by the web server'
             => static fn(): bool => is_dir(BASE_PATH) && is_writable(BASE_PATH),
 
-        'openssl_random_pseudo_bytes or random_bytes must be available'
+        'An entropy source (openssl or random_bytes) must be available'
             => static fn(): bool =>
                 function_exists('openssl_random_pseudo_bytes')
                 || function_exists('random_bytes'),
@@ -83,28 +81,55 @@ declare(strict_types=1);
         }
     }
 
-    // ── §C Capture values for closures ────────────────────────────
-    // Closures inside ->step() close over these variables. We resolve
-    // them once here so each closure stays focused on a single action.
+    // ── §C Resolve paths used by closures ─────────────────────────
 
     $examplePath = BASE_PATH . '/.env.example';
     $dbDir       = dirname($dbPath);
 
-    // Shared mutable state passed by reference into closures.
-    // This lets step closures communicate results to later steps
-    // without global variables.
+    // ── §D Confirmation gate ──────────────────────────────────────
+    // Phase 1: user has not yet confirmed → show the preview page.
+    // All steps are declared pending (no closures execute here).
+    // submitStep emits a plain <a> to /?webkernel_setup=1.
+
+    $confirmed = (($_GET['webkernel_setup'] ?? '') === '1');
+
+    if (!$confirmed) {
+        EmergencyPageBuilder::create()
+            ->title('First-run Setup Required')
+            ->severity('SETUP')
+            ->code(200)
+            ->systemState('FIRST-RUN SETUP')
+            ->footer('WEBKERNEL (BY NUMERIMONDES) — REVIEW AND CONFIRM BEFORE PROCEEDING')
+            ->message(
+                "<b>This application has not been initialised yet.</b>"
+                . "&nbsp;The following actions will be performed on this server."
+                . "&nbsp;Review them, then click Proceed when ready."
+            )
+
+            // All pending — nothing executed, nothing written
+            ->step('Read environment template (.env.example)',  pending: true)
+            ->step('Generate a secure application key (APP_KEY)', pending: true)
+            ->step('Write environment file (.env)',              pending: true)
+            ->step('Create SQLite database file',               pending: true)
+            ->step('Run database migrations (on next boot)',    pending: true)
+
+            // submitStep renders as a plain <a> link — no JS
+            ->submitStep('Proceed with Setup', '/?webkernel_setup=1')
+            ->render();
+        // render() is never-return — execution stops here
+    }
+
+    // ── §E Phase 2: run the setup ─────────────────────────────────
+    // User confirmed. Step closures execute in order inside render().
+    // Shared mutable state lets closures pass results to later steps.
+
     $state = [
         'envContent' => '',
         'appKey'     => null,
     ];
 
-    // ── §D Build and render the setup page ───────────────────────
-    // Every action is declared as a ->step() closure. Steps are
-    // executed in order inside ->render(). The chain reads like
-    // a plain description of what the setup does.
-
     EmergencyPageBuilder::create()
-        ->title('Initial Setup')
+        ->title('Setup in Progress')
         ->severity('SETUP')
         ->code(200)
         ->systemState('SETTING UP YOUR ENVIRONMENT')
@@ -115,12 +140,11 @@ declare(strict_types=1);
             label: 'Reading environment template',
             closure: static function () use ($envPath, $examplePath, &$state): bool|string {
                 if (is_file($envPath)) {
-                    return true; // already present — nothing to read
+                    return true; // already present — skip
                 }
 
                 if (!is_file($examplePath)) {
-                    // No template — start from scratch; not a hard failure
-                    $state['envContent'] = '';
+                    $state['envContent'] = ''; // will create minimal .env
                     return true;
                 }
 
@@ -137,7 +161,7 @@ declare(strict_types=1);
 
         // ── Step 1: generate APP_KEY ──────────────────────────────
         ->step(
-            label: 'Generating secure application key',
+            label: 'Generating secure application key (APP_KEY)',
             closure: static function () use ($envPath, &$state): bool|string {
                 if (is_file($envPath)) {
                     return true; // key already set in existing .env
@@ -176,7 +200,7 @@ declare(strict_types=1);
                     : "APP_KEY={$key}\n" . $content;
 
                 if (@file_put_contents($envPath, $content) === false) {
-                    return "Write failed — check directory permissions on " . BASE_PATH;
+                    return 'Write failed — check directory permissions on ' . BASE_PATH;
                 }
 
                 return true;
@@ -185,14 +209,14 @@ declare(strict_types=1);
 
         // ── Step 3: create database file ──────────────────────────
         ->step(
-            label: 'Initialising SQLite database file',
+            label: 'Creating SQLite database file',
             closure: static function () use ($dbPath, $dbDir): bool|string {
                 if (is_file($dbPath)) {
                     return true;
                 }
 
                 if (!is_dir($dbDir)) {
-                    return "The database/ directory does not exist — check project structure.";
+                    return 'The database/ directory does not exist — check project structure.';
                 }
 
                 if (!@touch($dbPath)) {
@@ -203,18 +227,17 @@ declare(strict_types=1);
             },
         )
 
-        // ── Step 4: migrations (deferred, no closure) ─────────────
-        // Marked pending: true — shown as ⋯, not executed here.
-        // SystemManagerServiceProvider handles this on the next boot.
+        // ── Step 4: migrations (deferred) ─────────────────────────
+        // Marked pending — SystemManagerServiceProvider handles this
+        // via Artisan::call('migrate') on the first full boot.
         ->step(
             label: 'Running database migrations',
             pending: true,
         )
 
-        // ── Submit step ───────────────────────────────────────────
-        // Renders as a plain <a> link pointing to / only when every
-        // non-pending step returned true. If any step failed, a
-        // "Setup incomplete" notice appears instead.
+        // ── Submit ────────────────────────────────────────────────
+        // Link appears only when every non-pending step returned true.
+        // RootController then redirects to /installer or /system.
         ->submitStep('Open Application', '/')
 
         ->render();
