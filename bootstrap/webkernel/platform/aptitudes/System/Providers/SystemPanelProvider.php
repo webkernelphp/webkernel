@@ -1,49 +1,42 @@
-<?php
-
-declare(strict_types=1);
+<?php declare(strict_types=1);
 
 namespace Webkernel\Aptitudes\System\Providers;
 
+use Filament\Http\Middleware\Authenticate;
+use Filament\Http\Middleware\AuthenticateSession;
+use Filament\Http\Middleware\DisableBladeIconComponents;
+use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Panel;
+use Filament\PanelProvider;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
+use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Webkernel\Pages\Dashboard;
 use Webkernel\Pages\DependencyManager;
-use Webkernel\Panel;
-use Webkernel\PanelProvider;
 
 final class SystemPanelProvider extends PanelProvider
 {
-    protected string $panelId   = 'system';
-    protected string $panelPath = 'system';
-
-    protected bool $acceptRemoteComponents = true;
-
-    /**
-     * Initial config written to storage/webkernel/panels/system.json on first boot.
-     * Edit the file or update via PanelConfigStore::patch() to override at runtime.
-     */
-    protected array $panelDefaults = [
-        'brand_logo'            => '/logo.png',
-        'brand_logo_dark'       => '/logo-dark.png',
-        'brand_logo_height'     => '2.1rem',
-        'max_content_width'     => 'screen-2xl',
-        'sidebar_collapsible'   => 1,
-        'spa'                   => 1,
-        'dark_mode'             => 1,
-        'global_search'         => 1,
-        'auth'                  => 1,
-        'registration'          => 1,
-        'is_default'            => 1,
-    ];
-
-    /**
-     * Structural config only: discovery paths, pages, widgets.
-     * Brand, layout, features, and auth come from $panelDefaults / the config store.
-     */
-    protected function build(Panel $panel): Panel
+    public function panel(Panel $panel): Panel
     {
         return $panel
+            ->id('system')
+            ->path('system')
             ->default()
+            ->brandLogo('/logo.png')
+            ->darkModeBrandLogo('/logo-dark.png')
+            ->brandLogoHeight('2.1rem')
+            ->darkMode(true)
+            ->spa()
+            ->globalSearch()
+            ->sidebarCollapsibleOnDesktop()
+            ->maxContentWidth('screen-2xl')
+            ->login()
+            ->registration()
             ->profile(isSimple: false)
             ->discoverResources(
                 in: aptitude_path('System/Presentation/Resources'),
@@ -58,6 +51,20 @@ final class SystemPanelProvider extends PanelProvider
                 in: aptitude_path('System/Presentation/Widgets'),
                 for: 'Webkernel\Aptitudes\System\Presentation\Widgets',
             )
-            ->widgets([AccountWidget::class, FilamentInfoWidget::class]);
+            ->widgets([AccountWidget::class, FilamentInfoWidget::class])
+            ->middleware([
+                EncryptCookies::class,
+                AddQueuedCookiesToResponse::class,
+                StartSession::class,
+                ShareErrorsFromSession::class,
+                PreventRequestForgery::class,
+                SubstituteBindings::class,
+                DisableBladeIconComponents::class,
+                DispatchServingFilamentEvent::class,
+            ])
+            ->authMiddleware([
+                Authenticate::class,
+                AuthenticateSession::class,
+            ]);
     }
 }
