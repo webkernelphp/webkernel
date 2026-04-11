@@ -1,7 +1,5 @@
 {{-- webkernel::panels.layout._table — ultra-compact Filament table styles (private partial) --}}
 <style>
-/* === Ultra Compact Modern Table – Premium Per-Cell Tile Hover === */
-
 /* ── Core compactness ── */
 .fi-ta-table th,
 .fi-ta-table td,
@@ -18,13 +16,14 @@
 .fi-ta-content-ctn,
 .fi-ta-ctn { padding: 0 !important; }
 
-/* ── Row lines ── */
+/* ── Row hover ── */
 @media (hover: hover) {
     .fi-ta-row.fi-clickable:hover {
         background-color: color-mix(in oklab, var(--primary-500) 7%, transparent);
     }
-
 }
+
+/* ── Row lines ── */
 .fi-ta-table tbody tr.fi-ta-row {
     border-top: 1px solid color-mix(in oklab, var(--color-white) 12%, transparent) !important;
 }

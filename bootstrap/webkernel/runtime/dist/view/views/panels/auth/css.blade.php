@@ -2,33 +2,22 @@
     webkernel::panels.auth.css
     ──────────────────────────
     Injected at every auth render hook (login, register, password-reset).
-
     Props:
       $bgLight (string) — light-mode background image URL
       $bgDark  (string) — dark-mode background image URL
-
-    Override from any panel / plugin:
-        FilamentView::registerRenderHook(
-            \Webkernel\View\WebkernelRenderHook::AUTH_BG_LIGHT,
-            fn () => 'https://example.com/my-light-bg.jpg',
-        );
 --}}
 <style>
 :root {
-    /* ── Auth-specific tokens (separate from panel layout tokens) ── */
     --wds-auth-bg-image-light: url('{{ $bgLight }}');
     --wds-auth-bg-image-dark:  url('{{ $bgDark }}');
     --wds-auth-z-background:   -2;
     --wds-auth-card-max-width: 560px;
-
     --bg-fi-simple-main:       oklch(96.8% 0.007 247.896);
     --bg-fi-simple-main-dark:  var(--gray-950);
-
     --shadow-light: rgba(0, 0, 0, 0.08);
     --border-light: rgba(0, 0, 0, 0.06);
     --shadow-dark:  rgba(0, 0, 0, 0.4);
     --border-dark:  rgba(255, 255, 255, 0.08);
-
     --z-card-shadow: 0;
     --z-card:        1;
     --z-content:     10;
@@ -57,7 +46,6 @@ body::after {
 html.dark body::before, .dark body::before { opacity: 0; }
 html.dark body::after,  .dark body::after  { opacity: 1; }
 
-/* Hidden on small phones */
 @media (max-width: 539px) {
     body::before,
     body::after { display: none !important; }
@@ -110,7 +98,7 @@ html:where(.dark) .fi-simple-main,
     border: 0.5px solid var(--border-dark);
 }
 
-/* Outer glow layer — sits behind the card */
+/* Outer glow layer */
 .fi-simple-main::before {
     content: "";
     position: absolute;
@@ -127,7 +115,7 @@ html:where(.dark) .fi-simple-main,
     border: 0.5px solid var(--border-dark);
 }
 
-/* Reserved pseudo-element for future decoration (gradient border etc.) */
+/* Reserved for future decoration */
 .fi-simple-main::after {
     content: "";
     position: absolute;

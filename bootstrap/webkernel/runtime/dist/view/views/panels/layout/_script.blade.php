@@ -1,4 +1,3 @@
-{{-- webkernel::panels.layout._script — custom JS injected alongside layout CSS (private partial) --}}
-{{-- Add Alpine hooks, Livewire listeners, etc. here as needed. --}}
+{{-- webkernel::panels.layout._script — JS hooks (Alpine, Livewire listeners, etc.) (private partial) --}}
 <script>
 </script>
