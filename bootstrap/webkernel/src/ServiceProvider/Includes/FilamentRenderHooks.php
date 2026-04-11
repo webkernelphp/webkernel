@@ -49,15 +49,15 @@ class FilamentRenderHooks
 
     // ── Auth page CSS ─────────────────────────────────────────────────────────
     //
-    // Background images are injected via two scoped render hooks so that any
-    // webkernel application can override them cleanly:
+    // Injected via STYLES_AFTER (inside <head>, outside any Livewire component)
+    // so Livewire AJAX morphing never removes it — validation errors, retries,
+    // and any component update keep the background images intact.
     //
+    // Background image URLs can be overridden per-app:
     //   FilamentView::registerRenderHook(
     //       \Webkernel\View\WebkernelRenderHook::AUTH_BG_LIGHT,
-    //       fn () => 'https://example.com/my-light-bg.jpg',
+    //       fn () => 'https://example.com/my-bg.jpg',
     //   );
-    //
-    // If nobody registers a hook the built-in defaults are used.
     private function registerAuthPageCss(): void
     {
         $authPaths = ['login', 'register', 'password-reset', 'profile'];
@@ -66,36 +66,25 @@ class FilamentRenderHooks
             return;
         }
 
-        foreach ([
-            PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
-            PanelsRenderHook::AUTH_LOGIN_FORM_BEFORE,
-            PanelsRenderHook::AUTH_PASSWORD_RESET_REQUEST_FORM_AFTER,
-            PanelsRenderHook::AUTH_PASSWORD_RESET_REQUEST_FORM_BEFORE,
-            PanelsRenderHook::AUTH_PASSWORD_RESET_RESET_FORM_AFTER,
-            PanelsRenderHook::AUTH_PASSWORD_RESET_RESET_FORM_BEFORE,
-            PanelsRenderHook::AUTH_REGISTER_FORM_AFTER,
-            PanelsRenderHook::AUTH_REGISTER_FORM_BEFORE,
-        ] as $hook) {
-            FilamentView::registerRenderHook(
-                $hook,
-                function (): string {
-                    $bgLight = (string) FilamentView::renderHook(RenderHooks::AUTH_BG_LIGHT);
-                    $bgDark  = (string) FilamentView::renderHook(RenderHooks::AUTH_BG_DARK);
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::STYLES_AFTER,
+            function (): string {
+                $bgLight = (string) FilamentView::renderHook(RenderHooks::AUTH_BG_LIGHT);
+                $bgDark  = (string) FilamentView::renderHook(RenderHooks::AUTH_BG_DARK);
 
-                    if (trim($bgLight) === '') {
-                        $bgLight = webkernelBrandingUrl('bg-login-light');
-                    }
-                    if (trim($bgDark) === '') {
-                        $bgDark = webkernelBrandingUrl('bg-login-dark');
-                    }
+                if (trim($bgLight) === '') {
+                    $bgLight = webkernelBrandingUrl('bg-login-light');
+                }
+                if (trim($bgDark) === '') {
+                    $bgDark = webkernelBrandingUrl('bg-login-dark');
+                }
 
-                    return view('webkernel::panels.auth.css', [
-                        'bgLight' => $bgLight,
-                        'bgDark'  => $bgDark,
-                    ])->render();
-                },
-            );
-        }
+                return view('webkernel::panels.auth.css', [
+                    'bgLight' => $bgLight,
+                    'bgDark'  => $bgDark,
+                ])->render();
+            },
+        );
     }
 
     // ── Icon aliases ──────────────────────────────────────────────────────────
