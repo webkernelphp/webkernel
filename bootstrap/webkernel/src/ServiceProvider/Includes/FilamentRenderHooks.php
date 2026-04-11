@@ -83,10 +83,10 @@ class FilamentRenderHooks
                     $bgDark  = (string) FilamentView::renderHook(RenderHooks::AUTH_BG_DARK);
 
                     if (trim($bgLight) === '') {
-                        $bgLight = asset('webkernel/auth/classic-tree-light-login.png');
+                        $bgLight = webkernelBrandingUrl('bg-login-light');
                     }
                     if (trim($bgDark) === '') {
-                        $bgDark = asset('webkernel/auth/classic-tree-dark-login.png');
+                        $bgDark = webkernelBrandingUrl('bg-login-dark');
                     }
 
                     return view('webkernel::panels.auth.css', [

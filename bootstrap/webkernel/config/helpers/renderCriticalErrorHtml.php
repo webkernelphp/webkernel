@@ -286,6 +286,13 @@ final class WebkernelRouter
         return false;
     }
 
+    /** Returns true if the current HTTP request targets a /__webkernel-app/* path. */
+    public static function isWebkernelRequest(): bool
+    {
+        $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
+        return str_starts_with('/' . ltrim($uri, '/'), self::PREFIX);
+    }
+
     /** Generate a canonical /__webkernel-app/ URL. */
     public static function url(string $pattern, array $params = []): string
     {
@@ -1401,6 +1408,12 @@ final class SetupFlow
     private readonly string $tokenFile;
     private int             $tokenTtl = 86400; // 24 h
 
+    // ── Scope ─────────────────────────────────────────────────────
+    // SetupFlow only claims /__webkernel-app/{scope}/* URLs.
+    // Other /__webkernel-app/* paths are dispatched directly by
+    // WebkernelRouter without guards.  Default matches existing routes.
+    private string $scope = 'setup';
+
     // ── Preview page ──────────────────────────────────────────────
     private string  $previewTitle   = 'First-run Setup Required';
     private string  $previewMessage = '<b>This application has not been initialised yet.</b>'
@@ -1460,8 +1473,8 @@ final class SetupFlow
         $this->tokenFile = $this->basePath . '/.deployment_setup_token';
 
         //--- Logos Declaration Base64 encoded
-        $this->logoLight = webkernelLogoForLightMode();
-        $this->logoDark  = webkernelLogoForDarkMode();
+        $this->logoLight = WEBKERNEL_BRAND_LOGO_LIGHT;
+        $this->logoDark  = WEBKERNEL_BRAND_LOGO_DARK;
     }
 
     public static function create(string $basePath): self
@@ -1647,6 +1660,24 @@ final class SetupFlow
         return $this;
     }
 
+    /**
+     * Restrict this SetupFlow to a sub-path of /__webkernel-app/.
+     *
+     * ->scopeTo('setup') means the flow only intercepts
+     * /__webkernel-app/setup/* requests and runs guards/steps for them.
+     * Any other /__webkernel-app/* URL (e.g. /__webkernel-app/branding/*)
+     * is dispatched directly via WebkernelRouter without guards or setup
+     * logic, then handed back to Laravel if no route matched.
+     *
+     * Routes registered by WebkernelRouter::register() OUTSIDE this scope
+     * are always dispatched before any SetupFlow processing.
+     */
+    public function scopeTo(string $scope): self
+    {
+        $this->scope = trim($scope, '/');
+        return $this;
+    }
+
     // ── run() — the single dispatch entry-point ───────────────────
 
     /**
@@ -1669,39 +1700,38 @@ final class SetupFlow
      */
     public function run(): void
     {
-        // ── 0. Webkernel URL intercept ────────────────────────────
-        // If the browser is already on a /__webkernel-app/* URL we MUST
-        // handle it — no fast-path shortcut, no framework fallback.
-        // This is what happens on /complete after setup succeeds: the
-        // fast-path would return true and let Laravel boot, which 404s.
-        if (self::isWebkernelRequest()) {
-            $this->runGuards();          // hard conditions always apply
-            [$this->signer, $this->token] = $this->resolveToken();
-            $this->registerRoutes();
+        $uri       = '/' . ltrim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/', '/');
+        $wkBase    = '/__webkernel-app/';
+        $scopeBase = $wkBase . $this->scope . '/';
 
+        // ── 0. Non-scoped WebkernelRouter routes ──────────────────
+        // Requests to /__webkernel-app/* that are NOT in this flow's scope
+        // (e.g. /__webkernel-app/branding/*) are dispatched directly —
+        // no guards, no setup logic.  If a registered route matches, we
+        // exit.  If nothing matches, we return and let Laravel handle it.
+        if (str_starts_with($uri, $wkBase) && !str_starts_with($uri, $scopeBase)) {
             if (WebkernelRouter::dispatch()) {
                 exit(0);
             }
-
-            // Webkernel URL but no route matched (mangled path, stale link…).
-            // Redirect to the preview page instead of letting Laravel 404.
-            $previewUrl = WebkernelRouter::url('setup/{token}', ['token' => $this->token]);
-            header('Location: ' . $previewUrl, true, 302);
-            exit(0);
+            return; // unknown sub-path → fall through to Laravel routing
         }
 
         // ── 1. Fast-paths ─────────────────────────────────────────
-        // Only reached when the current URL is NOT a webkernel URL.
-        foreach ($this->fastPaths as $fp) {
-            if ($fp()) {
-                return; // Setup not needed — let the framework boot normally.
+        // Skip when the URL is already inside our scope: the app may be
+        // installed but the user is still on a setup page (e.g. /complete).
+        // Letting a fast-path return here would make Laravel 404 those URLs.
+        if (!str_starts_with($uri, $scopeBase)) {
+            foreach ($this->fastPaths as $fp) {
+                if ($fp()) {
+                    return; // Setup not needed — let the framework boot normally.
+                }
             }
         }
 
         // ── 2. Guards ─────────────────────────────────────────────
         $this->runGuards();
 
-        // ── 3. Resolve token + register routes ───────────────────
+        // ── 3. Resolve token + register scoped routes ────────────
         [$this->signer, $this->token] = $this->resolveToken();
         $this->registerRoutes();
 
@@ -1710,23 +1740,10 @@ final class SetupFlow
             exit(0);
         }
 
-        // ── 5. Fallback redirect → preview page ───────────────────
-        // Non-webkernel URL, setup needed, no route matched → send the
-        // browser to the setup preview page.
-        $previewUrl = WebkernelRouter::url('setup/{token}', ['token' => $this->token]);
+        // ── 5. Fallback redirect → scoped preview page ────────────
+        $previewUrl = WebkernelRouter::url($this->scope . '/{token}', ['token' => $this->token]);
         header('Location: ' . $previewUrl, true, 302);
         exit(0);
-    }
-
-    /**
-     * Returns true if the current HTTP request targets a webkernel URL.
-     * Used to intercept these requests before fast-paths can skip them.
-     */
-    private static function isWebkernelRequest(): bool
-    {
-        $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
-        $uri = '/' . ltrim($uri, '/');
-        return str_starts_with($uri, '/__webkernel-app/');
     }
 
     /**

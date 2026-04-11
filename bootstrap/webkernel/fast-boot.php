@@ -40,7 +40,6 @@ require $_wc . 'constants/runtime.php';
 require $_wc . 'constants/thresholds.php';
 require $_wc . 'constants/security.php';
 require $_wc . 'constants/globals.php';
-require $_wc . 'constants/branding.php';
 unset($_wc);
 
 // ── Dev mode + dev namespace map ──────────────────────────────────────────────
@@ -108,6 +107,11 @@ spl_autoload_register(static function (string $class): void {
 
 // ── Critical helper ───────────────────────────────────────────────────────────
 require WEBKERNEL_HELPERS_ROOT . '/renderCriticalErrorHtml.php';
+
+// ── Branding constants + WebkernelRouter route registration ──────────────────
+// Loaded here (after renderCriticalErrorHtml.php) so WebkernelRouter is
+// already defined when branding.php registers its routes.
+require WEBKERNEL_PATH . '/config/constants/branding.php';
 
 // ── First-boot guard (.env + SQLite) ─────────────────────────────────────────
 require WEBKERNEL_PATH . '/config/setup_env.php';

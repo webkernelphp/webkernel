@@ -39,6 +39,12 @@ declare(strict_types=1);
 
     SetupFlow::create(BASE_PATH)
 
+        // ── Scope ─────────────────────────────────────────────────
+        // This flow owns /__webkernel-app/setup/* only.
+        // Other /__webkernel-app/* paths (e.g. branding) are dispatched
+        // directly by WebkernelRouter without guards.
+        ->scopeTo('setup')
+
         // ── Fast-path ─────────────────────────────────────────────
         // Both pre-boot files exist → return immediately.
         // Laravel boots normally. RootController takes over.
