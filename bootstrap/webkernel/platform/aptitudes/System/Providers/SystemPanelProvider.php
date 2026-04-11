@@ -18,6 +18,7 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Webkernel\Pages\Dashboard;
 use Webkernel\Pages\DependencyManager;
+use Filament\Support\Enums\Width;
 
 final class SystemPanelProvider extends PanelProvider
 {
@@ -31,8 +32,10 @@ final class SystemPanelProvider extends PanelProvider
             ->darkModeBrandLogo(webkernelBrandingUrl('logo-dark'))
             ->brandLogoHeight('2.1rem')
             ->darkMode(true)
+            ->maxContentWidth(Width::Full)
+            ->sidebarWidth("17rem")
             ->spa()
-            ->globalSearch()
+            ->globalSearch(position: \Filament\Enums\GlobalSearchPosition::Sidebar)
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth('screen-2xl')
             ->login()

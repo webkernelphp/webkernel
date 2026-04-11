@@ -14,6 +14,7 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Illuminate\Session\Middleware\StartSession;
 use Webkernel\Aptitudes\System\Presentation\Installer\InstallerPage;
 use Filament\Support\Enums\Width;
+use Filament\Support\Colors\Color;
 
 
 
@@ -32,6 +33,9 @@ final class InstallerPanelProvider extends PanelProvider
             ->path('installer')
             ->brandName('Webkernel')
             ->topNavigation()
+            ->colors([
+                'primary' => Color::Blue,
+            ])
             ->sidebarFullyCollapsibleOnDesktop()
             ->maxContentWidth(Width::ExtraSmall)
             ->brandLogoHeight('2rem')

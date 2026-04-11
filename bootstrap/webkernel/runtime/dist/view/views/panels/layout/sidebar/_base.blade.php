@@ -1,7 +1,6 @@
 {{-- webkernel::panels.layout.sidebar._base — internal padding, border-right, hidden scrollbar (private partial) --}}
 <style>
 .fi-sidebar-nav {
-    border-right: 1px solid color-mix(in oklab, var(--color-white) 12%, transparent) !important;
     padding-left:       var(--wds-sidebar-padding-x) !important;
     padding-right:      var(--wds-sidebar-padding-x) !important;
     padding-inline:     0 !important;
