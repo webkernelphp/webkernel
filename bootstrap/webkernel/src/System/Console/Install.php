@@ -41,8 +41,13 @@ final class Install extends Command
             $this->line('  · .env already exists');
         }
 
-        // 2. App key
-        $this->call('key:generate', ['--ansi' => true]);
+        // 2. App key — only generate if missing or empty
+        $currentKey = trim((string) config('app.key', ''));
+        if ($currentKey === '' || ! str_starts_with($currentKey, 'base64:')) {
+            $this->call('key:generate', ['--ansi' => true]);
+        } else {
+            $this->line('  · APP_KEY already set — skipping key:generate');
+        }
 
         // 3. SQLite
         $db = database_path('database.sqlite');

@@ -13,6 +13,7 @@
     {{-- ══════════════════════════════════════════════════════════════════════
          PHASE: installing
     ══════════════════════════════════════════════════════════════════════ --}}
+
     @if($this->phase === 'installing')
 
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:80px 24px;text-align:center;">

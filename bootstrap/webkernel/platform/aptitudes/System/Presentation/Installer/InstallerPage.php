@@ -25,7 +25,7 @@ use Webkernel\System\Support\CapabilityMap;
 class InstallerPage extends Page
 {
     protected string $view = 'webkernel-system::filament.pages.installer';
-   // protected static string $layout = 'filament-panels::components.layout.simple';
+    protected static string $layout = 'filament-panels::components.layout.simple';
 
     // ── Livewire state ────────────────────────────────────────────────────────
 
