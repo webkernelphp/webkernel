@@ -96,6 +96,7 @@ web-sync.config
 # Webkernel Deployment Profile
 # -----------------------------
 /deployment.php
+.deployment_setup_token
 
 # -----------------------------
 # Distribution Builds

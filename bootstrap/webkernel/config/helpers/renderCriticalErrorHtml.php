@@ -1,96 +1,395 @@
 <?php
 declare(strict_types=1);
-
 /**
  * ═══════════════════════════════════════════════════════════════════
- *  WebKernel — Emergency Page, Validation & HTTP Infrastructure
+ *  Webkernel — Core Infrastructure
+ *  bootstrap/webkernel/config/helpers/renderCriticalErrorHtml.php
  * ═══════════════════════════════════════════════════════════════════
  *
- *  Three self-contained systems in one file:
+ *  Self-contained pre-boot kernel. No framework, no autoloader,
+ *  no query-string routing. Everything lives here.
  *
- *  1. EmergencyPageBuilder   Fluent builder for every full-page
- *                            termination scenario: critical errors,
- *                            security blocks, validation failures,
- *                            and multi-step progress pages.
- *                            Steps with closures are first-class
- *                            citizens. submitStep() emits the real
- *                            "proceed" element — a plain <a> link,
- *                            no JS — only when all steps passed.
- *
- *  2. ServerSideValidator    Chainable rule engine with closure
- *                            support. Plugs directly into
- *                            EmergencyPageBuilder. Drives submit-
- *                            gating so the server never sends a
- *                            working action to an ineligible user.
- *
- *  3. HttpClient             Pure-PHP chainable HTTP client.
- *                            cURL primary, stream-context fallback.
- *                            ->send() terminal, closure interceptors.
- *
- *  Backward-compatible free functions at the bottom keep every
- *  existing call-site working without modification.
+ *  ┌─────────────────────────────────────────────────────────────┐
+ *  │  § 1  HmacSigner          Sign/verify tokens & payloads     │
+ *  │  § 2  WebkernelSession    File-backed signed step state      │
+ *  │  § 3  WebkernelRouter     /__webkernel-app/* routing         │
+ *  │  § 4  EmergencyPageBuilder  Full-page + modal renderer       │
+ *  │  § 5  ServerSideValidator   Chainable rule engine            │
+ *  │  § 6  HttpClient / HttpResponse                              │
+ *  │  § 7  Global helpers      webkernel_page(), webkernel_modal()│
+ *  └─────────────────────────────────────────────────────────────┘
  *
  * ═══════════════════════════════════════════════════════════════════
  *
- *  Quick-reference: EmergencyPageBuilder patterns
+ *  Route scheme
+ *  ────────────────────────────────────────────────────────────────
+ *  All Webkernel UI lives under:
+ *
+ *    /__webkernel-app/{flow}/{token}
+ *
+ *  e.g.  /__webkernel-app/setup/a3f9b1c2d4e5f6a7
+ *        /__webkernel-app/setup/a3f9b1c2d4e5f6a7/confirm
+ *        /__webkernel-app/error/b2e7d9f1
+ *
+ *  Tokens are HMAC-SHA256 derived, opaque, unguessable.
+ *  No query strings. No leaking intent in the URL.
+ *
+ * ═══════════════════════════════════════════════════════════════════
+ *
+ *  EmergencyPageBuilder — quick reference
  *  ────────────────────────────────────────────────────────────────
  *
  *  A) Simple error / security block:
  *
  *     EmergencyPageBuilder::create()
  *         ->title('Access Denied')
- *         ->message('Your account is suspended pending review.')
+ *         ->message('Your account is suspended.')
  *         ->severity('WARNING')
  *         ->code(403)
- *         ->addButton('Contact Support', 'mailto:support@example.com')
+ *         ->addButton('Contact Support', '/__webkernel-app/support/token')
  *         ->render();
  *
- *  B) Guard chain — only renders when a check fails:
+ *  B) Guard chain:
  *
  *     EmergencyPageBuilder::create()
  *         ->accessBlocked('Operation not permitted.')
  *         ->guard(fn() => $user->isActive())
- *         ->guard(fn() => !$user->hasPendingDispute())
  *         ->renderIfGuardFails();
- *     // execution continues here when all guards pass
  *
- *  C) Multi-step setup / progress page:
+ *  C) Multi-step setup page:
  *
  *     EmergencyPageBuilder::create()
  *         ->title('Initial Setup')
  *         ->severity('SETUP')
- *         ->step('Reading environment template',  fn() => loadTemplate())
- *         ->step('Generating application key',    fn() => generateKey())
- *         ->step('Writing .env',                  fn() => writeEnv())
- *         ->step('Creating database file',        fn() => createDb())
- *         ->step('Scheduling migrations', pending: true)
+ *         ->step('Reading template',   fn() => loadTemplate())
+ *         ->step('Generating key',     fn() => generateKey())
+ *         ->step('Writing .env',       fn() => writeEnv())
+ *         ->step('Migrations', pending: true)
  *         ->submitStep('Open Application', '/')
  *         ->render();
  *
- *     ✓ marks passed steps, ✕ marks failed steps (with error detail),
- *     ⋯ marks pending steps.  submitStep() link only appears when
- *     every non-pending step returned true.
+ *  D) macOS-style modal (renders inline, caller handles display):
  *
- *  D) Inline submit-button gating (inside a form controller):
+ *     echo EmergencyPageBuilder::modal()
+ *         ->title('Confirm Action')
+ *         ->message('This cannot be undone.')
+ *         ->modalButton('Cancel',  '#', 'cancel')
+ *         ->modalButton('Proceed', '/confirm-url', 'destructive')
+ *         ->renderModal();
  *
- *     echo EmergencyPageBuilder::gatedSubmitButton(
- *         label:  'Proceed to Payment',
- *         checks: [
- *             fn() => $user->hasVerifiedEmail(),
- *             fn() => $cart->isValid(),
- *         ],
- *     );
+ *  E) Available anywhere in Filament / Laravel views:
+ *
+ *     webkernel_page()->accessBlocked('Nope.')->render();
+ *     echo webkernel_modal()->title('Sure?')->renderModal();
  *
  * ═══════════════════════════════════════════════════════════════════
  */
 
+// ═══════════════════════════════════════════════════════════════════
+//  § 1  HmacSigner
+// ═══════════════════════════════════════════════════════════════════
+
+final class HmacSigner
+{
+    private string $secret;
+    private string $algo;
+
+    public function __construct(string $secret, string $algo = 'sha256')
+    {
+        if ($secret === '') {
+            throw new \InvalidArgumentException('HmacSigner secret must not be empty.');
+        }
+        $this->secret = $secret;
+        $this->algo   = $algo;
+    }
+
+    /**
+     * Derive a self-contained opaque token from arbitrary context data.
+     * The token is URL-safe base64, 32 chars by default.
+     */
+    public function token(string ...$parts): string
+    {
+        $payload = implode('|', $parts) . '|' . microtime(true) . '|' . random_int(0, PHP_INT_MAX);
+        $raw     = hash_hmac($this->algo, $payload, $this->secret, true);
+        return rtrim(strtr(base64_encode($raw), '+/', '-_'), '=');
+    }
+
+    /**
+     * Sign a payload string. Returns "payload.signature".
+     */
+    public function sign(string $payload): string
+    {
+        $sig = hash_hmac($this->algo, $payload, $this->secret);
+        return $payload . '.' . $sig;
+    }
+
+    /**
+     * Verify and extract payload from a signed string.
+     * Returns null on tamper.
+     */
+    public function verify(string $signed): ?string
+    {
+        $pos = strrpos($signed, '.');
+        if ($pos === false) {
+            return null;
+        }
+        $payload  = substr($signed, 0, $pos);
+        $sig      = substr($signed, $pos + 1);
+        $expected = hash_hmac($this->algo, $payload, $this->secret);
+        return hash_equals($expected, $sig) ? $payload : null;
+    }
+
+    /**
+     * Sign an arbitrary array as JSON. Returns opaque signed blob.
+     */
+    public function signArray(array $data): string
+    {
+        return $this->sign(json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
+    }
+
+    /**
+     * Verify and decode a signed JSON array. Returns null on tamper/invalid.
+     */
+    public function verifyArray(string $signed): ?array
+    {
+        $json = $this->verify($signed);
+        if ($json === null) {
+            return null;
+        }
+        try {
+            $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+            return is_array($decoded) ? $decoded : null;
+        } catch (\JsonException) {
+            return null;
+        }
+    }
+
+    /**
+     * Compute a bare HMAC hex string for arbitrary data.
+     */
+    public function compute(string $data): string
+    {
+        return hash_hmac($this->algo, $data, $this->secret);
+    }
+}
 
 // ═══════════════════════════════════════════════════════════════════
-//  § 1  EmergencyPageBuilder
+//  § 2  WebkernelSession
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Lightweight file-backed session for pre-boot flows.
+ *
+ * State is stored as a HMAC-signed JSON file in the system temp
+ * directory. No cookies, no PHP session. The session ID is the
+ * token in the URL — the user cannot forge it without the secret.
+ *
+ * Usage:
+ *   $sess = WebkernelSession::load($token, $signer);
+ *   $sess->set('step', 2);
+ *   $sess->save();
+ *   $sess->destroy();
+ */
+final class WebkernelSession
+{
+    private array  $data    = [];
+    private bool   $dirty   = false;
+
+    private function __construct(
+        private readonly string      $token,
+        private readonly HmacSigner  $signer,
+        private readonly string      $storePath,
+    ) {}
+
+    public static function load(string $token, HmacSigner $signer, ?string $storeDir = null): self
+    {
+        $dir      = ($storeDir ?? sys_get_temp_dir()) . '/webkernel_sessions';
+        $path     = $dir . '/' . preg_replace('/[^a-zA-Z0-9\-_]/', '', $token) . '.sess';
+        $instance = new self($token, $signer, $path);
+
+        if (is_file($path)) {
+            $raw  = @file_get_contents($path);
+            $data = ($raw !== false) ? $signer->verifyArray($raw) : null;
+            if (is_array($data)) {
+                // Expire after 2 hours of inactivity
+                if (isset($data['__ts']) && (time() - $data['__ts']) < 7200) {
+                    $instance->data = $data;
+                } else {
+                    @unlink($path);
+                }
+            }
+        }
+
+        return $instance;
+    }
+
+    public function get(string $key, mixed $default = null): mixed
+    {
+        return $this->data[$key] ?? $default;
+    }
+
+    public function set(string $key, mixed $value): self
+    {
+        $this->data[$key] = $value;
+        $this->dirty      = true;
+        return $this;
+    }
+
+    public function has(string $key): bool
+    {
+        return array_key_exists($key, $this->data);
+    }
+
+    public function save(): bool
+    {
+        if (!$this->dirty) {
+            return true;
+        }
+        $dir = dirname($this->storePath);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0700, true);
+        }
+        $this->data['__ts'] = time();
+        $signed = $this->signer->signArray($this->data);
+        return @file_put_contents($this->storePath, $signed, LOCK_EX) !== false;
+    }
+
+    public function destroy(): void
+    {
+        @unlink($this->storePath);
+    }
+
+    public function token(): string
+    {
+        return $this->token;
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  § 3  WebkernelRouter
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Internal router for /__webkernel-app/* paths.
+ *
+ * Call WebkernelRouter::dispatch() at pre-boot entry points.
+ * If the current request matches a registered Webkernel route,
+ * the handler is invoked and execution terminates.
+ * If no route matches, dispatch() returns normally so the
+ * framework (Laravel, etc.) can take over.
+ *
+ * Route patterns support named segments: {token}, {flow}, etc.
+ * The prefix /__webkernel-app is always implicit.
+ *
+ * Usage:
+ *   WebkernelRouter::register('setup/{token}',         $handler);
+ *   WebkernelRouter::register('setup/{token}/confirm', $confirmHandler);
+ *   WebkernelRouter::dispatch();
+ *
+ * Inside a handler:
+ *   function(array $params): never {
+ *       $token = $params['token'];
+ *       ...
+ *       exit;
+ *   }
+ */
+final class WebkernelRouter
+{
+    private const PREFIX = '/__webkernel-app/';
+
+    /** @var list<array{pattern: string, handler: \Closure}> */
+    private static array $routes = [];
+
+    /**
+     * Register a route under /__webkernel-app/.
+     *
+     * @param \Closure(array<string,string> $params): void $handler
+     */
+    public static function register(string $pattern, \Closure $handler): void
+    {
+        self::$routes[] = ['pattern' => $pattern, 'handler' => $handler];
+    }
+
+    /**
+     * Attempt to dispatch the current request.
+     * Returns true if a route matched (and the handler ran).
+     * Returns false if no route matched — caller may continue.
+     */
+    public static function dispatch(): bool
+    {
+        $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
+        $uri = '/' . ltrim($uri, '/');
+
+        if (!str_starts_with($uri, self::PREFIX) && $uri !== rtrim(self::PREFIX, '/')) {
+            return false;
+        }
+
+        $relative = substr($uri, strlen(self::PREFIX));
+
+        foreach (self::$routes as $route) {
+            $params = self::match($route['pattern'], $relative);
+            if ($params !== null) {
+                ($route['handler'])($params);
+                // If handler returns (non-never), we still stop dispatching
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Generate a canonical /__webkernel-app/ URL.
+     */
+    public static function url(string $pattern, array $params = []): string
+    {
+        $path = $pattern;
+        foreach ($params as $key => $value) {
+            $path = str_replace('{' . $key . '}', rawurlencode((string) $value), $path);
+        }
+        return self::PREFIX . ltrim($path, '/');
+    }
+
+    /**
+     * Match a route pattern against a URI segment.
+     * Returns an array of named parameters, or null on no match.
+     *
+     * @return array<string,string>|null
+     */
+    private static function match(string $pattern, string $uri): ?array
+    {
+        // Convert {name} placeholders to named capture groups
+        $regex = preg_replace_callback('/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/', static function (array $m): string {
+            return '(?P<' . $m[1] . '>[^/]+)';
+        }, $pattern);
+
+        $regex = '#^' . $regex . '$#';
+
+        if (!preg_match($regex, $uri, $matches)) {
+            return null;
+        }
+
+        // Extract only named captures
+        $params = [];
+        foreach ($matches as $key => $value) {
+            if (is_string($key)) {
+                $params[$key] = $value;
+            }
+        }
+
+        return $params;
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  § 4  EmergencyPageBuilder
 // ═══════════════════════════════════════════════════════════════════
 
 final class EmergencyPageBuilder
 {
+    // ── Mode ──────────────────────────────────────────────────────
+    private bool $isModal = false;
+
     // ── Page identity ─────────────────────────────────────────────
     private string  $title         = 'System Error';
     private string  $message       = '';
@@ -100,46 +399,43 @@ final class EmergencyPageBuilder
     private string  $footerMessage = '';
     private ?string $logBasePath   = null;
 
-    // ── Components ────────────────────────────────────────────────
+    // ── HTTP / HMAC capabilities ──────────────────────────────────
+    private ?HmacSigner $hmacSigner = null;
 
+    // ── Canonical URL ─────────────────────────────────────────────
+    private ?string $canonicalUrl = null;
+
+    // ── Components ────────────────────────────────────────────────
     /** @var list<array{text:string, href:string, extraCss:string}> */
     private array $buttons = [];
 
     /** @var list<string> */
     private array $htmlComponents = [];
 
-    // ── Guards ────────────────────────────────────────────────────
+    // ── Modal buttons ─────────────────────────────────────────────
+    /**
+     * @var list<array{text:string, href:string, style:'default'|'cancel'|'destructive'}>
+     */
+    private array $modalButtons = [];
 
+    // ── Guards ────────────────────────────────────────────────────
     /** @var list<\Closure():bool> */
     private array $guards = [];
 
     // ── Steps ─────────────────────────────────────────────────────
-
     /**
-     * Each step:
-     *   label   — human-readable description shown in the page
-     *   closure — executed at render time; null = pending (no execution)
-     *   pending — true forces the ⋯ "deferred" display regardless of closure
-     *
-     * Closure contract:
-     *   return true    → step ✓ passed
-     *   return false   → step ✕ failed (generic message)
-     *   return string  → step ✕ failed with that specific message
-     *   throw          → step ✕ failed with the exception message
-     *
      * @var list<array{label:string, closure:\Closure|null, pending:bool}>
      */
     private array $steps = [];
 
     /**
-     * The submit step: the "proceed" action rendered as a plain <a>
-     * link — no JS, no reload — only when every non-pending step
-     * passed. When any step failed, a neutral "incomplete" notice
-     * appears instead and the link is never emitted.
-     *
      * @var array{label:string, href:string, extraCss:string}|null
      */
     private ?array $submitStep = null;
+
+    // ── Embedded logos (base64 PNG/SVG, optional) ─────────────────
+    private ?string $logoLight = null;   // base64 data-URI, light mode
+    private ?string $logoDark  = null;   // base64 data-URI, dark mode
 
     // ── Factory ───────────────────────────────────────────────────
 
@@ -148,7 +444,17 @@ final class EmergencyPageBuilder
         return new self();
     }
 
-    // ── Core fluent setters ───────────────────────────────────────
+    /**
+     * Start a modal builder (renders HTML fragment, not a full page).
+     */
+    public static function modal(): self
+    {
+        $instance          = new self();
+        $instance->isModal = true;
+        return $instance;
+    }
+
+    // ── Fluent setters ────────────────────────────────────────────
 
     public function title(string $title): self
     {
@@ -192,123 +498,157 @@ final class EmergencyPageBuilder
         return $this;
     }
 
-    // ── Component builders ────────────────────────────────────────
-
     /**
-     * Add an action button to the page.
-     *
-     * $href is a real navigation target — a server route, external
-     * URL, or mailto: address. No javascript: URIs.
+     * Declare the canonical URL for this page.
+     * Emits a <link rel="canonical"> and X-Canonical-Url header.
+     * Use WebkernelRouter::url() to generate the value.
      */
-    public function addButton(
-        string $text,
-        string $href     = '/',
-        string $extraCss = '',
-    ): self {
-        $this->buttons[] = [
-            'text'     => $text,
-            'href'     => $href,
-            'extraCss' => $extraCss,
-        ];
+    public function canonicalize(string $url): self
+    {
+        $this->canonicalUrl = $url;
         return $this;
     }
 
     /**
-     * Append a raw, pre-escaped HTML fragment inside the card body.
-     * You are responsible for escaping any dynamic content inside $html.
+     * Attach an HmacSigner for use with hmac() helper or signed forms.
      */
+    public function withSigner(HmacSigner $signer): self
+    {
+        $this->hmacSigner = $signer;
+        return $this;
+    }
+
+    /**
+     * Compute an HMAC for arbitrary data using the attached signer.
+     * Throws if no signer was attached.
+     */
+    public function hmac(string $data): string
+    {
+        if ($this->hmacSigner === null) {
+            throw new \LogicException('Call withSigner() before hmac().');
+        }
+        return $this->hmacSigner->compute($data);
+    }
+
+    /**
+     * Execute an HTTP request from the builder context.
+     * Returns the HttpResponse — check ->successful() before using.
+     */
+    public function sendHttpRequest(): HttpClient
+    {
+        return HttpClient::request();
+    }
+
+    /**
+     * Embed logo images (base64 data-URIs).
+     *
+     * Pass null to either argument to skip that variant.
+     * If only one is provided it is used for both modes.
+     *
+     * Example:
+     *   ->logo(
+     *       light: 'data:image/png;base64,' . base64_encode(file_get_contents('logo-light.png')),
+     *       dark:  'data:image/png;base64,' . base64_encode(file_get_contents('logo-dark.png')),
+     *   )
+     *
+     * You may also pass a plain file path — the builder will encode it:
+     *   ->logo(light: '/var/www/public/logo.png')
+     */
+    public function logo(?string $light = null, ?string $dark = null): self
+    {
+        $this->logoLight = self::resolveLogoSrc($light ?? $dark);
+        $this->logoDark  = self::resolveLogoSrc($dark  ?? $light);
+        return $this;
+    }
+
+    private static function resolveLogoSrc(?string $src): ?string
+    {
+        if ($src === null) {
+            return null;
+        }
+        // Already a data-URI
+        if (str_starts_with($src, 'data:')) {
+            return $src;
+        }
+        // File path — encode it
+        if (is_file($src)) {
+            $mime = match (strtolower(pathinfo($src, PATHINFO_EXTENSION))) {
+                'svg'  => 'image/svg+xml',
+                'webp' => 'image/webp',
+                'jpg', 'jpeg' => 'image/jpeg',
+                default       => 'image/png',
+            };
+            $raw = @file_get_contents($src);
+            if ($raw !== false) {
+                return 'data:' . $mime . ';base64,' . base64_encode($raw);
+            }
+        }
+        // Treat as-is (URL, relative path)
+        return $src;
+    }
+
+    // ── Component builders ────────────────────────────────────────
+
+    public function addButton(string $text, string $href = '/', string $extraCss = ''): self
+    {
+        $this->buttons[] = ['text' => $text, 'href' => $href, 'extraCss' => $extraCss];
+        return $this;
+    }
+
     public function addHtmlComponent(string $html): self
     {
         $this->htmlComponents[] = $html;
         return $this;
     }
 
-    // ── Steps ─────────────────────────────────────────────────────
-
     /**
-     * Add a named step, optionally with a closure and/or pending flag.
+     * Add a button to a modal dialog.
      *
-     * Steps are registered here and executed lazily inside ->render().
-     * This keeps the chain declaration-like and human-readable:
-     *
-     *   ->step('Reading template',    fn() => readTemplate())
-     *   ->step('Generating key',      fn() => generateKey())
-     *   ->step('Writing .env',        fn() => writeEnv())
-     *   ->step('Scheduling migrations', pending: true)
-     *
-     * $pending = true  Marks the step as deferred. No closure is
-     *                  executed; the step is shown as ⋯ and does not
-     *                  affect whether submitStep() is displayed.
-     *
-     * @param (\Closure():bool)|(\Closure():string)|null $closure
+     * $style:
+     *   'default'     → primary action (accent border)
+     *   'cancel'      → neutral dismiss (gray border)
+     *   'destructive' → danger action (red border)
      */
-    public function step(
-        string    $label,
-        ?\Closure $closure = null,
-        bool      $pending = false,
+    public function modalButton(
+        string $text,
+        string $href,
+        string $style = 'default',
     ): self {
-        $this->steps[] = [
-            'label'   => $label,
-            'closure' => $closure,
-            'pending' => $pending,
-        ];
+        $this->modalButtons[] = ['text' => $text, 'href' => $href, 'style' => $style];
         return $this;
     }
 
+    // ── Steps ─────────────────────────────────────────────────────
+
     /**
-     * Register the terminal action for a step-based page.
-     *
-     * Renders as a plain <a> link (no JS) pointing to $href — a real
-     * server route that the next request hits normally. The link is
-     * only emitted when every non-pending step returned true.
-     *
-     * If any step failed the link is suppressed and a neutral
-     * "Setup incomplete" notice appears instead, so the user cannot
-     * navigate forward until the system is actually ready.
-     *
-     * Only one submitStep per builder — last call wins.
+     * @param (\Closure():bool)|(\Closure():string)|null $closure
      */
-    public function submitStep(
-        string $label,
-        string $href     = '/',
-        string $extraCss = '',
-    ): self {
-        $this->submitStep = [
-            'label'    => $label,
-            'href'     => $href,
-            'extraCss' => $extraCss,
-        ];
+    public function step(string $label, ?\Closure $closure = null, bool $pending = false): self
+    {
+        $this->steps[] = ['label' => $label, 'closure' => $closure, 'pending' => $pending];
+        return $this;
+    }
+
+    public function submitStep(string $label, string $href = '/', string $extraCss = ''): self
+    {
+        $this->submitStep = ['label' => $label, 'href' => $href, 'extraCss' => $extraCss];
         return $this;
     }
 
     // ── Guards ────────────────────────────────────────────────────
 
-    /**
-     * Register a boolean closure guard.
-     *
-     * Guards are evaluated lazily when ->renderIfGuardFails() is
-     * called. Returning false triggers an immediate render+terminate.
-     * Returning true is a no-op and the chain continues.
-     *
-     * @param \Closure():bool $check
-     */
+    /** @param \Closure():bool $check */
     public function guard(\Closure $check): self
     {
         $this->guards[] = $check;
         return $this;
     }
 
-    /**
-     * Evaluate all registered guards in order.
-     * Renders and terminates on the first failure.
-     * Returns $this when all guards pass so execution can continue.
-     */
     public function renderIfGuardFails(): self
     {
         foreach ($this->guards as $guard) {
             if (!$guard()) {
                 $this->render();
-                // render() is `never` — unreachable, satisfies analysers
             }
         }
         return $this;
@@ -316,66 +656,33 @@ final class EmergencyPageBuilder
 
     // ── Semantic presets ──────────────────────────────────────────
 
-    /** Server-side validation failure. */
     public function validationFailed(string $detail, int $code = 422): self
     {
-        return $this
-            ->title('Validation Failed')
-            ->message($detail)
-            ->severity('WARNING')
-            ->code($code);
+        return $this->title('Validation Failed')->message($detail)->severity('WARNING')->code($code);
     }
 
-    /** Security block / operation denied. */
     public function accessBlocked(string $reason, string $supportHref = ''): self
     {
-        $builder = $this
-            ->title('Access Blocked')
-            ->message($reason)
-            ->severity('WARNING')
-            ->code(403);
-
+        $builder = $this->title('Access Blocked')->message($reason)->severity('WARNING')->code(403);
         if ($supportHref !== '') {
             $builder->addButton('Contact Support', $supportHref);
         }
-
         return $builder;
     }
 
-    /** Rate limit exceeded. */
     public function rateLimited(string $detail = 'Please slow down and try again shortly.'): self
     {
-        return $this
-            ->title('Too Many Requests')
-            ->message($detail)
-            ->severity('WARNING')
-            ->code(429)
-            ->footer('RATE LIMIT REACHED');
+        return $this->title('Too Many Requests')->message($detail)->severity('WARNING')->code(429)->footer('RATE LIMIT REACHED');
     }
 
-    /** Scheduled maintenance / planned downtime. */
     public function maintenance(string $detail = 'The system is being updated. Please check back shortly.'): self
     {
-        return $this
-            ->title('Scheduled Maintenance')
-            ->message($detail)
-            ->severity('INFO')
-            ->code(503);
+        return $this->title('Scheduled Maintenance')->message($detail)->severity('INFO')->code(503);
     }
 
     // ── Static inline submit-gating ───────────────────────────────
 
     /**
-     * Emit a submit button HTML string gated by server-side closures.
-     *
-     * If every closure returns true, a real <button type="submit"> is
-     * emitted. If any returns false, a visually identical but disabled
-     * element is emitted instead — the server never delivers a working
-     * submit to a user who should not proceed.
-     *
-     * Intended for inline use inside form-rendering controllers, not
-     * as part of a full-page render.
-     *
      * @param list<\Closure():bool> $checks
      */
     public static function gatedSubmitButton(
@@ -401,14 +708,12 @@ final class EmergencyPageBuilder
                 );
             }
         }
-
         return sprintf(
             '<button type="submit" name="%s" value="%s"'
             . ' style="margin-top:1rem;padding:.55rem 1.3rem;background:transparent;'
             . 'border:1px solid %s;color:%s;font-family:inherit;font-size:.72rem;'
             . 'font-weight:600;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;%s">'
-            . '%s'
-            . '</button>',
+            . '%s</button>',
             htmlspecialchars($name,     ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
             htmlspecialchars($value,    ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
             htmlspecialchars($accent,   ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
@@ -418,16 +723,99 @@ final class EmergencyPageBuilder
         );
     }
 
-    // ── Render ────────────────────────────────────────────────────
+    // ── Modal render ──────────────────────────────────────────────
 
     /**
-     * Execute all steps (if any), build the full-page response,
-     * set the HTTP status code, and terminate.
+     * Render a macOS-style alert modal as an HTML fragment.
      *
-     * This is the only `never` exit point in the builder.
+     * The fragment is a self-contained <div> with an overlay backdrop.
+     * Drop it anywhere in a page — Filament, Blade, raw HTML.
+     * It uses fixed positioning with a high z-index.
+     *
+     * The modal has no JS dependency. Buttons are plain <a> links.
+     * Wrap in an Alpine x-show or Livewire conditional for toggling.
      */
+    public function renderModal(): string
+    {
+        [$accent, $accentDim, , , , $iconSvg] = self::palette($this->severity);
+
+        $eTitle   = htmlspecialchars($this->title,   ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $msgBlock = $this->message !== '' ? htmlspecialchars($this->message, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') : '';
+
+        $buttons = '';
+        foreach ($this->modalButtons as $btn) {
+            $borderColor = match ($btn['style']) {
+                'destructive' => '#ff3333',
+                'cancel'      => '#444',
+                default       => $accent,
+            };
+            $textColor = match ($btn['style']) {
+                'destructive' => '#ff3333',
+                'cancel'      => '#888',
+                default       => $accent,
+            };
+            $buttons .= sprintf(
+                '<a href="%s" style="display:inline-flex;align-items:center;justify-content:center;'
+                . 'min-width:80px;padding:.45rem 1.1rem;background:transparent;border:1px solid %s;'
+                . 'color:%s;font-family:inherit;font-size:.72rem;font-weight:600;'
+                . 'text-transform:uppercase;letter-spacing:.07em;text-decoration:none;'
+                . 'border-radius:4px;transition:background .12s;cursor:pointer;">%s</a>',
+                htmlspecialchars($btn['href'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+                $borderColor,
+                $textColor,
+                htmlspecialchars($btn['text'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+            );
+        }
+
+        // If no modal buttons were registered, add a sensible default dismiss
+        if ($buttons === '') {
+            $buttons = sprintf(
+                '<a href="/" style="display:inline-flex;align-items:center;justify-content:center;'
+                . 'min-width:80px;padding:.45rem 1.1rem;background:transparent;border:1px solid #444;'
+                . 'color:#888;font-family:inherit;font-size:.72rem;font-weight:600;'
+                . 'text-transform:uppercase;letter-spacing:.07em;text-decoration:none;'
+                . 'border-radius:4px;">OK</a>',
+            );
+        }
+
+        return <<<HTML
+<div class="wk-modal-overlay" style="
+    position:fixed;inset:0;z-index:9999;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.6);
+    backdrop-filter:blur(4px);
+    -webkit-backdrop-filter:blur(4px);
+    padding:1rem;
+    font-family:'Space Grotesk',system-ui,sans-serif;
+">
+  <div class="wk-modal" role="alertdialog" aria-modal="true" aria-labelledby="wk-modal-title" style="
+      background:#111;
+      border:1px solid #222;
+      border-radius:12px;
+      width:100%;max-width:380px;
+      padding:1.5rem 1.5rem 1.25rem;
+      box-shadow:0 20px 60px rgba(0,0,0,.8);
+      text-align:center;
+  ">
+    <div style="width:36px;height:36px;margin:0 auto .85rem;opacity:.9">{$iconSvg}</div>
+    <div id="wk-modal-title" style="font-size:.9rem;font-weight:700;color:#fff;letter-spacing:.02em;margin-bottom:.5rem;">{$eTitle}</div>
+    <div style="font-size:.78rem;color:#aaa;line-height:1.55;margin-bottom:1.25rem;">{$msgBlock}</div>
+    <div style="display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;">{$buttons}</div>
+  </div>
+</div>
+HTML;
+    }
+
+    // ── Full-page render ──────────────────────────────────────────
+
     public function render(): never
     {
+        if ($this->isModal) {
+            // Modal misuse — just echo the fragment and exit
+            echo $this->renderModal();
+            exit(0);
+        }
+
         $incidentId = 'INC-' . strtoupper(
             substr(hash('sha256', $this->message . microtime(true)), 0, 7)
         );
@@ -435,31 +823,19 @@ final class EmergencyPageBuilder
 
         if ($this->logBasePath !== null) {
             self::writeIncidentLog(
-                $incidentId,
-                $this->severity,
-                $this->title,
-                $this->message,
-                $this->code,
-                $this->logBasePath,
+                $incidentId, $this->severity, $this->title,
+                $this->message, $this->code, $this->logBasePath,
             );
         }
 
         // ── CLI path ──────────────────────────────────────────────
         if (PHP_SAPI === 'cli') {
-            $state = $this->systemState !== ''
-                ? $this->systemState
-                : 'SYSTEM STATE: ' . $this->severity;
-
+            $state = $this->systemState !== '' ? $this->systemState : 'SYSTEM STATE: ' . $this->severity;
             fwrite(STDERR, sprintf(
                 "%s\nINCIDENT : %s\nSEVERITY : %s\nTIMESTAMP: %s\n\n%s\n%s\n",
-                $state,
-                $incidentId,
-                $this->severity,
-                $timestamp,
-                strtoupper($this->title),
-                $this->message,
+                $state, $incidentId, $this->severity, $timestamp,
+                strtoupper($this->title), $this->message,
             ));
-
             throw new \RuntimeException($this->message, $this->code);
         }
 
@@ -467,8 +843,13 @@ final class EmergencyPageBuilder
         [$accent, $accentDim, $accentBorder, $defaultState, $defaultFooter, $iconSvg]
             = self::palette($this->severity);
 
-        $resolvedState  = $this->systemState    !== '' ? $this->systemState    : $defaultState;
-        $resolvedFooter = $this->footerMessage  !== '' ? $this->footerMessage  : $defaultFooter;
+        $resolvedState  = $this->systemState   !== '' ? $this->systemState   : $defaultState;
+        $resolvedFooter = $this->footerMessage !== '' ? $this->footerMessage : $defaultFooter;
+
+        // ── Canonical header ──────────────────────────────────────
+        if ($this->canonicalUrl !== null) {
+            header('X-Canonical-Url: ' . $this->canonicalUrl);
+        }
 
         // ── Execute steps → build step HTML ──────────────────────
         $stepsHtml = '';
@@ -476,7 +857,6 @@ final class EmergencyPageBuilder
 
         if ($this->steps !== []) {
             $stepsHtml .= '<div class="steps">';
-
             foreach ($this->steps as $step) {
                 ['label' => $label, 'closure' => $closure, 'pending' => $pending] = $step;
                 $eLabel = htmlspecialchars($label, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -495,32 +875,25 @@ final class EmergencyPageBuilder
                 if ($result === true) {
                     $stepsHtml .= self::stepRow($eLabel, 'ok', '', $accent);
                 } else {
-                    $allPassed  = false;
-                    $eDetail    = htmlspecialchars(
+                    $allPassed = false;
+                    $eDetail   = htmlspecialchars(
                         is_string($result) ? $result : '',
-                        ENT_QUOTES | ENT_SUBSTITUTE,
-                        'UTF-8',
+                        ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8',
                     );
                     $stepsHtml .= self::stepRow($eLabel, 'fail', $eDetail, $accent);
                 }
             }
 
-            // ── submitStep: link or blocked notice ────────────────
             if ($this->submitStep !== null) {
                 if ($allPassed) {
                     $eLabel    = htmlspecialchars($this->submitStep['label'],    ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
                     $eHref     = htmlspecialchars($this->submitStep['href'],     ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
                     $eExtraCss = htmlspecialchars($this->submitStep['extraCss'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-
                     $stepsHtml .= sprintf(
                         '<div class="submit-row">'
                         . '<a href="%s" class="proceed-btn" style="border-color:%s;color:%s;%s">%s</a>'
                         . '</div>',
-                        $eHref,
-                        $accent,
-                        $accent,
-                        $eExtraCss,
-                        $eLabel,
+                        $eHref, $accent, $accent, $eExtraCss, $eLabel,
                     );
                 } else {
                     $stepsHtml .= '<div class="submit-row submit-blocked">'
@@ -528,11 +901,10 @@ final class EmergencyPageBuilder
                         . '</div>';
                 }
             }
-
             $stepsHtml .= '</div>';
         }
 
-        // ── Escape structural strings (not message — developer-controlled HTML) ──
+        // ── Escape structural strings ─────────────────────────────
         $eSeverity = htmlspecialchars($this->severity,  ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $eTitle    = htmlspecialchars($this->title,     ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $eState    = htmlspecialchars($resolvedState,   ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -544,76 +916,81 @@ final class EmergencyPageBuilder
             $buttonsHtml .= sprintf(
                 '<a href="%s" class="action-btn" style="border-color:%s;color:%s;%s">%s</a>',
                 htmlspecialchars($btn['href'],     ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
-                $accent,
-                $accent,
+                $accent, $accent,
                 htmlspecialchars($btn['extraCss'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
                 htmlspecialchars($btn['text'],     ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
             );
         }
 
         $extraHtml = implode("\n", $this->htmlComponents);
-
-        // Message is developer-controlled — rendered as raw HTML so that
-        // callers can use <b>, <br>, <a> etc. without double-escaping.
         $msgBlock  = $this->message !== ''
             ? "<div class=\"msg-block\">{$this->message}</div>"
             : '';
 
+        // ── Logo HTML ─────────────────────────────────────────────
+        $logoHtml = $this->buildLogoHtml();
+
+        // ── Canonical link tag ────────────────────────────────────
+        $canonicalTag = $this->canonicalUrl !== null
+            ? '<link rel="canonical" href="' . htmlspecialchars($this->canonicalUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '"/>'
+            : '';
+
         // ── Emit ──────────────────────────────────────────────────
         http_response_code($this->code);
-
         echo self::buildDocument(
-            eState:       $eState,
-            eTitle:       $eTitle,
-            eSeverity:    $eSeverity,
-            eFooter:      $eFooter,
-            incidentId:   $incidentId,
-            timestamp:    $timestamp,
-            accent:       $accent,
-            accentDim:    $accentDim,
-            accentBorder: $accentBorder,
-            iconSvg:      $iconSvg,
-            msgBlock:     $msgBlock,
-            stepsHtml:    $stepsHtml,
-            extraHtml:    $extraHtml,
-            buttonsHtml:  $buttonsHtml,
+            eState: $eState, eTitle: $eTitle, eSeverity: $eSeverity,
+            eFooter: $eFooter, incidentId: $incidentId, timestamp: $timestamp,
+            accent: $accent, accentDim: $accentDim, accentBorder: $accentBorder,
+            iconSvg: $iconSvg, msgBlock: $msgBlock, stepsHtml: $stepsHtml,
+            extraHtml: $extraHtml, buttonsHtml: $buttonsHtml,
+            logoHtml: $logoHtml, canonicalTag: $canonicalTag,
         );
-
         exit(1);
     }
 
     // ── Internal helpers ──────────────────────────────────────────
 
-    /**
-     * Render a single step row.
-     * $status: 'ok' | 'fail' | 'pending'
-     */
-    private static function stepRow(
-        string $eLabel,
-        string $status,
-        string $eDetail,
-        string $accent,
-    ): string {
+    private function buildLogoHtml(): string
+    {
+        // Neither provided — use default path-based picture element
+        if ($this->logoLight === null && $this->logoDark === null) {
+            return <<<'HTML'
+<picture>
+  <source srcset="/logo-dark.png" media="(prefers-color-scheme:dark)"/>
+  <img src="/logo-light.png" alt="System" loading="eager" style="max-width:160px;width:100%;height:auto;display:block;margin:0 auto .85rem;opacity:.85"/>
+</picture>
+HTML;
+        }
+
+        $light = $this->logoLight ?? $this->logoDark ?? '';
+        $dark  = $this->logoDark  ?? $this->logoLight ?? '';
+
+        // Embedded base64 data-URIs — no HTTP request needed
+        return sprintf(
+            '<picture>'
+            . '<source srcset="%s" media="(prefers-color-scheme:dark)"/>'
+            . '<img src="%s" alt="System" loading="eager" style="max-width:160px;width:100%%;height:auto;display:block;margin:0 auto .85rem;opacity:.85"/>'
+            . '</picture>',
+            htmlspecialchars($dark,  ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+            htmlspecialchars($light, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+        );
+    }
+
+    private static function stepRow(string $eLabel, string $status, string $eDetail, string $accent): string
+    {
         [$icon, $color] = match ($status) {
             'ok'    => ['✓', $accent],
             'fail'  => ['✕', '#ff3333'],
             default => ['⋯', '#555'],
         };
-
-        $detail = $eDetail !== ''
-            ? "<span class=\"step-detail\">{$eDetail}</span>"
-            : '';
-
+        $detail = $eDetail !== '' ? "<span class=\"step-detail\">{$eDetail}</span>" : '';
         return sprintf(
             '<div class="step step-%s">'
             . '<span class="step-icon" style="color:%s">%s</span>'
             . '<span class="step-label">%s%s</span>'
             . '</div>',
             htmlspecialchars($status, ENT_QUOTES, 'UTF-8'),
-            $color,
-            $icon,
-            $eLabel,
-            $detail,
+            $color, $icon, $eLabel, $detail,
         );
     }
 
@@ -640,7 +1017,7 @@ final class EmergencyPageBuilder
                 'ACTION MAY BE REQUIRED',
                 '<svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
             ],
-            default => [ // CRITICAL and anything unrecognised
+            default => [
                 '#ff3333',
                 'rgba(255,0,0,.08)',
                 '#ff3333',
@@ -666,6 +1043,8 @@ final class EmergencyPageBuilder
         string $stepsHtml,
         string $extraHtml,
         string $buttonsHtml,
+        string $logoHtml,
+        string $canonicalTag,
     ): string {
         return <<<HTML
 <!DOCTYPE html>
@@ -674,25 +1053,16 @@ final class EmergencyPageBuilder
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <meta name="robots" content="noindex,nofollow"/>
+  {$canonicalTag}
   <title>{$eState}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
     ::selection, ::-moz-selection { background: transparent; }
-
-    html, body {
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-touch-callout: none;
-      pointer-events: none;
-    }
-
-    /* Interactive elements always receive pointer events */
+    html, body { user-select: none; -webkit-user-select: none; pointer-events: none; }
     a, button { pointer-events: all !important; }
-
     body {
       font-family: 'Space Grotesk', system-ui, sans-serif;
       background: #000;
@@ -704,217 +1074,90 @@ final class EmergencyPageBuilder
       justify-content: center;
       padding: .75rem;
     }
-
-    /* ── Card ──────────────────────────────────────────────────── */
     .card {
-      max-width: 680px;
-      width: 100%;
-      background: #0d0d0d;
-      border: 1px solid #1a1a1a;
-      overflow: hidden;
-      box-shadow: 0 4px 32px rgba(0,0,0,.85);
+      max-width: 680px; width: 100%;
+      background: #0d0d0d; border: 1px solid #1a1a1a;
+      overflow: hidden; box-shadow: 0 4px 32px rgba(0,0,0,.85);
     }
-
-    /* ── Header ────────────────────────────────────────────────── */
     .card-header {
-      background: #080808;
-      border-bottom: 1px solid #1a1a1a;
-      padding: .65rem 1rem;
-      display: flex;
-      align-items: center;
-      gap: .75rem;
+      background: #080808; border-bottom: 1px solid #1a1a1a;
+      padding: .65rem 1rem; display: flex; align-items: center; gap: .75rem;
     }
     .header-state {
-      flex: 1;
-      font-size: .68rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: #fff;
+      flex: 1; font-size: .68rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .08em; color: #fff;
     }
     .header-incident {
-      flex: 1;
-      text-align: center;
-      color: #555;
-      font-size: .65rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .08em;
+      flex: 1; text-align: center; color: #555; font-size: .65rem;
+      font-weight: 600; text-transform: uppercase; letter-spacing: .08em;
       font-family: 'Courier New', monospace;
     }
     .header-severity {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: .4rem;
+      flex: 1; display: flex; align-items: center;
+      justify-content: flex-end; gap: .4rem;
     }
-    .severity-icon        { width: 15px; height: 15px; flex-shrink: 0; }
-    .severity-icon svg    { width: 100%; height: 100%; display: block; }
+    .severity-icon { width: 15px; height: 15px; flex-shrink: 0; }
+    .severity-icon svg { width: 100%; height: 100%; display: block; }
     .severity-label {
-      color: {$accent};
-      font-weight: 700;
-      font-size: .68rem;
-      text-transform: uppercase;
-      letter-spacing: .08em;
+      color: {$accent}; font-weight: 700; font-size: .68rem;
+      text-transform: uppercase; letter-spacing: .08em;
     }
-
-    /* ── Body ──────────────────────────────────────────────────── */
     .card-body { padding: 1.25rem 1rem; }
-
-    .identity            { margin-bottom: 1rem; text-align: center; }
-    .identity picture img {
-      max-width: 200px;
-      width: 100%;
-      height: auto;
-      display: block;
-      margin: 0 auto .85rem;
-      opacity: .85;
-    }
+    .identity { margin-bottom: 1rem; text-align: center; }
     .incident-title {
-      font-size: .8rem;
-      font-weight: 600;
-      color: {$accent};
-      text-transform: uppercase;
-      letter-spacing: .1em;
+      font-size: .8rem; font-weight: 600; color: {$accent};
+      text-transform: uppercase; letter-spacing: .1em;
     }
-
-    /* ── Message block ─────────────────────────────────────────── */
     .msg-block {
-      background: {$accentDim};
-      border-left: 2px solid {$accentBorder};
-      padding: .8rem .9rem;
-      margin: .85rem 0;
-      font-size: .8rem;
-      line-height: 1.6;
-      white-space: pre-wrap;
-      word-break: break-word;
-      color: #d0d0d0;
+      background: {$accentDim}; border-left: 2px solid {$accentBorder};
+      padding: .8rem .9rem; margin: .85rem 0; font-size: .8rem;
+      line-height: 1.6; white-space: pre-wrap; word-break: break-word; color: #d0d0d0;
     }
-
-    /* ── Steps ─────────────────────────────────────────────────── */
-    .steps {
-      margin: .85rem 0;
-      display: flex;
-      flex-direction: column;
-      gap: .3rem;
-    }
-    .step {
-      display: flex;
-      align-items: flex-start;
-      gap: .55rem;
-      font-size: .78rem;
-      padding: .4rem .45rem;
-      border-radius: 2px;
-    }
+    .steps { margin: .85rem 0; display: flex; flex-direction: column; gap: .3rem; }
+    .step { display: flex; align-items: flex-start; gap: .55rem; font-size: .78rem; padding: .4rem .45rem; border-radius: 2px; }
     .step-ok      { background: rgba(59,130,246,.04); }
     .step-fail    { background: rgba(255,51,51,.05); }
     .step-pending { background: transparent; }
-
-    .step-icon {
-      font-family: monospace;
-      font-size: .82rem;
-      line-height: 1.35;
-      flex-shrink: 0;
-      width: 1rem;
-      text-align: center;
-    }
+    .step-icon { font-family: monospace; font-size: .82rem; line-height: 1.35; flex-shrink: 0; width: 1rem; text-align: center; }
     .step-label  { color: #bbb; line-height: 1.4; }
-    .step-detail {
-      display: block;
-      margin-top: .2rem;
-      font-size: .69rem;
-      color: #ff5555;
-      font-family: 'Courier New', monospace;
-    }
-
-    /* ── Submit step ───────────────────────────────────────────── */
-    .submit-row {
-      margin-top: 1rem;
-      padding-top: .85rem;
-      border-top: 1px solid #1e1e1e;
-    }
-    .submit-blocked {
-      font-size: .7rem;
-      color: #444;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-    }
+    .step-detail { display: block; margin-top: .2rem; font-size: .69rem; color: #ff5555; font-family: 'Courier New', monospace; }
+    .submit-row { margin-top: 1rem; padding-top: .85rem; border-top: 1px solid #1e1e1e; }
+    .submit-blocked { font-size: .7rem; color: #444; text-transform: uppercase; letter-spacing: .06em; }
     .proceed-btn {
-      display: inline-block;
-      padding: .55rem 1.4rem;
-      background: transparent;
-      border: 1px solid {$accent};
-      color: {$accent};
-      font-family: inherit;
-      font-size: .73rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      text-decoration: none;
-      transition: background .14s;
+      display: inline-block; padding: .55rem 1.4rem; background: transparent;
+      border: 1px solid {$accent}; color: {$accent}; font-family: inherit;
+      font-size: .73rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .08em; text-decoration: none; transition: background .14s;
     }
     .proceed-btn:hover { background: {$accentDim}; }
-
-    /* ── Action buttons ────────────────────────────────────────── */
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: .5rem;
-      margin-top: .85rem;
-    }
+    .actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .85rem; }
     .action-btn {
-      display: inline-block;
-      padding: .5rem 1.2rem;
-      background: transparent;
-      border: 1px solid;
-      font-family: inherit;
-      font-size: .72rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      text-decoration: none;
-      transition: background .14s;
+      display: inline-block; padding: .5rem 1.2rem; background: transparent;
+      border: 1px solid; font-family: inherit; font-size: .72rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .08em; text-decoration: none; transition: background .14s;
     }
     .action-btn:hover { background: {$accentDim}; }
-
-    /* ── Footer ────────────────────────────────────────────────── */
     .card-footer {
-      padding: .65rem 1rem;
-      text-align: center;
-      font-size: .65rem;
-      color: #555;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      background: #080808;
-      border-top: 1px solid #1a1a1a;
+      padding: .65rem 1rem; text-align: center; font-size: .65rem;
+      color: #555; text-transform: uppercase; letter-spacing: .08em;
+      background: #080808; border-top: 1px solid #1a1a1a;
     }
-
-    /* ── Timestamp ─────────────────────────────────────────────── */
     .timestamp-bar {
-      margin-top: 1.25rem;
-      text-align: center;
-      font-size: .62rem;
-      color: rgba(255,255,255,.25);
-      font-family: 'Courier New', monospace;
-      letter-spacing: .05em;
+      margin-top: 1.25rem; text-align: center; font-size: .62rem;
+      color: rgba(255,255,255,.25); font-family: 'Courier New', monospace; letter-spacing: .05em;
     }
-
-    /* ── Responsive ────────────────────────────────────────────── */
     @media (max-width: 480px) {
-      .identity picture img  { max-width: 140px; }
-      .card-body             { padding: .9rem .75rem; }
-      .msg-block             { font-size: .74rem; padding: .65rem .75rem; }
-      .card-footer           { font-size: .6rem; }
-      .timestamp-bar         { font-size: .57rem; margin-top: .85rem; }
-      .header-incident       { display: none; }
-      .step                  { font-size: .74rem; }
+      .card-body { padding: .9rem .75rem; }
+      .msg-block { font-size: .74rem; padding: .65rem .75rem; }
+      .card-footer { font-size: .6rem; }
+      .timestamp-bar { font-size: .57rem; margin-top: .85rem; }
+      .header-incident { display: none; }
+      .step { font-size: .74rem; }
     }
   </style>
 </head>
 <body>
   <div class="card">
-
     <div class="card-header">
       <div class="header-state">{$eState}</div>
       <div class="header-incident">{$incidentId}</div>
@@ -923,28 +1166,18 @@ final class EmergencyPageBuilder
         <span class="severity-label">{$eSeverity}</span>
       </div>
     </div>
-
     <div class="card-body">
       <div class="identity">
-        <picture>
-          <source srcset="/logo-dark.png" media="(prefers-color-scheme:dark)"/>
-          <img src="/src-app/logo-light-mode.png" alt="System" loading="eager"/>
-        </picture>
+        {$logoHtml}
         <div class="incident-title">{$eTitle}</div>
       </div>
-
       {$msgBlock}
-
       {$stepsHtml}
-
       {$extraHtml}
-
       <div class="actions">{$buttonsHtml}</div>
     </div>
-
     <div class="card-footer">{$eFooter}</div>
   </div>
-
   <div class="timestamp-bar">TIMESTAMP (UTC): {$timestamp}</div>
 </body>
 </html>
@@ -960,57 +1193,44 @@ HTML;
         string $basePath,
     ): void {
         $logDir = rtrim($basePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'logs';
-
         if (!is_dir($logDir)) {
             @mkdir($logDir, 0755, true);
         }
-
         $entry = sprintf(
             "[%s] INCIDENT:%s | SEV:%s | CODE:%d | TITLE:%s | MSG:%s | UA:%s | IP:%s\n",
             gmdate('Y-m-d\TH:i:s\Z'),
-            $incidentId,
-            $severity,
-            $code,
+            $incidentId, $severity, $code,
             str_replace(["\r", "\n"], ' ', $title),
             str_replace(["\r", "\n"], ' ', $message),
             $_SERVER['HTTP_USER_AGENT'] ?? 'CLI',
             $_SERVER['REMOTE_ADDR']     ?? 'INTERNAL',
         );
-
         @file_put_contents("{$logDir}/critical-incidents.log", $entry, FILE_APPEND | LOCK_EX);
     }
 }
 
-
 // ═══════════════════════════════════════════════════════════════════
-//  § 2  ServerSideValidator
+//  § 5  ServerSideValidator
 // ═══════════════════════════════════════════════════════════════════
 
 /**
  * Chainable server-side validator.
  *
- * String rules:
- *   required | email | url | numeric | integer
+ * String rules: required | email | url | numeric | integer
  *   min:N | max:N | min_value:N | max_value:N
  *   in:a,b,c | not_in:a,b,c | regex:/pattern/
  *
- * Closure rules receive ($value, $fullDataArray) and must return:
- *   true     → pass
- *   false    → fail with generic message
- *   string   → fail with that specific message
+ * Closure rules receive ($value, $fullDataArray) → true|false|string.
  */
 final class ServerSideValidator
 {
     /** @var array<string, mixed> */
     private array $data;
-
     /** @var list<array{field:string, rule:string|\Closure, label:string}> */
-    private array $rules = [];
-
+    private array $rules    = [];
     /** @var list<string> */
-    private array $errors = [];
-
-    private bool $evaluated = false;
+    private array $errors   = [];
+    private bool  $evaluated = false;
 
     private function __construct(array $data)
     {
@@ -1022,14 +1242,9 @@ final class ServerSideValidator
         return new self($data);
     }
 
-    /**
-     * @param string|\Closure(mixed $value, array<string,mixed> $data): (bool|string) $rule
-     */
-    public function field(
-        string          $field,
-        string|\Closure $rule,
-        string          $label = '',
-    ): self {
+    /** @param string|\Closure(mixed, array<string,mixed>): (bool|string) $rule */
+    public function field(string $field, string|\Closure $rule, string $label = ''): self
+    {
         $this->rules[] = [
             'field' => $field,
             'rule'  => $rule,
@@ -1043,21 +1258,16 @@ final class ServerSideValidator
         if ($this->evaluated) {
             return $this;
         }
-
         $this->evaluated = true;
 
         foreach ($this->rules as $entry) {
-            $field = $entry['field'];
-            $label = $entry['label'];
+            ['field' => $field, 'label' => $label, 'rule' => $rule] = $entry;
             $value = $this->data[$field] ?? null;
-            $rule  = $entry['rule'];
 
             if ($rule instanceof \Closure) {
                 $result = $rule($value, $this->data);
                 if ($result !== true) {
-                    $this->errors[] = is_string($result)
-                        ? $result
-                        : "'{$label}' failed validation.";
+                    $this->errors[] = is_string($result) ? $result : "'{$label}' failed validation.";
                 }
                 continue;
             }
@@ -1066,7 +1276,7 @@ final class ServerSideValidator
                 $error = self::applyToken($token, $label, $value);
                 if ($error !== null) {
                     $this->errors[] = $error;
-                    break; // one error per field
+                    break;
                 }
             }
         }
@@ -1074,16 +1284,13 @@ final class ServerSideValidator
         return $this;
     }
 
-    public function passes(): bool        { return $this->evaluate()->errors === []; }
-    public function fails(): bool         { return !$this->passes(); }
-
+    public function passes(): bool       { return $this->evaluate()->errors === []; }
+    public function fails(): bool        { return !$this->passes(); }
     /** @return list<string> */
-    public function errors(): array       { return $this->evaluate()->errors; }
-    public function firstError(): string  { return $this->evaluate()->errors[0] ?? ''; }
+    public function errors(): array      { return $this->evaluate()->errors; }
+    public function firstError(): string { return $this->evaluate()->errors[0] ?? ''; }
 
-    /**
-     * @param \Closure(string $first, list<string> $all): void $callback
-     */
+    /** @param \Closure(string, list<string>): void $callback */
     public function onFail(\Closure $callback): self
     {
         if ($this->fails()) {
@@ -1092,70 +1299,44 @@ final class ServerSideValidator
         return $this;
     }
 
-    /**
-     * Render an EmergencyPageBuilder page and terminate if validation fails.
-     *
-     * @param \Closure(EmergencyPageBuilder $b, string $firstError): void|null $customise
-     */
+    /** @param \Closure(EmergencyPageBuilder, string): void|null $customise */
     public function renderOnFail(?\Closure $customise = null): self
     {
         if ($this->fails()) {
-            $builder = EmergencyPageBuilder::create()
-                ->validationFailed($this->firstError());
-
+            $builder = EmergencyPageBuilder::create()->validationFailed($this->firstError());
             if ($customise !== null) {
                 $customise($builder, $this->firstError());
             }
-
             $builder->render();
         }
-
         return $this;
     }
-
-    // ── Rule engine ───────────────────────────────────────────────
 
     private static function applyToken(string $token, string $label, mixed $value): ?string
     {
         $str = is_string($value) ? trim($value) : (string) ($value ?? '');
-
-        [$name, $param] = str_contains($token, ':')
-            ? explode(':', $token, 2)
-            : [$token, ''];
+        [$name, $param] = str_contains($token, ':') ? explode(':', $token, 2) : [$token, ''];
 
         return match ($name) {
-            'required'  => ($value === null || $value === '' || $value === [])
-                               ? "'{$label}' is required."                               : null,
-            'email'     => filter_var($value, FILTER_VALIDATE_EMAIL) === false
-                               ? "'{$label}' must be a valid email address."             : null,
-            'url'       => filter_var($value, FILTER_VALIDATE_URL) === false
-                               ? "'{$label}' must be a valid URL."                       : null,
-            'numeric'   => !is_numeric($value)
-                               ? "'{$label}' must be numeric."                           : null,
-            'integer'   => filter_var($value, FILTER_VALIDATE_INT) === false
-                               ? "'{$label}' must be an integer."                        : null,
-            'min'       => mb_strlen($str) < (int) $param
-                               ? "'{$label}' must be at least {$param} characters."      : null,
-            'max'       => mb_strlen($str) > (int) $param
-                               ? "'{$label}' must not exceed {$param} characters."       : null,
-            'min_value' => (float) $value < (float) $param
-                               ? "'{$label}' must be at least {$param}."                 : null,
-            'max_value' => (float) $value > (float) $param
-                               ? "'{$label}' must not exceed {$param}."                  : null,
-            'in'        => !in_array($str, explode(',', $param), true)
-                               ? "'{$label}' contains an unacceptable value."            : null,
-            'not_in'    => in_array($str, explode(',', $param), true)
-                               ? "'{$label}' contains a disallowed value."               : null,
-            'regex'     => !preg_match($param, $str)
-                               ? "'{$label}' format is invalid."                         : null,
+            'required'  => ($value === null || $value === '' || $value === []) ? "'{$label}' is required." : null,
+            'email'     => filter_var($value, FILTER_VALIDATE_EMAIL) === false  ? "'{$label}' must be a valid email address." : null,
+            'url'       => filter_var($value, FILTER_VALIDATE_URL) === false    ? "'{$label}' must be a valid URL." : null,
+            'numeric'   => !is_numeric($value)                                  ? "'{$label}' must be numeric." : null,
+            'integer'   => filter_var($value, FILTER_VALIDATE_INT) === false    ? "'{$label}' must be an integer." : null,
+            'min'       => mb_strlen($str) < (int) $param                       ? "'{$label}' must be at least {$param} characters." : null,
+            'max'       => mb_strlen($str) > (int) $param                       ? "'{$label}' must not exceed {$param} characters." : null,
+            'min_value' => (float) $value < (float) $param                      ? "'{$label}' must be at least {$param}." : null,
+            'max_value' => (float) $value > (float) $param                      ? "'{$label}' must not exceed {$param}." : null,
+            'in'        => !in_array($str, explode(',', $param), true)           ? "'{$label}' contains an unacceptable value." : null,
+            'not_in'    => in_array($str, explode(',', $param), true)            ? "'{$label}' contains a disallowed value." : null,
+            'regex'     => !preg_match($param, $str)                             ? "'{$label}' format is invalid." : null,
             default     => null,
         };
     }
 }
 
-
 // ═══════════════════════════════════════════════════════════════════
-//  § 3  HttpClient  +  HttpResponse
+//  § 6  HttpClient + HttpResponse
 // ═══════════════════════════════════════════════════════════════════
 
 final class HttpClient
@@ -1165,19 +1346,14 @@ final class HttpClient
     private int     $timeout   = 15;
     private bool    $verifySsl = true;
     private ?string $rawBody   = null;
-
     /** @var array<string, string> */
     private array $headers = [];
-
     /** @var list<array{expect:int, handler:\Closure():never}> */
     private array $statusHandlers = [];
-
     /** @var \Closure(HttpResponse): void|null */
     private ?\Closure $onSuccess = null;
 
     public static function request(): self { return new self(); }
-
-    // ── Method shortcuts ──────────────────────────────────────────
 
     public function get(string $url): self    { $this->method = 'GET';    $this->url = $url; return $this; }
     public function post(string $url): self   { $this->method = 'POST';   $this->url = $url; return $this; }
@@ -1185,66 +1361,35 @@ final class HttpClient
     public function patch(string $url): self  { $this->method = 'PATCH';  $this->url = $url; return $this; }
     public function delete(string $url): self { $this->method = 'DELETE'; $this->url = $url; return $this; }
 
-    // ── Body builders ─────────────────────────────────────────────
-
     public function jsonBody(array $data): self
     {
-        $this->rawBody = json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
-        $this->headers['Content-Type'] = 'application/json';
+        $this->rawBody                    = json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+        $this->headers['Content-Type']    = 'application/json';
         return $this;
     }
 
     public function formBody(array $data): self
     {
-        $this->rawBody = http_build_query($data);
-        $this->headers['Content-Type'] = 'application/x-www-form-urlencoded';
+        $this->rawBody                    = http_build_query($data);
+        $this->headers['Content-Type']    = 'application/x-www-form-urlencoded';
         return $this;
     }
 
     public function body(string $raw, string $contentType = 'text/plain'): self
     {
-        $this->rawBody = $raw;
-        $this->headers['Content-Type'] = $contentType;
+        $this->rawBody                    = $raw;
+        $this->headers['Content-Type']    = $contentType;
         return $this;
     }
 
-    // ── Headers & auth ────────────────────────────────────────────
+    public function withHeader(string $name, string $value): self { $this->headers[$name] = $value; return $this; }
+    public function bearerToken(string $token): self              { return $this->withHeader('Authorization', 'Bearer ' . $token); }
+    public function basicAuth(string $user, string $pass): self   { return $this->withHeader('Authorization', 'Basic ' . base64_encode("{$user}:{$pass}")); }
+    public function accept(string $mime): self                    { return $this->withHeader('Accept', $mime); }
+    public function timeout(int $seconds): self                   { $this->timeout = max(1, $seconds); return $this; }
+    public function withoutSslVerification(): self                { $this->verifySsl = false; return $this; }
 
-    public function withHeader(string $name, string $value): self
-    {
-        $this->headers[$name] = $value;
-        return $this;
-    }
-
-    public function bearerToken(string $token): self
-    {
-        return $this->withHeader('Authorization', 'Bearer ' . $token);
-    }
-
-    public function basicAuth(string $user, string $pass): self
-    {
-        return $this->withHeader('Authorization', 'Basic ' . base64_encode("{$user}:{$pass}"));
-    }
-
-    public function accept(string $mime): self    { return $this->withHeader('Accept', $mime); }
-    public function timeout(int $seconds): self   { $this->timeout = max(1, $seconds); return $this; }
-
-    public function withoutSslVerification(): self { $this->verifySsl = false; return $this; }
-
-    // ── Interceptors ──────────────────────────────────────────────
-
-    /**
-     * Register a `never` closure triggered when the response status
-     * does NOT match $expected. Perfect for inline page renders:
-     *
-     *   ->expectStatus(200, fn() =>
-     *       EmergencyPageBuilder::create()
-     *           ->accessBlocked('Upstream denied the request.')
-     *           ->render()
-     *   )
-     *
-     * @param \Closure():never $handler
-     */
+    /** @param \Closure():never $handler */
     public function expectStatus(int $expected, \Closure $handler): self
     {
         $this->statusHandlers[] = ['expect' => $expected, 'handler' => $handler];
@@ -1258,13 +1403,9 @@ final class HttpClient
         return $this;
     }
 
-    // ── Terminal ──────────────────────────────────────────────────
-
     public function send(): HttpResponse
     {
-        $response = function_exists('curl_init')
-            ? $this->sendViaCurl()
-            : $this->sendViaStream();
+        $response = function_exists('curl_init') ? $this->sendViaCurl() : $this->sendViaStream();
 
         foreach ($this->statusHandlers as $entry) {
             if ($response->status() !== $entry['expect']) {
@@ -1280,12 +1421,9 @@ final class HttpClient
         return $response;
     }
 
-    // ── Transport ─────────────────────────────────────────────────
-
     private function sendViaCurl(): HttpResponse
     {
         $ch = curl_init();
-
         curl_setopt_array($ch, [
             CURLOPT_URL            => $this->url,
             CURLOPT_RETURNTRANSFER => true,
@@ -1294,7 +1432,7 @@ final class HttpClient
             CURLOPT_HEADER         => true,
             CURLOPT_SSL_VERIFYPEER => $this->verifySsl,
             CURLOPT_SSL_VERIFYHOST => $this->verifySsl ? 2 : 0,
-            CURLOPT_USERAGENT      => 'WebKernel-HttpClient/3.0',
+            CURLOPT_USERAGENT      => 'Webkernel-HttpClient/4.0',
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_MAXREDIRS      => 5,
         ]);
@@ -1305,10 +1443,8 @@ final class HttpClient
 
         $headerLines = array_map(
             static fn(string $k, string $v): string => "{$k}: {$v}",
-            array_keys($this->headers),
-            $this->headers,
+            array_keys($this->headers), $this->headers,
         );
-
         if ($headerLines !== []) {
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headerLines);
         }
@@ -1331,11 +1467,9 @@ final class HttpClient
     {
         $headerLines = array_map(
             static fn(string $k, string $v): string => "{$k}: {$v}",
-            array_keys($this->headers),
-            $this->headers,
+            array_keys($this->headers), $this->headers,
         );
-
-        $ctx  = stream_context_create([
+        $ctx = stream_context_create([
             'http' => [
                 'method'          => $this->method,
                 'header'          => implode("\r\n", $headerLines),
@@ -1354,7 +1488,6 @@ final class HttpClient
         $body       = (string) @file_get_contents($this->url, false, $ctx);
         $rawHeaders = $http_response_header ?? [];
         $status     = 0;
-
         if (isset($rawHeaders[0])) {
             preg_match('#HTTP/[\d.]+\s+(\d+)#', $rawHeaders[0], $m);
             $status = (int) ($m[1] ?? 0);
@@ -1373,8 +1506,6 @@ final class HttpClient
     }
 }
 
-// ── HttpResponse ──────────────────────────────────────────────────
-
 final class HttpResponse
 {
     /** @param list<string> $headers */
@@ -1388,7 +1519,6 @@ final class HttpResponse
     public function status(): int    { return $this->statusCode; }
     public function body(): string   { return $this->body; }
     public function error(): ?string { return $this->error; }
-
     public function successful(): bool  { return $this->statusCode >= 200 && $this->statusCode < 300; }
     public function failed(): bool      { return !$this->successful(); }
     public function clientError(): bool { return $this->statusCode >= 400 && $this->statusCode < 500; }
@@ -1409,11 +1539,6 @@ final class HttpResponse
         return is_array($data) ? ($data[$key] ?? $default) : $default;
     }
 
-    /**
-     * Terminate with an emergency page if the response failed.
-     *
-     * @param \Closure(HttpResponse $r): never|null $customise
-     */
     public function throwIfFailed(?\Closure $customise = null): self
     {
         if ($this->failed()) {
@@ -1421,7 +1546,6 @@ final class HttpResponse
                 $customise($this);
                 exit(1);
             }
-
             EmergencyPageBuilder::create()
                 ->title('Upstream Service Error')
                 ->message("The remote service returned HTTP {$this->statusCode}.")
@@ -1429,78 +1553,53 @@ final class HttpResponse
                 ->code(502)
                 ->render();
         }
-
         return $this;
     }
 }
 
-
 // ═══════════════════════════════════════════════════════════════════
-//  § 4  Backward-compatible free functions
+//  § 7  Global helpers
 // ═══════════════════════════════════════════════════════════════════
 
-if (!function_exists('renderCriticalErrorHtml')) {
-    /**
-     * Original signature preserved for zero-migration compatibility.
-     * $autoRefreshSeconds is accepted but ignored — use submitStep()
-     * on the builder for controlled navigation instead.
-     */
-    function renderCriticalErrorHtml(
-        string  $title,
-        string  $message,
-        int     $code               = 500,
-        string  $severity           = 'CRITICAL',
-        ?string $exception          = null,
-        ?string $logBasePath        = null,
-        string  $systemState        = '',
-        string  $footerMessage      = '',
-        int     $autoRefreshSeconds = 0,
-        bool    $showRefreshButton  = false,
-    ): never {
-        $builder = EmergencyPageBuilder::create()
-            ->title($title)
-            ->message($message)
-            ->code($code)
-            ->severity($severity)
-            ->logTo($logBasePath)
-            ->systemState($systemState)
-            ->footer($footerMessage);
-
-        if ($showRefreshButton) {
-            $builder->addButton('Reload', '/');
-        }
-
-        $builder->render();
-    }
+/**
+ * Return a fresh EmergencyPageBuilder (full-page mode).
+ * Available globally — works inside Filament, Blade, raw PHP, anywhere.
+ *
+ * Examples:
+ *   webkernel_page()->accessBlocked('Nope.')->render();
+ *   webkernel_page()->title('Oops')->message('Something broke.')->render();
+ */
+function webkernel_page(): EmergencyPageBuilder
+{
+    return EmergencyPageBuilder::create();
 }
 
-if (!function_exists('logCriticalIncident')) {
-    function logCriticalIncident(
-        string $incidentId,
-        string $severity,
-        string $title,
-        string $message,
-        int    $code,
-        string $basePath,
-    ): void {
-        $logDir = rtrim($basePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'logs';
+/**
+ * Return a fresh EmergencyPageBuilder (modal mode).
+ * Renders an HTML fragment — embed it anywhere in your views.
+ *
+ * Examples:
+ *   echo webkernel_modal()
+ *       ->title('Confirm deletion')
+ *       ->message('This cannot be undone.')
+ *       ->modalButton('Cancel',  '#',       'cancel')
+ *       ->modalButton('Delete',  '/delete', 'destructive')
+ *       ->renderModal();
+ */
+function webkernel_modal(): EmergencyPageBuilder
+{
+    return EmergencyPageBuilder::modal();
+}
 
-        if (!is_dir($logDir)) {
-            @mkdir($logDir, 0755, true);
-        }
-
-        $entry = sprintf(
-            "[%s] INCIDENT:%s | SEV:%s | CODE:%d | TITLE:%s | MSG:%s | UA:%s | IP:%s\n",
-            gmdate('Y-m-d\TH:i:s\Z'),
-            $incidentId,
-            $severity,
-            $code,
-            str_replace(["\r", "\n"], ' ', $title),
-            str_replace(["\r", "\n"], ' ', $message),
-            $_SERVER['HTTP_USER_AGENT'] ?? 'CLI',
-            $_SERVER['REMOTE_ADDR']     ?? 'INTERNAL',
-        );
-
-        @file_put_contents("{$logDir}/critical-incidents.log", $entry, FILE_APPEND | LOCK_EX);
-    }
+/**
+ * Shorthand — render a critical error page and terminate.
+ * Use webkernel_page() for full fluent control.
+ */
+function webkernel_abort(string $message, int $code = 500, string $severity = 'CRITICAL'): never
+{
+    EmergencyPageBuilder::create()
+        ->message($message)
+        ->code($code)
+        ->severity($severity)
+        ->render();
 }
