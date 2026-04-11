@@ -584,7 +584,7 @@ final class EmergencyPageBuilder
         }
 
         return <<<HTML
-<div class="wk-modal-overlay" style="
+<div class="webkernel-components-modal-overlay" style="
     position:fixed;inset:0;z-index:9999;
     display:flex;align-items:center;justify-content:center;
     background:rgba(0,0,0,.6);
@@ -593,7 +593,7 @@ final class EmergencyPageBuilder
     padding:1rem;
     font-family:'Space Grotesk',system-ui,sans-serif;
 ">
-  <div class="wk-modal" role="alertdialog" aria-modal="true" aria-labelledby="wk-modal-title" style="
+  <div class="webkernel-components-modal" role="alertdialog" aria-modal="true" aria-labelledby="webkernel-components-modal-title" style="
       background:#111;
       border:1px solid #222;
       border-radius:12px;
@@ -603,7 +603,7 @@ final class EmergencyPageBuilder
       text-align:center;
   ">
     <div style="width:36px;height:36px;margin:0 auto .85rem;opacity:.9">{$iconSvg}</div>
-    <div id="wk-modal-title" style="font-size:.9rem;font-weight:700;color:#fff;letter-spacing:.02em;margin-bottom:.5rem;">{$eTitle}</div>
+    <div id="webkernel-components-modal-title" style="font-size:.9rem;font-weight:700;color:#fff;letter-spacing:.02em;margin-bottom:.5rem;">{$eTitle}</div>
     <div style="font-size:.78rem;color:#aaa;line-height:1.55;margin-bottom:1.25rem;">{$msgBlock}</div>
     <div style="display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;">{$buttons}</div>
   </div>
