@@ -1582,20 +1582,28 @@ final class SetupFlow
     /**
      * Define the complete (success) page shown after all steps pass.
      *
-     * @param string $title   Page title.
-     * @param string $message HTML message body.
-     * @param string $buttonLabel  Label for the "Open Application" button.
+     * @param string $title        Page title.
+     * @param string $message      HTML message body.
+     * @param string $buttonLabel  Label for the CTA button.
+     * @param string $redirectTo   URL the button points to (default '/').
+     *                             Can also be set separately with ->redirectThenTo().
      */
-    public function completePage(string $title, string $message = '', string $buttonLabel = 'Open Application'): self
-    {
+    public function completePage(
+        string $title,
+        string $message      = '',
+        string $buttonLabel  = 'Open Application',
+        string $redirectTo   = '',
+    ): self {
         $this->completeTitle       = $title;
-        if ($message !== '') $this->completeMessage = $message;
-        $this->completeButtonLabel = $buttonLabel;
+        if ($message !== '')     $this->completeMessage      = $message;
+        if ($buttonLabel !== '') $this->completeButtonLabel  = $buttonLabel;
+        if ($redirectTo  !== '') $this->redirectAfterComplete = $redirectTo;
         return $this;
     }
 
     /**
-     * Set the URL the "Open Application" button points to on the complete page.
+     * Set the URL the CTA button points to on the complete page.
+     * Convenience alias — identical to passing $redirectTo to completePage().
      * Defaults to '/'.
      */
     public function redirectThenTo(string $url): self
@@ -1639,27 +1647,89 @@ final class SetupFlow
     /**
      * Execute the setup flow.
      *
-     * Order of operations:
-     *   1. Fast-paths  → if any returns true, return immediately (no-op).
-     *   2. Guards      → if any fails, render error page + terminate.
-     *   3. Resolve token (load/generate).
-     *   4. Register routes (preview, run, complete).
-     *   5. Dispatch current request.
-     *   6. If no route matched → redirect to preview page.
+     * The URL is inspected FIRST. If the current request is already
+     * targeting a webkernel URL (/__webkernel-app/*), we own it
+     * unconditionally — fast-paths are skipped, guards still apply,
+     * and the response always terminates here (exit). This prevents
+     * Laravel from ever seeing setup URLs and returning a 404.
      *
-     * After ->run() returns the caller may continue normally.
-     * It only returns when no URL matched any setup route.
+     * If the URL is NOT a webkernel URL:
+     *   1. Fast-paths  → if any returns true, return normally (Laravel boots).
+     *   2. Guards      → if any fails, render error page + terminate.
+     *   3. Resolve token + register routes + dispatch.
+     *   4. No match    → redirect to preview page.
+     *
+     * ->run() only returns (without exit) when a fast-path matched and
+     * setup is not needed. In every other case execution terminates here.
      */
     public function run(): void
     {
+        // ── 0. Webkernel URL intercept ────────────────────────────
+        // If the browser is already on a /__webkernel-app/* URL we MUST
+        // handle it — no fast-path shortcut, no framework fallback.
+        // This is what happens on /complete after setup succeeds: the
+        // fast-path would return true and let Laravel boot, which 404s.
+        if (self::isWebkernelRequest()) {
+            $this->runGuards();          // hard conditions always apply
+            [$this->signer, $this->token] = $this->resolveToken();
+            $this->registerRoutes();
+
+            if (WebkernelRouter::dispatch()) {
+                exit(0);
+            }
+
+            // Webkernel URL but no route matched (mangled path, stale link…).
+            // Redirect to the preview page instead of letting Laravel 404.
+            $previewUrl = WebkernelRouter::url('setup/{token}', ['token' => $this->token]);
+            header('Location: ' . $previewUrl, true, 302);
+            exit(0);
+        }
+
         // ── 1. Fast-paths ─────────────────────────────────────────
+        // Only reached when the current URL is NOT a webkernel URL.
         foreach ($this->fastPaths as $fp) {
             if ($fp()) {
-                return; // All good — let the framework boot.
+                return; // Setup not needed — let the framework boot normally.
             }
         }
 
         // ── 2. Guards ─────────────────────────────────────────────
+        $this->runGuards();
+
+        // ── 3. Resolve token + register routes ───────────────────
+        [$this->signer, $this->token] = $this->resolveToken();
+        $this->registerRoutes();
+
+        // ── 4. Dispatch ───────────────────────────────────────────
+        if (WebkernelRouter::dispatch()) {
+            exit(0);
+        }
+
+        // ── 5. Fallback redirect → preview page ───────────────────
+        // Non-webkernel URL, setup needed, no route matched → send the
+        // browser to the setup preview page.
+        $previewUrl = WebkernelRouter::url('setup/{token}', ['token' => $this->token]);
+        header('Location: ' . $previewUrl, true, 302);
+        exit(0);
+    }
+
+    /**
+     * Returns true if the current HTTP request targets a webkernel URL.
+     * Used to intercept these requests before fast-paths can skip them.
+     */
+    private static function isWebkernelRequest(): bool
+    {
+        $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
+        $uri = '/' . ltrim($uri, '/');
+        return str_starts_with($uri, '/__webkernel-app/');
+    }
+
+    /**
+     * Run all registered guards. Renders a CRITICAL page and terminates
+     * on the first failure. Extracted so both code paths in run() share it.
+     */
+    private function runGuards(): void
+    {
         foreach ($this->guards as $guard) {
             if (!($guard['check'])()) {
                 $msg = $guard['message'] !== ''
@@ -1683,25 +1753,9 @@ final class SetupFlow
                     $builder->logo($this->logoLight, $this->logoDark);
                 }
 
-                $builder->render(); // terminates
+                $builder->render(); // always terminates (exit inside render)
             }
         }
-
-        // ── 3. Resolve token ──────────────────────────────────────
-        [$this->signer, $this->token] = $this->resolveToken();
-
-        // ── 4. Register routes ────────────────────────────────────
-        $this->registerRoutes();
-
-        // ── 5. Dispatch ───────────────────────────────────────────
-        if (WebkernelRouter::dispatch()) {
-            exit(0);
-        }
-
-        // ── 6. Fallback redirect → preview page ───────────────────
-        $previewUrl = WebkernelRouter::url('setup/{token}', ['token' => $this->token]);
-        header('Location: ' . $previewUrl, true, 302);
-        exit(0);
     }
 
     // ── Route registration ────────────────────────────────────────
@@ -1866,7 +1920,7 @@ final class SetupFlow
                     $builder
                         ->title($self->completeTitle)
                         ->message($self->completeMessage)
-                        ->submitStep($self->completeButtonLabel, $self->redirectAfterComplete);
+                        ->addButton($self->completeButtonLabel, $self->redirectAfterComplete);
                 } else {
                     $retryUrl = WebkernelRouter::url('setup/{token}/run', ['token' => $token]);
                     $builder

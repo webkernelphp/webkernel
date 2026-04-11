@@ -155,10 +155,11 @@ declare(strict_types=1);
                        . ' Database migrations will run automatically on first boot.'
                        . ' Click the button below to open the application.',
             buttonLabel: 'Open Application',
+            redirectTo:  '/',
         )
 
         // ── Post-setup redirect ────────────────────────────────────
-        ->redirectThenTo('/')
+        //->redirectThenTo('/')
 
         // ── Dispatch ───────────────────────────────────────────────
         // If the current URL matches a setup route → handle + exit.
