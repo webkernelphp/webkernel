@@ -93,9 +93,8 @@ declare(strict_types=1);
                     return true; // Already exists — skip silently.
                 }
                 try {
-                    $raw = function_exists('openssl_random_pseudo_bytes')
-                        ? (string) openssl_random_pseudo_bytes(32)
-                        : random_bytes(32);
+                    /** @disregard */
+                    $raw = function_exists('openssl_random_pseudo_bytes') ? (string) openssl_random_pseudo_bytes(32) : random_bytes(32);
                 } catch (\Throwable $e) {
                     return 'Entropy source failed: ' . $e->getMessage();
                 }

@@ -102,6 +102,7 @@ final class HmacSigner
      */
     public function token(string ...$parts): string
     {
+        /** @disregard */
         $payload = implode('|', $parts) . '|' . microtime(true) . '|' . random_int(0, PHP_INT_MAX);
         $raw     = hash_hmac($this->algo, $payload, $this->secret, true);
         return rtrim(strtr(base64_encode($raw), '+/', '-_'), '=');
@@ -1975,9 +1976,9 @@ final class SetupFlow
 
         // Generate fresh token
         $entropy  = bin2hex(
-            function_exists('random_bytes')
-                ? random_bytes(32)
-                : openssl_random_pseudo_bytes(32)
+            function_exists('random_bytes') ?
+            /** @disregard */
+            random_bytes(32) : openssl_random_pseudo_bytes(32)
         );
         $signer   = new HmacSigner($projectSalt . ':' . $entropy);
         $newToken = $signer->token('setup', $this->basePath, (string) time());
