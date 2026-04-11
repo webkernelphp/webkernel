@@ -40,6 +40,7 @@ require $_wc . 'constants/runtime.php';
 require $_wc . 'constants/thresholds.php';
 require $_wc . 'constants/security.php';
 require $_wc . 'constants/globals.php';
+require $_wc . 'constants/webkernel-logos.php';
 unset($_wc);
 
 // ── Dev mode + dev namespace map ──────────────────────────────────────────────

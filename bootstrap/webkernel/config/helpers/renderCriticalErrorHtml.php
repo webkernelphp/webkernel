@@ -1458,6 +1458,10 @@ final class SetupFlow
     {
         $this->basePath  = rtrim($basePath, '/\\');
         $this->tokenFile = $this->basePath . '/.deployment_setup_token';
+
+        //--- Logos Declaration Base64 encoded
+        $this->logoLight = webkernelLogoForLightMode();
+        $this->logoDark  = webkernelLogoForDarkMode();
     }
 
     public static function create(string $basePath): self
