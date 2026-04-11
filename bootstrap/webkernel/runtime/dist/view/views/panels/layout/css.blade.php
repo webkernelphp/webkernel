@@ -11,6 +11,10 @@
 @include('webkernel::panels.layout._table')
 @include('webkernel::panels.layout._desktop', ['sidebarKeepsBackground' => $sidebarKeepsBackground])
 @include('webkernel::panels.layout._desktop-fi-main')
-<script>
+<style>
+
+
+
+</style>
+{{-- Script JS --}}
 @include('webkernel::panels.layout._script')
-</script>

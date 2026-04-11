@@ -1,7 +1,4 @@
-<?php
-
-declare(strict_types=1);
-
+<?php declare(strict_types=1);
 namespace Webkernel;
 
 use Illuminate\Foundation\Application;
@@ -91,7 +88,9 @@ final class WebApp extends Application
                 commands: $basePath . '/routes/console.php',
                 health: '/up',
             )
-            ->withMiddleware(fn(Middleware $m): null => null)
+            ->withMiddleware(function (Middleware $m): void {
+                $m->prepend(InstallationGuard::class);
+            })
             ->withExceptions(fn(Exceptions $e): null => null);
 
         // Override the default exception handler with a bootstrap-safe instance.
@@ -154,5 +153,25 @@ final class WebApp extends Application
             return [];
         }
         return (array) data_get(json_decode(file_get_contents($path), true), 'autoload.psr-4');
+    }
+}
+
+/**
+ * Global installation guard — blocks every request until deployment.php exists.
+ * Defined here to avoid a standalone middleware file.
+ */
+final class InstallationGuard
+{
+    public function handle(\Illuminate\Http\Request $request, \Closure $next): mixed
+    {
+        if (
+            ! is_file(WEBKERNEL_DEPLOYMENT_FILE)
+            && ! str_starts_with($request->decodedPath(), WEBKERNEL_INSTALLER_PATH_PREFIX)
+            && $request->decodedPath() !== WEBKERNEL_HEALTH_PATH
+        ) {
+            return redirect(WEBKERNEL_INSTALLER_URL);
+        }
+
+        return $next($request);
     }
 }

@@ -31,7 +31,7 @@ final class InstallerPanelProvider extends PanelProvider
             ->path('installer')
             ->brandName('Webkernel')
             ->topNavigation()
-            ->sidebarFullyCollapsibleOnDesktop()
+            //->sidebarCollapsibleOnDesktop()
             ->brandLogo('/logo.png')
             ->darkModeBrandLogo('/logo-dark.png')
             ->brandLogoHeight('2rem')
