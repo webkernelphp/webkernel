@@ -19,18 +19,7 @@
         top: 0 !important;
         z-index: 20 !important;
     }
-    .fi-topbar {
-        background-color: var(--wds-color-surface) !important;
-        border-radius: var(--wds-radius-container) !important;
-        box-shadow:
-            0 var(--wds-shadow-y) var(--wds-shadow-blur) var(--wds-shadow-spread)
-                rgba(0, 0, 0, var(--wds-shadow-opacity)),
-            0 0 0 1px rgba(0, 0, 0, var(--wds-shadow-border-opacity)) !important;
-        margin: var(--wds-space-top) var(--wds-space-outer) 0 !important;
-        height: var(--wds-topbar-height) !important;
-        backdrop-filter: blur(var(--wds-backdrop-blur)) !important;
-        overflow: visible !important;
-    }
+
     .dark .fi-topbar,
     .fi-topbar:where(.dark, .dark *),
     [data-theme="dark"] .fi-topbar {
@@ -42,13 +31,7 @@
     }
 
     /* ── Main content container ──────────────────────────────────────────── */
-    .fi-main-ctn {
-        width: 100% !important;
-        padding-left: var(--wds-space-outer) !important;
-        padding-right: var(--wds-space-outer) !important;
-        position: relative !important;
-        box-sizing: border-box !important;
-    }
+
     .fi-main {
         margin-inline: 0 !important;
         background-color: var(--wds-color-surface) !important;
@@ -64,8 +47,7 @@
         max-width: none !important;
         /* Tablet: body scrolls naturally — no fixed height, no overflow clipping.
            Desktop (1024px+) overrides height/overflow once the body is locked. */
-        margin: var(--wds-space-top) 0 var(--wds-space-bottom) !important;
-        border-radius: var(--wds-radius-container) !important;
+
         background-color: var(--wds-color-surface) !important;
         position: relative !important;
         box-sizing: border-box !important;
@@ -93,16 +75,7 @@
     .fi-user-menu-trigger { border-radius: var(--wds-radius-container) !important; }
 
     /* ── Database notifications panel ────────────────────────────────────── */
-    #database-notifications > div:nth-child(2) > div {
-        height: calc(
-            100vh
-            - var(--wds-content-offset)
-            + var(--wds-space-outer)
-            + 2 * var(--wds-topbar-height)
-        ) !important;
-        background-color: var(--wds-color-surface) !important;
-        border-radius: var(--wds-radius-container) !important;
-    }
+
     .dark #database-notifications > div:nth-child(2) > div {
         background-color: var(--wds-color-surface-dark) !important;
     }

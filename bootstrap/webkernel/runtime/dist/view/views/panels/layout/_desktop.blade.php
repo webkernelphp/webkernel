@@ -14,9 +14,7 @@
     body {
         margin: 0;
         padding: 0;
-        overflow: hidden !important;
-        height: 100vh !important;
-        max-height: 100vh !important;
+
         width: 100% !important;
         position: relative !important;
     }
@@ -56,21 +54,6 @@
             0 0 0 1px rgba(255, 255, 255, var(--wds-shadow-dark-border-opacity)) !important;
     }
 
-    /* ── Sidebar shell ───────────────────────────────────────────────────── */
-    aside.fi-sidebar.fi-main-sidebar {
-        height: var(--wds-sidebar-height) !important;
-        max-height: var(--wds-sidebar-height) !important;
-        margin-left: var(--wds-space-outer) !important;
-        margin-top: var(--wds-space-top) !important;
-        margin-bottom: var(--wds-space-bottom) !important;
-        padding: 0 !important;
-        box-sizing: border-box !important;
-        border-radius: var(--wds-radius-container) !important;
-        transition:
-            background-color 0.2s ease,
-            box-shadow       0.2s ease,
-            backdrop-filter  0.2s ease !important;
-    }
 
     @if ($sidebarKeepsBackground)
     {{-- ── icon-strip / collapsible-on-desktop: bg always present ── --}}
@@ -144,7 +127,7 @@
         padding-inline:        0 !important;
         position:              relative !important;
         overflow-y:            auto !important;
-        overflow-x:            hidden !important;
+        overflow-x:            auto !important;
         scrollbar-width:       none !important;
         -ms-overflow-style:    none !important;
     }
