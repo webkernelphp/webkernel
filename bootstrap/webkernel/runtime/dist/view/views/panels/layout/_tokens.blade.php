@@ -37,12 +37,8 @@
 
     /* ── Colors (light) ── */
     --wds-color-background: #e4e7e9;
-    --wds-color-surface:  hsl(60 2% 12% / 1);
-
-    /* ── Colors (dark) ── */
-    --wds-color-background-dark: oklch(21% 0.006 285.885);
-    --wds-color-surface-dark:    var(--gray-950);
-    --wds-color-topbar-dark:     var(--gray-950);
+    --wds-color-surface:    oklch(96.8% 0.007 247.896);
+    --wds-color-topbar:     oklch(96.8% 0.007 247.896);
 
     /* ── Sidebar inner spacing ── */
     --wds-sidebar-padding-x:         1rem;
@@ -71,5 +67,13 @@
     /* Active offset — overridden contextually via :has() in sidebar/_desktop */
     --wds-content-offset: var(--wds-content-offset-with-topbar);
     --wds-sidebar-height: calc(100vh - var(--wds-content-offset));
+}
+
+/* ── Dark mode token overrides ── */
+.dark,
+[data-theme="dark"] {
+    --wds-color-background: oklch(21% 0.006 285.885);
+    --wds-color-surface:    var(--gray-950);
+    --wds-color-topbar:     var(--gray-950);
 }
 </style>

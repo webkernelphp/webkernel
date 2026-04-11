@@ -12,9 +12,11 @@
 
         <div style="display:flex; flex-direction:column; gap:0.4rem;">
             <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem;">
-                <span style="font-size:1.5rem; font-weight:900; letter-spacing:-0.03em;">Webkernel™</span>
-                <x-filament::badge color="primary">{{ $semver }}</x-filament::badge>
-                <x-filament::badge color="gray">"{{ $codename }}"</x-filament::badge>
+                <span style="font-size:1.5rem; letter-spacing:-0.03em;">
+                  Webkernel<sup>™</sup>
+                  <span style="color:var(--primary-600);">{{ $codename }}</span>
+                </span>
+                <x-filament::badge color="primary" size="lg">{{ $semver }}</x-filament::badge>
             </div>
             <p style="font-size:0.8rem; color:var(--gray-400,#94a3b8); margin:0;">
                 Dependency &amp; Module Manager · Vendor snapshots · CVE auditing · Updates · Store
@@ -53,7 +55,7 @@
     <x-filament::section :compact="true">
         <div style="display:flex; flex-direction:column; gap:0.4rem; align-items:flex-start;">
             <x-filament::icon-button :icon="$s['icon']" :color="$s['color']" size="sm" disabled />
-            <span style="font-size:1.6rem; font-weight:900; line-height:1;">{{ $s['value'] }}</span>
+            <span style="font-size:1.6rem;  line-height:1;">{{ $s['value'] }}</span>
             <span style="font-size:0.65rem; text-transform:uppercase; letter-spacing:.07em; color:var(--gray-400,#94a3b8);">{{ $s['label'] }}</span>
         </div>
     </x-filament::section>
@@ -238,7 +240,7 @@
             </div>
 
             <div style="display:flex; flex-direction:column; line-height:1;">
-                <span style="font-weight:700;">{{ $vendor }}</span>
+                <span style="">{{ $vendor }}</span>
                 @if($authorEmail)
                     <span style="font-size:0.75rem; color:#64748b;">{{ $authorEmail }}</span>
                 @endif
@@ -266,7 +268,7 @@
 
             {{-- Package name + type --}}
             <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.25rem; flex-wrap:wrap;">
-                <span style="font-weight:700; font-size:0.82rem; word-break:break-all; line-height:1.3;">{{ $pkg['package'] }}</span>
+                <span style=" font-size:0.82rem; word-break:break-all; line-height:1.3;">{{ $pkg['package'] }}</span>
                 <x-filament::badge :color="$typeColor" size="sm">{{ $pkg['type'] }}</x-filament::badge>
             </div>
 
@@ -288,13 +290,13 @@
             {{-- CVE details --}}
             @if($hasCve)
             <div style="margin-top:0.5rem;">
-                <button @click="cveOpen=!cveOpen" style="font-size:0.7rem; font-weight:600; background:none; border:none; cursor:pointer; padding:0; color:var(--danger-500,#ef4444);">
+                <button @click="cveOpen=!cveOpen" style="font-size:0.7rem;  background:none; border:none; cursor:pointer; padding:0; color:var(--danger-500,#ef4444);">
                     <span x-text="cveOpen ? '▲ hide' : '▼ ' + {{ count($cveList) }} + ' CVE(s)'"></span>
                 </button>
                 <div x-show="cveOpen" x-collapse style="margin-top:0.4rem; display:flex; flex-direction:column; gap:0.25rem;">
                     @foreach($cveList as $c)
                     <x-filament::callout icon="heroicon-o-exclamation-triangle" color="danger">
-                        <span style="font-weight:700;">{{ $c['cve'] ?? 'Advisory' }}</span> — {{ $c['title'] }}
+                        <span style="">{{ $c['cve'] ?? 'Advisory' }}</span> — {{ $c['title'] }}
                     </x-filament::callout>
                     @endforeach
                 </div>
@@ -361,7 +363,7 @@
 
         <div style="flex:1; min-width:0;">
             <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.4rem;">
-                <span style="font-weight:700; font-size:0.92rem;">{{ $mod['label'] }}</span>
+                <span style=" font-size:0.92rem;">{{ $mod['label'] }}</span>
                 <x-filament::badge :color="$partyColor"                    size="sm">{{ $partyLabel }}</x-filament::badge>
                 <x-filament::badge :color="($mod['active']??false)?'success':'gray'" size="sm">{{ ($mod['active']??false)?'Active':'Inactive' }}</x-filament::badge>
                 <x-filament::badge color="gray" size="sm">v{{ $mod['version'] }}</x-filament::badge>
@@ -403,7 +405,7 @@
 <x-filament::section :compact="true">
     <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:0.75rem;">
         <div>
-            <p style="font-weight:700; font-size:1rem; margin:0;">Webkernel™ Module Store</p>
+            <p style=" font-size:1rem; margin:0;">Webkernel™ Module Store</p>
             <p style="font-size:0.76rem; color:var(--gray-400,#94a3b8); margin:.15rem 0 0;">Discover, install and manage extensions.</p>
         </div>
         <div style="display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center;">

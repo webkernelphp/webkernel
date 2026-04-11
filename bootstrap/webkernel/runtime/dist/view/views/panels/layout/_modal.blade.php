@@ -1,6 +1,10 @@
 {{-- webkernel::panels.layout._modal — overlay backdrop + window glass + spring animation (private partial) --}}
 <style>
 @media (min-width: 768px) {
+    .fi-modal>.fi-modal-window-ctn {
+        display: unset;
+    }
+
     .fi-modal-overlay,
     .fi-modal-close-overlay {
         backdrop-filter: saturate(150%) brightness(0.6) !important;
@@ -13,7 +17,6 @@
         background: rgba(255, 255, 255, 0.9) !important;
         border: 1px solid rgba(255, 255, 255, 0.3) !important;
         box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37) !important;
-        border-radius: var(--wds-radius-container) !important;
     }
     .dark .fi-modal-window {
         background: rgba(0, 0, 0, 0.25) !important;

@@ -19,6 +19,7 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Webkernel\Pages\Dashboard;
 use Webkernel\Pages\DependencyManager;
 use Filament\Support\Enums\Width;
+use Filament\Support\Colors\Color;
 
 final class SystemPanelProvider extends PanelProvider
 {
@@ -38,6 +39,9 @@ final class SystemPanelProvider extends PanelProvider
             ->globalSearch(position: \Filament\Enums\GlobalSearchPosition::Sidebar)
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth('screen-2xl')
+            ->colors([
+                'primary' => Color::Blue,
+            ])
             ->login()
             ->registration()
             ->profile(isSimple: false)
