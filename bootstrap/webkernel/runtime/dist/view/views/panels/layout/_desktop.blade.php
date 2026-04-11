@@ -6,6 +6,7 @@
       false → fully-collapsible: transparent when closed is correct.
 --}}
 <style>
+
 @media (min-width: 1024px) {
 
     /* ── Body overflow lock ──────────────────────────────────────────────── */

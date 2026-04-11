@@ -166,6 +166,7 @@ final class InstallationGuard
     {
         if (
             ! is_file(WEBKERNEL_DEPLOYMENT_FILE)
+            && str_starts_with($request->header('Accept', ''), 'text/html')
             && ! str_starts_with($request->decodedPath(), WEBKERNEL_INSTALLER_PATH_PREFIX)
             && $request->decodedPath() !== WEBKERNEL_HEALTH_PATH
         ) {

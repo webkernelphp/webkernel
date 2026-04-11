@@ -222,46 +222,7 @@
 
         </div>{{-- /webkernel-top-row --}}
 
-        {{-- ────────────────────────────────────────────────────────────────
-             BOTTOM: What this installer does
-             Warning inline if requirements not met — no separate block.
-        ─────────────────────────────────────────────────────────────────── --}}
-        <div style="border-radius:12px;border:1px solid rgba(0,0,0,.08);overflow:hidden;" class="dark:border-white/10">
 
-            <div style="padding:13px 16px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;" class="dark:border-white/8">
-                <div>
-                    <p style="font-size:13px;font-weight:500;margin:0 0 1px;">What this installer does</p>
-                    <p style="font-size:11px;margin:0;opacity:.45;">5 steps, run once.</p>
-                </div>
-                <code style="font-size:11px;padding:3px 9px;border-radius:6px;background:rgba(0,0,0,.04);font-family:monospace;opacity:.55;border:1px solid rgba(0,0,0,.06);" class="dark:bg-white/6 dark:border-white/8">php artisan webkernel:install</code>
-            </div>
-
-            @php
-                $steps = [
-                    ['.env',             'Copies .env.example → .env if missing.'],
-                    ['key:generate',     'Generates APP_KEY and writes it to .env.'],
-                    ['database.sqlite',  'Touches database/database.sqlite for the default SQLite connection.'],
-                    ['migrate',          'Runs all pending migrations in order.'],
-                    ['deployment.php',   'Detects host profile and writes deployment.php.'],
-                ];
-            @endphp
-
-            @foreach($steps as $i => [$code, $desc])
-                <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;{{ !$loop->last ? 'border-bottom:1px solid rgba(0,0,0,.04);' : '' }}" class="{{ !$loop->last ? 'dark:border-white/5' : '' }}">
-                    <span style="font-size:10px;font-weight:500;width:14px;text-align:center;opacity:.25;flex-shrink:0;">{{ $i+1 }}</span>
-                    <code style="font-size:11px;font-family:monospace;padding:2px 7px;border-radius:4px;background:rgba(0,0,0,.04);white-space:nowrap;flex-shrink:0;border:1px solid rgba(0,0,0,.06);" class="dark:bg-white/6 dark:border-white/8">{{ $code }}</code>
-                    <span style="font-size:12px;opacity:.55;line-height:1.5;">{{ $desc }}</span>
-                </div>
-            @endforeach
-
-            @if(!$allReqOk)
-                <div style="margin:10px 14px;padding:10px 13px;border-radius:8px;border:1px solid rgb(var(--warning-300));background:rgb(var(--warning-50));display:flex;align-items:center;gap:9px;" class="dark:border-warning-700/50 dark:bg-warning-950/25">
-                    <x-filament::icon icon="heroicon-m-exclamation-triangle" style="width:14px;height:14px;flex-shrink:0;color:rgb(var(--warning-600));" class="dark:text-warning-400"/>
-                    <p style="font-size:12px;margin:0;color:rgb(var(--warning-800));line-height:1.5;" class="dark:text-warning-300">Fix failing requirements — install button stays disabled until all checks pass.</p>
-                </div>
-            @endif
-
-        </div>
 
     @endif
 

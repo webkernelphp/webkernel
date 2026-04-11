@@ -5,7 +5,7 @@ namespace Webkernel\Aptitudes\System\Presentation\Installer;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
-use Filament\Pages\Page;
+use Filament\Pages\{Page,SimplePage};
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Artisan;
 use Webkernel\System\Support\CapabilityMap;
@@ -25,6 +25,7 @@ use Webkernel\System\Support\CapabilityMap;
 class InstallerPage extends Page
 {
     protected string $view = 'webkernel-system::filament.pages.installer';
+   // protected static string $layout = 'filament-panels::components.layout.simple';
 
     // ── Livewire state ────────────────────────────────────────────────────────
 
@@ -177,6 +178,11 @@ class InstallerPage extends Page
     public function getTitle(): string|Htmlable
     {
         return 'Webkernel Setup';
+    }
+
+    public function getSubheading(): ?string
+    {
+        return 'Run pending migrations in order and store host profile';
     }
 
     // ── Private ───────────────────────────────────────────────────────────────

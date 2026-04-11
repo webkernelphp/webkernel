@@ -13,6 +13,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Illuminate\Session\Middleware\StartSession;
 use Webkernel\Aptitudes\System\Presentation\Installer\InstallerPage;
+use Filament\Support\Enums\Width;
 
 
 
@@ -31,11 +32,9 @@ final class InstallerPanelProvider extends PanelProvider
             ->path('installer')
             ->brandName('Webkernel')
             ->topNavigation()
-            //->sidebarCollapsibleOnDesktop()
-            ->brandLogo('/logo.png')
-            ->darkModeBrandLogo('/logo-dark.png')
+            ->sidebarFullyCollapsibleOnDesktop()
+            ->maxContentWidth(Width::ExtraSmall)
             ->brandLogoHeight('2rem')
-            ->darkMode(true)
             ->pages([InstallerPage::class])
             ->authMiddleware([])         // no authentication required
             ->middleware([
@@ -47,6 +46,7 @@ final class InstallerPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                \Webkernel\Http\Middleware\InstallerNoCacheMiddleware::class,
             ]);
     }
 }
