@@ -94,13 +94,59 @@ $phpBin  = PHP_BINARY ?: 'php';
 $command = $subCommand ?: 'package:discover';
 $extra   = array_slice($argv, 2);
 $args    = array_map('escapeshellarg', $extra);
-$cmd     = escapeshellarg($phpBin)
+
+$cmd = escapeshellarg($phpBin)
     . ' ' . escapeshellarg($artisan)
     . ' ' . escapeshellarg($command)
     . (empty($args) ? '' : ' ' . implode(' ', $args))
     . ' --ansi';
 
-passthru($cmd, $exitCode);
+// proc_open replacement for passthru
+$descriptorSpec = [
+    0 => ["pipe", "r"],
+    1 => ["pipe", "w"],
+    2 => ["pipe", "w"],
+];
+
+$process = proc_open($cmd, $descriptorSpec, $pipes);
+
+if (!is_resource($process)) {
+    echo '[installer-guard] ERROR: Unable to start process.' . PHP_EOL;
+    $exitCode = 1;
+} else {
+    fclose($pipes[0]);
+
+    // stream output live (passthru-like)
+    stream_set_blocking($pipes[1], false);
+    stream_set_blocking($pipes[2], false);
+
+    while (true) {
+        $status = proc_get_status($process);
+
+        $out = stream_get_contents($pipes[1]);
+        $err = stream_get_contents($pipes[2]);
+
+        if ($out !== '') {
+            echo $out;
+        }
+
+        if ($err !== '') {
+            fwrite(STDERR, $err);
+        }
+
+        if (!$status['running']) {
+            break;
+        }
+
+        usleep(100000); // 100ms
+    }
+
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+
+    $exitCode = proc_close($process);
+}
+
 exit($exitCode);
 
 // ─────────────────────────────────────────────────────────────────────────────
