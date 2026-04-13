@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-// -- PSR-4: Webkernel packages ------------------------------------------------
+// -- PSR-4: Only invoked if the Webkernel sovereign packages loader -----------
 //
 // @link https://php.net/manual/en/function.spl-autoload-register.php
 //
@@ -13,6 +13,7 @@
 // order and requires the first match.  This mirrors the way Composer handles
 // multiple PSR-4 roots for the same namespace.
 //
+
 /** @disregard */
 spl_autoload_register(static function (string $class): void {
     static $prefixes = null;
@@ -20,19 +21,13 @@ spl_autoload_register(static function (string $class): void {
     if ($prefixes === null) {
         $prefixes = array_merge(
             [
-                'App\\Models\\'                      => WEBKERNEL_PATH . '/support/app-models',
-                'Webkernel\\Arcanes\\'               => WEBKERNEL_PATH . '/platform/arcanes',
-                'Webkernel\\Panel\\'                 => WEBKERNEL_PATH . '/platform/panel',
-                'Webkernel\\Pages\\'                 => WEBKERNEL_PATH . '/platform/pages',
-                'Webkernel\\Widgets\\'               => WEBKERNEL_PATH . '/platform/widgets',
+                'App\\Models\\'                    => WEBKERNEL_PATH . '/support/app-models',
+                'Webkernel\\Arcanes\\'             => WEBKERNEL_PATH . '/platform/arcanes',
+                'Webkernel\\Panel\\'               => WEBKERNEL_PATH . '/platform/panel',
+                'Webkernel\\Pages\\'               => WEBKERNEL_PATH . '/platform/pages',
+                'Webkernel\\Widgets\\'             => WEBKERNEL_PATH . '/platform/widgets',
                 'Webkernel\\Platform\\SystemPanel\\' => WEBKERNEL_PATH . '/platform/system_panel',
-                'Webkernel\\Users\\'                 => WEBKERNEL_PATH . '/aptitudes/users',
-                //
-                // Example of a namespace backed by multiple directories:
-                //   'Webkernel\\Shared\\' => [
-                //       WEBKERNEL_PATH . '/src/Shared',
-                //       WEBKERNEL_PATH . '/platform/shared',
-                //   ],
+                'Webkernel\\Users\\'               => WEBKERNEL_PATH . '/aptitudes/users',
             ],
             WEBKERNEL_DEV_NAMESPACES,
             [
@@ -57,4 +52,6 @@ spl_autoload_register(static function (string $class): void {
             }
         }
     }
-});
+},
+/* $throw: Force a crash if registration fails (No silent failure) */ true,
+/* $prepend: Jump to the very top of the priority stack */ true);

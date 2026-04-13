@@ -71,41 +71,39 @@
 
     {{-- ── CREATE USER ─────────────────────────────────────────────────── --}}
     @elseif ($this->phase === 'create_user')
+        @php $selPriv = \Webkernel\Users\UserPrivilege::fromKey($this->adminData['privilege'] ?? 'app-owner'); @endphp
+            <x-filament::fieldset
+                label="First {{ $selPriv?->label() }} account "
+            >            <div class="wds-card-inner">
 
-        <x-filament::fieldset class="wds-card">
-            <div class="wds-card-inner">
-
+                {{--
                 <div class="wds-head">
-                    <span>First administrator account</span>
-                    @php $selPriv = \Webkernel\Users\UserPrivilege::fromKey($this->adminData['privilege'] ?? 'app-owner'); @endphp
-                    @if ($selPriv)
-                        <x-filament::badge color="{{ $selPriv === \Webkernel\Users\UserPrivilege::APP_OWNER ? 'primary' : ($selPriv === \Webkernel\Users\UserPrivilege::SUPER_USER ? 'warning' : 'gray') }}">
-                            {{ $selPriv->label() }}
-                        </x-filament::badge>
-                    @endif
+                   @if ($selPriv)
+                       <x-filament::badge color="{{ $selPriv === \Webkernel\Users\UserPrivilege::APP_OWNER ? 'primary' : ($selPriv === \Webkernel\Users\UserPrivilege::SUPER_USER ? 'warning' : 'gray') }}">
+                           {{ $selPriv->label() }}
+                       </x-filament::badge>
+                   @endif
                 </div>
+                --}}
 
-                <hr class="wds-divider">
-
-                <div class="wds-body" style="gap:0;">
+                <div style="gap:0;">
                     {{ $this->form }}
                 </div>
 
                 <div class="wds-foot" style="text-align:left;opacity:1;margin-top:12px;">
+                    <p style="font-size:11px;opacity:.6;margin:0 0 8px;">
+                        @if ($selPriv)
+                                {{ $selPriv->description() }}
+                        @endif
+                    </p>
+
                     <hr class="wds-divider">
-                    @if ($selPriv)
-                        <p style="font-size:11px;opacity:.6;margin:0 0 8px;">
-                            {{ $selPriv->description() }}
-                        </p>
-                    @endif
-                    <x-filament::button
-                        wire:click="runCreateAdmin"
-                        color="success"
-                        icon="heroicon-o-user-plus"
-                        size="sm"
-                    >
-                        Create account &amp; finish
-                    </x-filament::button>
+
+                    <p style="font-size:11px;opacity:.6;margin-top:1rem;margin-bottom: .1rem;">
+
+                    All credentials provided above are stored exclusively on your local infrastructure. No data is transmitted to Numerimondes or any external entity during this process. Use only authentic Webkernel builds to maintain total environmental control.
+                    </p>
+
                 </div>
 
             </div>
@@ -192,12 +190,13 @@
             @includeIf('filament-panels::components.theme-switcher.index')
         </div>
         <div class="fi-header-subheading" style="display:flex;flex-direction:column;align-items:flex-end;text-align:right;line-height:1.1;">
-            <a href="https://webkernelphp.com" target="_blank" style="text-decoration:none;margin-bottom:0;">Webkernel</a>
-            <a href="https://numerimondes.com"  target="_blank" style="text-decoration:none;margin-bottom:0;">Numerimondes</a>
+            <a href="https://webkernelphp.com" target="_blank" style="text-decoration:none;margin-bottom:0;">www.webkernelphp.com</a>
+            <a href="https://numerimondes.com"  target="_blank" style="text-decoration:none;margin-bottom:0;">www.numerimondes.com</a>
         </div>
     </div>
 
     <style>
+        .fi-fieldset legend {font-weight:var(--font-weight-normal); font-size: 100%;}
         .fi-header { padding-top:.7rem; }
         .fi-page-content { row-gap:calc(var(--spacing)*3); }
         .fi-page-header-main-ctn { row-gap:calc(var(--spacing)*9); }

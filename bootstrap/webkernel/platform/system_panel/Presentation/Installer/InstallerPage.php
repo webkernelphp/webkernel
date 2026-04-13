@@ -39,6 +39,7 @@ use App\Models\User;
  *   operator can finish without re-running the Artisan command.
  *
  *   If everything is fully installed the page redirects to /system.
+ *   @extends Page<PageConfiguration>
  */
 class InstallerPage extends Page
 {
@@ -69,8 +70,10 @@ class InstallerPage extends Page
 
     public function mount(): void
     {
+        /** @disregard  */
         $state = InstallationState::resolve();
 
+        /** @disregard  */
         if ($state === InstallationState::INSTALLED) {
             // Everything is in order -- nothing to do here.
             $this->redirect('/system');
@@ -129,14 +132,13 @@ class InstallerPage extends Page
                     ->maxLength(255),
 
                 Select::make('privilege')
-                    ->label('Role')
+                    ->label('Your Privilege')
                     ->options(self::privilegedOptions())
                     ->default(UserPrivilege::APP_OWNER->value)
+                    ->native(false)
+                    ->searchable()
                     ->required()
-                    ->live()
-                    ->helperText(fn (?string $state): string =>
-                        UserPrivilege::fromKey($state ?? '')?->description() ?? ''
-                    ),
+                    ->live(),
             ]);
     }
 
