@@ -187,10 +187,10 @@ class InstallerPage extends Page
     public function getHeading(): string|Htmlable
     {
     return new HtmlString('
-            <img src="' . e(webkernelBrandingUrl('logo-light')) . '"
+            <img src="' . e(webkernelBrandingUrl('webkernel-logo-light')) . '"
                  alt="Webkernel"
                  class="fi-logo fi-logo-light">
-            <img src="' . e(webkernelBrandingUrl('logo-dark')) . '"
+            <img src="' . e(webkernelBrandingUrl('webkernel-logo-dark')) . '"
                  alt="Webkernel"
                  class="fi-logo fi-logo-dark">
         ');

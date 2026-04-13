@@ -1,6 +1,6 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "webkernel/webkernel",
+    "name": "webkernel/foundation",
     "type": "project",
     "description": "Webkernel — Modular application framework.",
     "keywords": [
@@ -16,6 +16,7 @@
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",
         "laravel/octane": "^2.12",
+        "laravel/pail": "^1.2.5",
         "laravel/prompts": "^0.3.8",
         "laravel/sanctum": "^4.0",
         "livewire/blaze": "^1.0",

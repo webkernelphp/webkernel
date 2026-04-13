@@ -1,7 +1,7 @@
 <x-filament-panels::page>
 @includeIf('webkernel::panels.auth.css', [
-    'bgLight' => webkernelBrandingUrl('bg-login-light'),
-    'bgDark'  => webkernelBrandingUrl('bg-login-dark'),
+    'bgLight' => webkernelBrandingUrl('webkernel-bg-login-light'),
+    'bgDark'  => webkernelBrandingUrl('webkernel-bg-login-dark'),
 ])
     @php
         $reqFailing  = collect($requirements)->where('ok', false)->all();

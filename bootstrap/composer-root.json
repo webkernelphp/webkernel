@@ -4,10 +4,7 @@
     "description": "Webkernel is a sovereign application foundation that lets organizations own, control, and scale their business software without subscriptions, cloud lock-in, or vendor dependency.",
     "type": "project",
     "license": "EPL-2.0",
-    "keywords": [
-        "webkernel",
-        "framework"
-    ],
+    "keywords": ["webkernel", "framework"],
     "require": {
         "webkernel/composer-merger": "^0.1.4",
         "calebporzio/sushi": "*",
@@ -76,10 +73,7 @@
             "Composer\\Config::disableProcessTimeout",
             "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1 --timeout=0\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite --kill-others"
         ],
-        "test": [
-            "@php artisan config:clear --ansi",
-            "@php artisan test"
-        ],
+        "test": ["@php artisan config:clear --ansi", "@php artisan test"],
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
         ],

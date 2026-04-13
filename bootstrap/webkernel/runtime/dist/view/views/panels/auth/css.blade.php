@@ -3,8 +3,8 @@
     Injected at every auth render hook
 --}}
 @php
-    $bgLight = $bgLight ?? webkernelBrandingUrl('bg-login-light');
-    $bgDark  = $bgDark  ?? webkernelBrandingUrl('bg-login-dark');
+    $bgLight = $bgLight ?? webkernelBrandingUrl('webkernel-bg-login-light');
+    $bgDark  = $bgDark  ?? webkernelBrandingUrl('webkernel-bg-login-dark');
 @endphp
 
 <style>
