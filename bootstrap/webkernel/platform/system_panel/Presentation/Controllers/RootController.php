@@ -4,33 +4,27 @@ namespace Webkernel\Platform\SystemPanel\Presentation\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
+use Webkernel\Platform\SystemPanel\Support\InstallationState;
 
 /**
  * Handles the application root (/).
  *
- * - Not installed → /installer
- * - Installed     → /system
+ * Resolution order:
+ *   NOT_INSTALLED -> /installer         (run the full wizard)
+ *   MISSING_ADMIN -> /installer         (resume at create_user)
+ *   INSTALLED     -> /system            (normal boot)
+ *
+ * Both NOT_INSTALLED and MISSING_ADMIN land on /installer.
+ * The InstallerPage::mount() method reads InstallationState itself and
+ * sets the correct phase, so no state needs to be passed in the URL.
  */
 final class RootController extends Controller
 {
     public function __invoke(): RedirectResponse
     {
-        return $this->isInstalled()
-            ? redirect('/system')
-            : redirect('/installer');
-    }
-
-    private function isInstalled(): bool
-    {
-        if (! is_file(base_path('.env'))) {
-            return false;
-        }
-
-        $key = trim((string) config('app.key', ''));
-
-        return $key !== ''
-            && str_starts_with($key, 'base64:')
-            && strlen($key) > 30
-            && is_file(base_path('deployment.php'));
+        return match (InstallationState::resolve()) {
+            InstallationState::INSTALLED => redirect('/system'),
+            default                      => redirect('/installer'),
+        };
     }
 }

@@ -2,7 +2,7 @@
 
 // -- Dev mode + dev namespace map ---------------------------------------------
 defined('IS_DEVMODE') || (static function (): void {
-    $devFile = BASE_PATH . '/dev-tools.php';
+    $devFile = DEVMODE_FILE;
     if (!is_file($devFile)) {
         define('IS_DEVMODE', false);
         define('WEBKERNEL_DEV_NAMESPACES', []);

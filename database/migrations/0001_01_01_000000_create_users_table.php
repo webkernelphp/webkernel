@@ -21,6 +21,18 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        Schema::create('user_privileges', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')
+                ->unique()
+                ->constrained()
+                ->cascadeOnDelete();
+            $table->string('privilege'); // 'app-owner' | 'super-user' | 'member'
+            $table->timestamps();
+            $table->index('privilege');
+        });
+
+
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
             $table->string('token');
@@ -43,6 +55,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('users');
+        Schema::dropIfExists('user_privileges');
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
     }

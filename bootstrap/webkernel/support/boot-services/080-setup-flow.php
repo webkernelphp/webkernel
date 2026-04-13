@@ -1,8 +1,10 @@
 <?php declare(strict_types=1);
 
-// ═══════════════════════════════════════════════════════════════════
+
+
+// =============================================================================
 //  § 7  SetupFlow
-// ═══════════════════════════════════════════════════════════════════
+// =============================================================================
 /**
  * Declarative first-run wizard.
  *
@@ -10,21 +12,34 @@
  * Depends on: WEBKERNEL_BRAND_LOGO_LIGHT, WEBKERNEL_BRAND_LOGO_DARK
  *             (branding constants — must be defined before this file is loaded)
  *
- * ┌──────────────────────────────────────────────────────────────┐
- * │  Three kinds of pre-conditions                               │
- * │                                                              │
- * │  fastPath(fn)  → if fn() === true, return immediately.      │
- * │                  Laravel boots normally. Wizard never shown. │
- * │                                                              │
- * │  guard(fn, msg, sev)  → if fn() === false, render an error  │
- * │                         page immediately and terminate.      │
- * │                         Use for hard server pre-conditions   │
- * │                         (PHP version, extensions, perms…).  │
- * │                                                              │
- * │  gap(fn)  → silent side-effect closure injected between     │
- * │             steps at /run time (chmod, mkdir, log…).        │
- * │             Exceptions bubble up as step failures.          │
- * └──────────────────────────────────────────────────────────────┘
+ * -----------------------------------------------------------------------
+ *  Three kinds of pre-conditions
+ *
+ *  fastPath(fn)         If fn() === true, return immediately.
+ *                       Laravel boots normally. Wizard never shown.
+ *
+ *  guard(fn, msg, sev)  If fn() === false, render an error page
+ *                       immediately and terminate.
+ *                       Use for hard server pre-conditions
+ *                       (PHP version, extensions, permissions...).
+ *
+ *  gap(fn)              Silent side-effect closure injected between
+ *                       steps at run time (chmod, mkdir, log...).
+ *                       Exceptions bubble up as step failures.
+ * -----------------------------------------------------------------------
+ *
+ *  Two conditional helpers:
+ *
+ *  when(bool, fn)       Calls fn($this) only when the condition is true.
+ *                       Returns $this so the chain continues.
+ *                       Use to register optional guards, notices, steps,
+ *                       or any other fluent call without breaking the chain.
+ *
+ *  notice(level, h, b)  Registers an informational band rendered at the
+ *                       top of every setup page produced by this flow.
+ *                       Delegates to EmergencyPageBuilder::notice() on
+ *                       each builder instance created during ->run().
+ *                       $level: 'info' | 'warning' | 'error'
  */
 final class SetupFlow
 {
@@ -37,52 +52,56 @@ final class SetupFlow
     private string $scope = 'setup';
 
     // ── Preview page ──────────────────────────────────────────────
-    private string  $previewTitle   = 'First-run Setup Required';
-    private string  $previewMessage = '<b>This application has not been initialised yet.</b>'
-                                    . ' The following actions will be performed on this server.'
-                                    . ' Review them carefully, then click Proceed when ready.';
+    private string $previewTitle   = 'First-run Setup Required';
+    private string $previewMessage = '<b>This application has not been initialised yet.</b>'
+                                   . ' The following actions will be performed on this server.'
+                                   . ' Review them carefully, then click Proceed when ready.';
 
     // ── Complete page ─────────────────────────────────────────────
-    private string $completeTitle   = 'Setup Complete';
-    private string $completeMessage = '<b>The environment has been initialised successfully.</b>'
-                                    . ' Database migrations will run automatically on first boot.'
-                                    . ' Click the button below to open the application.';
+    private string $completeTitle       = 'Setup Complete';
+    private string $completeMessage     = '<b>The environment has been initialised successfully.</b>'
+                                        . ' Database migrations will run automatically on first boot.'
+                                        . ' Click the button below to open the application.';
     private string $completeButtonLabel = 'Open Application';
     private string $redirectAfterComplete = '/';
 
     // ── Incomplete (error) page ───────────────────────────────────
     private string $incompleteTitle   = 'Setup Incomplete';
     private string $incompleteMessage = 'One or more setup steps did not complete successfully.'
-                                      . ' Check server permissions and try again.';
+                                     . ' Check server permissions and try again.';
 
     // ── Token ─────────────────────────────────────────────────────
     private HmacSigner $signer;
     private string     $token;
 
     // ── Fast-paths ────────────────────────────────────────────────
-    /**
-     * @var list<\Closure():bool>
-     * If any returns true → return immediately (no wizard).
-     */
+    /** @var list<\Closure():bool> */
     private array $fastPaths = [];
 
     // ── Guards ────────────────────────────────────────────────────
-    /**
-     * @var list<array{check:\Closure():bool, message:string, severity:string}>
-     * If check() returns false → render error page immediately.
-     */
+    /** @var list<array{check:\Closure():bool, message:string, severity:string}> */
     private array $guards = [];
 
-    // ── Steps (shown on preview + run pages) ──────────────────────
+    // ── Steps ─────────────────────────────────────────────────────
     /**
      * @var list<array{
      *   label:   string,
      *   closure: \Closure|null,
      *   pending: bool,
      *   gap:     \Closure|null,
+     *   _pre:    bool,
      * }>
      */
     private array $steps = [];
+
+    // ── Notices ───────────────────────────────────────────────────
+    /**
+     * Notices are passed to every EmergencyPageBuilder instance created
+     * inside registerRoutes(). They appear on every setup page.
+     *
+     * @var list<array{level:string, heading:string, body:string}>
+     */
+    private array $notices = [];
 
     // ── Logo ──────────────────────────────────────────────────────
     private ?string $logoLight = null;
@@ -94,7 +113,6 @@ final class SetupFlow
         $this->basePath  = rtrim($basePath, '/\\');
         $this->tokenFile = $this->basePath . '/.deployment_setup_token';
 
-        // Branding constants are defined in boot-branding — loaded before this file.
         $this->logoLight = WEBKERNEL_BRAND_LOGO_LIGHT;
         $this->logoDark  = WEBKERNEL_BRAND_LOGO_DARK;
     }
@@ -107,10 +125,50 @@ final class SetupFlow
     // ── Fluent API ────────────────────────────────────────────────
 
     /**
+     * Conditional helper.
+     *
+     * Calls $fn($this) only when $condition is true, then returns $this.
+     * The callback must return void (it operates on $this by reference via
+     * the fluent chain inside it, but the outer chain continues from the
+     * value returned by when() itself).
+     *
+     * Usage:
+     *   ->when($someFlag, static fn (SetupFlow $f) => $f->notice(...)->guard(...))
+     *
+     * @param bool             $condition
+     * @param \Closure(self):mixed $fn
+     */
+    public function when(bool $condition, \Closure $fn): self
+    {
+        if ($condition) {
+            $fn($this);
+        }
+        return $this;
+    }
+
+    /**
+     * Register an informational notice rendered on every setup page.
+     *
+     * Notices are forwarded to each EmergencyPageBuilder created during
+     * ->run() via EmergencyPageBuilder::notice().
+     *
+     * @param string $level   'info' | 'warning' | 'error'
+     * @param string $heading Short bold label shown above the body.
+     * @param string $body    Full explanation. Safe HTML is allowed.
+     */
+    public function notice(string $level, string $heading, string $body): self
+    {
+        $this->notices[] = [
+            'level'   => $level,
+            'heading' => $heading,
+            'body'    => $body,
+        ];
+        return $this;
+    }
+
+    /**
      * Fast-path: if the closure returns true, the wizard is skipped
      * entirely and ->run() returns immediately (Laravel boots normally).
-     *
-     * You may chain multiple fast-paths; any one returning true exits.
      *
      * @param \Closure():bool $check
      */
@@ -121,10 +179,7 @@ final class SetupFlow
     }
 
     /**
-     * Guard: if the closure returns false, render an error page immediately.
-     *
-     * Guards run BEFORE any route is registered and BEFORE any step runs.
-     * Use them for hard server pre-conditions that the wizard cannot fix.
+     * Guard: if the closure returns false, render an error page and exit.
      *
      * @param \Closure():bool $check
      * @param string $message  Human-readable description of what failed.
@@ -141,7 +196,7 @@ final class SetupFlow
     }
 
     /**
-     * Gap: a silent side-effect closure injected BEFORE the next step.
+     * Gap: a silent side-effect closure injected before the next step.
      *
      * @param \Closure():void $fn
      */
@@ -196,7 +251,7 @@ final class SetupFlow
 
     public function previewPage(string $title, string $message = ''): self
     {
-        $this->previewTitle   = $title;
+        $this->previewTitle = $title;
         if ($message !== '') $this->previewMessage = $message;
         return $this;
     }
@@ -207,7 +262,7 @@ final class SetupFlow
         string $buttonLabel  = 'Open Application',
         string $redirectTo   = '',
     ): self {
-        $this->completeTitle       = $title;
+        $this->completeTitle = $title;
         if ($message !== '')     $this->completeMessage      = $message;
         if ($buttonLabel !== '') $this->completeButtonLabel  = $buttonLabel;
         if ($redirectTo  !== '') $this->redirectAfterComplete = $redirectTo;
@@ -247,7 +302,6 @@ final class SetupFlow
     }
 
     // ── run() — the single dispatch entry-point ───────────────────
-
     public function run(): void
     {
         $uri       = '/' . ltrim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/', '/');
@@ -255,7 +309,7 @@ final class SetupFlow
         $scopeBase = $wkBase . $this->scope . '/';
 
         // ── 0. Non-scoped WebkernelRouter routes ──────────────────
-        if (str_starts_with($uri, $wkBase) && !str_starts_with($uri, $scopeBase)) {
+        if (str_starts_with($uri, $wkBase) && ! str_starts_with($uri, $scopeBase)) {
             if (WebkernelRouter::dispatch()) {
                 exit(0);
             }
@@ -263,7 +317,7 @@ final class SetupFlow
         }
 
         // ── 1. Fast-paths ─────────────────────────────────────────
-        if (!str_starts_with($uri, $scopeBase)) {
+        if (! str_starts_with($uri, $scopeBase)) {
             foreach ($this->fastPaths as $fp) {
                 if ($fp()) {
                     return;
@@ -274,7 +328,7 @@ final class SetupFlow
         // ── 2. Guards ─────────────────────────────────────────────
         $this->runGuards();
 
-        // ── 3. Resolve token + register scoped routes ────────────
+        // ── 3. Resolve token + register scoped routes ─────────────
         [$this->signer, $this->token] = $this->resolveToken();
         $this->registerRoutes();
 
@@ -283,16 +337,17 @@ final class SetupFlow
             exit(0);
         }
 
-        // ── 5. Fallback redirect → scoped preview page ────────────
+        // ── 5. Fallback redirect -> scoped preview page ────────────
         $previewUrl = WebkernelRouter::url($this->scope . '/{token}', ['token' => $this->token]);
         header('Location: ' . $previewUrl, true, 302);
         exit(0);
     }
 
+    // ── Internal: guards ──────────────────────────────────────────
     private function runGuards(): void
     {
         foreach ($this->guards as $guard) {
-            if (!($guard['check'])()) {
+            if (! ($guard['check'])()) {
                 $msg = $guard['message'] !== ''
                     ? $guard['message']
                     : 'A required server condition is not satisfied.';
@@ -301,7 +356,7 @@ final class SetupFlow
                     ->title('Setup Cannot Proceed')
                     ->message(
                         "A required server condition is not satisfied:\n\n"
-                        . "  ✕  {$msg}\n\n"
+                        . "  X  {$msg}\n\n"
                         . "Fix the server configuration and reload this page."
                     )
                     ->severity($guard['severity'])
@@ -310,31 +365,50 @@ final class SetupFlow
                     ->footer('SERVER CONFIGURATION ERROR — SETUP BLOCKED')
                     ->addButton('Reload', '/');
 
-                if ($this->logoLight !== null || $this->logoDark !== null) {
-                    $builder->logo($this->logoLight, $this->logoDark);
-                }
+                $this->applyLogo($builder);
+                $this->applyNotices($builder);
 
                 $builder->render();
             }
         }
     }
 
-    // ── Route registration ────────────────────────────────────────
+    // ── Internal: apply shared state to a builder instance ────────
 
+    private function applyLogo(EmergencyPageBuilder $builder): void
+    {
+        if ($this->logoLight !== null || $this->logoDark !== null) {
+            $builder->logo($this->logoLight, $this->logoDark);
+        }
+    }
+
+    /**
+     * Forward all registered notices to a builder instance.
+     * Called on every builder created inside registerRoutes() and runGuards()
+     * so notices appear on every page the flow can render.
+     */
+    private function applyNotices(EmergencyPageBuilder $builder): void
+    {
+        foreach ($this->notices as $n) {
+            $builder->notice($n['level'], $n['heading'], $n['body']);
+        }
+    }
+
+    // ── Route registration ────────────────────────────────────────
     private function registerRoutes(): void
     {
         $token     = $this->token;
-        $signer    = $this->signer;
         $tokenFile = $this->tokenFile;
         $self      = $this;
 
         // ── GET /__webkernel-app/setup/{token} ────────────────────
         WebkernelRouter::register(
             'setup/{token}',
-            static function (array $params) use ($token, $signer, $self): never {
-                if (!hash_equals($token, $params['token'])) {
+            static function (array $params) use ($token, $self): never {
+                if (! hash_equals($token, $params['token'])) {
                     SetupFlow::renderBadToken();
                 }
+
                 $runUrl       = WebkernelRouter::url('setup/{token}/run',  ['token' => $token]);
                 $canonicalUrl = WebkernelRouter::url('setup/{token}',      ['token' => $token]);
 
@@ -347,9 +421,8 @@ final class SetupFlow
                     ->footer('WEBKERNEL — REVIEW AND CONFIRM BEFORE PROCEEDING')
                     ->message($self->previewMessage);
 
-                if ($self->logoLight !== null || $self->logoDark !== null) {
-                    $builder->logo($self->logoLight, $self->logoDark);
-                }
+                $self->applyLogo($builder);
+                $self->applyNotices($builder);
 
                 foreach ($self->steps as $step) {
                     if ($step['_pre'] ?? false) continue;
@@ -364,10 +437,11 @@ final class SetupFlow
         // ── GET /__webkernel-app/setup/{token}/run ────────────────
         WebkernelRouter::register(
             'setup/{token}/run',
-            static function (array $params) use ($token, $signer, $self): never {
-                if (!hash_equals($token, $params['token'])) {
+            static function (array $params) use ($token, $self): never {
+                if (! hash_equals($token, $params['token'])) {
                     SetupFlow::renderBadToken();
                 }
+
                 $completeUrl  = WebkernelRouter::url('setup/{token}/complete', ['token' => $token]);
                 $canonicalUrl = WebkernelRouter::url('setup/{token}/run',      ['token' => $token]);
 
@@ -379,12 +453,12 @@ final class SetupFlow
                     ->canonicalize($canonicalUrl)
                     ->footer('WEBKERNEL — FIRST-RUN SETUP');
 
-                if ($self->logoLight !== null || $self->logoDark !== null) {
-                    $builder->logo($self->logoLight, $self->logoDark);
-                }
+                $self->applyLogo($builder);
+                $self->applyNotices($builder);
 
-                $preGaps = [];
+                $preGaps      = [];
                 $visibleSteps = [];
+
                 foreach ($self->steps as $step) {
                     if ($step['_pre'] ?? false) {
                         if ($step['gap'] !== null) {
@@ -395,7 +469,7 @@ final class SetupFlow
                     }
                 }
 
-                $preFired = false;
+                $preFired        = false;
                 $capturedPreGaps = $preGaps;
 
                 foreach ($visibleSteps as $step) {
@@ -408,7 +482,7 @@ final class SetupFlow
                     }
 
                     $wrapped = static function () use ($closure, $gap, $capturedPreGaps, &$preFired): bool|string {
-                        if (!$preFired) {
+                        if (! $preFired) {
                             $preFired = true;
                             foreach ($capturedPreGaps as $preGap) {
                                 try { $preGap(); } catch (\Throwable) { /* swallowed */ }
@@ -432,8 +506,8 @@ final class SetupFlow
         // ── GET /__webkernel-app/setup/{token}/complete ───────────
         WebkernelRouter::register(
             'setup/{token}/complete',
-            static function (array $params) use ($token, $signer, $tokenFile, $self): never {
-                if (!hash_equals($token, $params['token'])) {
+            static function (array $params) use ($token, $tokenFile, $self): never {
+                if (! hash_equals($token, $params['token'])) {
                     SetupFlow::renderBadToken();
                 }
 
@@ -458,9 +532,8 @@ final class SetupFlow
                     ->canonicalize($canonicalUrl)
                     ->footer('WEBKERNEL — FIRST-RUN SETUP');
 
-                if ($self->logoLight !== null || $self->logoDark !== null) {
-                    $builder->logo($self->logoLight, $self->logoDark);
-                }
+                $self->applyLogo($builder);
+                $self->applyNotices($builder);
 
                 if ($ready) {
                     $builder
@@ -481,7 +554,6 @@ final class SetupFlow
     }
 
     // ── Token lifecycle ───────────────────────────────────────────
-
     /**
      * @return array{HmacSigner, string}
      */
@@ -515,25 +587,23 @@ final class SetupFlow
         }
 
         $entropy  = bin2hex(
-            function_exists('random_bytes') ?
             /** @disregard */
-            random_bytes(32) : openssl_random_pseudo_bytes(32)
+            function_exists('random_bytes') ? random_bytes(32): openssl_random_pseudo_bytes(32)
         );
         $signer   = new HmacSigner($projectSalt . ':' . $entropy);
         $newToken = $signer->token('setup', $this->basePath, (string) time());
-
-        $signed = $signer->signArray([
+        $signed   = $signer->signArray([
             'entropy'    => $entropy,
             'token'      => $newToken,
             'created_at' => time(),
         ]);
+
         @file_put_contents($this->tokenFile, $signed, LOCK_EX);
 
         return [$signer, $newToken];
     }
 
     // ── Static helpers ────────────────────────────────────────────
-
     public static function renderBadToken(): never
     {
         EmergencyPageBuilder::create()
@@ -541,9 +611,9 @@ final class SetupFlow
             ->message(
                 "This setup link is no longer valid.\n\n"
                 . "This can happen if:\n"
-                . "  · The link has expired (tokens are valid for 24 hours)\n"
-                . "  · The URL was modified or shared from another server\n"
-                . "  · Setup has already been completed\n\n"
+                . "  - The link has expired (tokens are valid for 24 hours)\n"
+                . "  - The URL was modified or shared from another server\n"
+                . "  - Setup has already been completed\n\n"
                 . "Reload the application root to get a fresh setup link."
             )
             ->severity('WARNING')

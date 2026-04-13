@@ -1,28 +1,44 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
+
 /**
- * ═══════════════════════════════════════════════════════════════════
- *  Webkernel — Pre-boot Environment Guard
- *  bootstrap/webkernel/config/setup_env.php
- * ═══════════════════════════════════════════════════════════════════
+ * =============================================================================
+ *  Webkernel -- Pre-boot Environment Guard
+ *  bootstrap/webkernel/support/boot-actions/050-setup_env.php
+ * =============================================================================
  *
- *  This file is intentionally thin. All wizard logic (token lifecycle,
- *  route registration, page rendering, redirect fallback) lives inside
- *  SetupFlow in renderCriticalErrorHtml.php.
+ *  Responsibilities (this file only):
+ *    - Detect IS_DEVMODE and, if active, register a step to remove the
+ *      devmode file. The file path is never surfaced in the UI.
+ *    - Run the fast-path check (.env + database.sqlite both present).
+ *    - Register hard guards (PHP version, extensions, writability).
+ *    - Declare and register each setup step.
+ *    - Define the complete-page and post-setup redirect.
  *
- *  What lives here:
- *    - The fast-path condition (both files exist → Laravel boots normally)
- *    - Hard server guards (PHP version, extensions, writability…)
- *    - The step declarations and their closures
- *    - The complete-page definition
- *    - The post-setup redirect target
+ *  What this file does NOT do:
+ *    - Token lifecycle         -> SetupFlow (080-setup-flow.php)
+ *    - Route registration      -> SetupFlow
+ *    - Page rendering          -> SetupFlow
+ *    - exit() calls            -> SetupFlow
  *
- *  Nothing else. No token code. No router calls. No exit().
+ *  Devmode note:
+ *    IS_DEVMODE (defined upstream in the Webkernel bootstrap layer) is
+ *    entirely separate from Laravel's APP_ENV=local / APP_ENV=production.
+ *    IS_DEVMODE controls Webkernel's own pre-boot diagnostic behaviour.
+ *    APP_ENV controls Laravel's environment (caching, error detail, etc.).
+ *    The two are orthogonal and must not be conflated.
+ *
+ *    When IS_DEVMODE is active, a dedicated setup step is injected that
+ *    offers to remove the devmode activation file. The operator may skip
+ *    it (the step returns true immediately if they choose not to proceed)
+ *    or confirm, in which case the file is unlinked. Failure to remove
+ *    the file is reported as a step warning but does not block setup.
+ *    The file path is intentionally not shown in the UI.
  *
  *  BASE_PATH must be defined before this file is included.
- *  renderCriticalErrorHtml.php must already be loaded.
- * ═══════════════════════════════════════════════════════════════════
+ *  bootstrap/webkernel/support/boot-services/* must already be loaded.
+ * =============================================================================
  */
+
 (static function (): void {
 
     $envPath     = BASE_PATH . '/.env';
@@ -30,77 +46,122 @@ declare(strict_types=1);
     $examplePath = BASE_PATH . '/.env.example';
     $dbDir       = dirname($dbPath);
 
-    // Shared mutable state threaded through step closures.
-    // Using an object avoids reference-capture verbosity.
+    // =========================================================================
+    //  Webkernel devmode detection
+    //
+    //  IS_DEVMODE is set by the upstream bootstrap layer when the devmode
+    //  activation file exists on disk. We check it here once and derive
+    //  everything we need. The file path is kept in a local variable only;
+    //  it is never forwarded to any page builder or UI component.
+    // =========================================================================
+
+    $devmodeActive   = defined('IS_DEVMODE') && IS_DEVMODE === true;
+    $devmodeFilePath = ($devmodeActive && defined('DEVMODE_FILE')) ? (string) DEVMODE_FILE : null;
+
+    // =========================================================================
+    //  Shared mutable state threaded through step closures.
+    //  Using an object avoids reference-capture verbosity.
+    // =========================================================================
+
     $state = new class {
         public string  $envContent = '';
         public ?string $appKey     = null;
     };
 
-    SetupFlow::create(BASE_PATH)
+    // =========================================================================
+    //  Build the setup flow
+    // =========================================================================
 
-        // ── Scope ─────────────────────────────────────────────────
-        // This flow owns /__webkernel-app/setup/* only.
-        // Other /__webkernel-app/* paths (e.g. branding) are dispatched
-        // directly by WebkernelRouter without guards.
+    $flow = SetupFlow::create(BASE_PATH)
+
         ->scopeTo('setup')
 
-        // ── Fast-path ─────────────────────────────────────────────
-        // Both pre-boot files exist → return immediately.
-        // Laravel boots normally. RootController takes over.
-        ->fastPath(static fn(): bool => is_file($envPath) && is_file($dbPath))
+        // ── Fast-path ──────────────────────────────────────────────────────────
+        // Both pre-boot sentinel files present -> Laravel boots normally.
+        // Devmode removal is NOT part of the fast-path condition: the operator
+        // may keep devmode active even on a fully installed system.
+        ->fastPath(static fn (): bool => is_file($envPath) && is_file($dbPath))
 
-        // ── Hard guards ───────────────────────────────────────────
-        // Conditions the wizard cannot fix. Render CRITICAL and stop.
+        // ── Hard guards ────────────────────────────────────────────────────────
+
         ->guard(
-            check:    static fn(): bool => PHP_VERSION_ID >= 80100,
-            message:  'PHP 8.1 or newer is required',
+            check:   static fn (): bool => PHP_VERSION_ID >= 80100,
+            message: 'PHP 8.1 or newer is required.',
         )
         ->guard(
-            check:    static fn(): bool => extension_loaded('pdo_sqlite'),
-            message:  'The pdo_sqlite extension must be enabled',
+            check:   static fn (): bool => extension_loaded('pdo_sqlite'),
+            message: 'The pdo_sqlite extension must be enabled.',
         )
         ->guard(
-            check:    static fn(): bool => is_dir(BASE_PATH) && is_writable(BASE_PATH),
-            message:  'The application root must be writable by the web server',
+            check:   static fn (): bool => is_dir(BASE_PATH) && is_writable(BASE_PATH),
+            message: 'The application root must be writable by the web server.',
         )
         ->guard(
-            check:    static fn(): bool =>
-                          function_exists('openssl_random_pseudo_bytes')
-                          || function_exists('random_bytes'),
-            message:  'An entropy source (openssl or random_bytes) must be available',
+            check:   static fn (): bool =>
+                         function_exists('openssl_random_pseudo_bytes')
+                         || function_exists('random_bytes'),
+            message: 'An entropy source (openssl or random_bytes) must be available.',
         )
 
-        // ── Step 0: read environment template ─────────────────────
+        // ── Step 0: disable devmode (conditional) ─────────────────────────────
+        // Injected only when IS_DEVMODE is active.
+        // The operator sees a clear label and chooses whether to proceed.
+        // The file path is never included in the label or any UI output.
+        // Failure is non-fatal: setup continues regardless.
+        ->when(
+            $devmodeActive,
+            function (SetupFlow $f) use ($devmodeFilePath): SetupFlow {
+                return $f->step(
+                    label:   'Disable Webkernel devmode',
+                    closure: static function () use ($devmodeFilePath): bool|string {
+                        if ($devmodeFilePath === null || ! is_file($devmodeFilePath)) {
+                            // File already gone or path unknown -- nothing to do.
+                            return true;
+                        }
+                        if (@unlink($devmodeFilePath)) {
+                            return true;
+                        }
+                        // Removal failed. Not a hard error -- warn and continue.
+                        return 'Devmode file could not be removed. Check server permissions.';
+                    },
+                );
+            }
+        )
+
+        // ── Step 1: read environment template ─────────────────────────────────
+
         ->step(
             label:   'Read environment template (.env.example)',
             closure: static function () use ($envPath, $examplePath, $state): bool|string {
                 if (is_file($envPath)) {
-                    return true; // Already exists — skip silently.
+                    return true;
                 }
-                if (!is_file($examplePath)) {
+                if (! is_file($examplePath)) {
                     $state->envContent = '';
-                    return true; // No template — that's fine, we'll write a minimal .env.
+                    return true;
                 }
                 $content = @file_get_contents($examplePath);
                 if ($content === false) {
-                    return "Cannot read {$examplePath} — check file permissions.";
+                    return 'Cannot read .env.example -- check file permissions.';
                 }
                 $state->envContent = $content;
                 return true;
             },
         )
 
-        // ── Step 1: generate APP_KEY ───────────────────────────────
+        // ── Step 2: generate APP_KEY ───────────────────────────────────────────
+
         ->step(
             label:   'Generate secure application key (APP_KEY)',
             closure: static function () use ($envPath, $state): bool|string {
                 if (is_file($envPath)) {
-                    return true; // Already exists — skip silently.
+                    return true;
                 }
                 try {
                     /** @disregard */
-                    $raw = function_exists('openssl_random_pseudo_bytes') ? (string) openssl_random_pseudo_bytes(32) : random_bytes(32);
+                    $raw = function_exists('openssl_random_pseudo_bytes')
+                        ? (string) openssl_random_pseudo_bytes(32)
+                        : random_bytes(32);
                 } catch (\Throwable $e) {
                     return 'Entropy source failed: ' . $e->getMessage();
                 }
@@ -109,7 +170,8 @@ declare(strict_types=1);
             },
         )
 
-        // ── Step 2: write .env ─────────────────────────────────────
+        // ── Step 3: write .env ────────────────────────────────────────────────
+
         ->step(
             label:   'Write environment file (.env)',
             closure: static function () use ($envPath, $state): bool|string {
@@ -117,59 +179,54 @@ declare(strict_types=1);
                     return true;
                 }
                 if ($state->appKey === null) {
-                    return 'APP_KEY was not generated — cannot write .env.';
+                    return 'APP_KEY was not generated -- cannot write .env.';
                 }
                 $content = $state->envContent;
                 $key     = $state->appKey;
                 $content = preg_match('/^APP_KEY=/m', $content)
                     ? (string) preg_replace('/^APP_KEY=.*$/m', 'APP_KEY=' . $key, $content)
                     : "APP_KEY={$key}\n" . $content;
-
                 if (@file_put_contents($envPath, $content) === false) {
-                    return 'Write failed — check permissions on ' . BASE_PATH;
+                    return 'Write failed -- check permissions on the application root.';
                 }
                 return true;
             },
         )
 
-        // ── Step 3: create database file ───────────────────────────
+        // ── Step 4: create SQLite database file ───────────────────────────────
+
         ->step(
             label:   'Create SQLite database file',
             closure: static function () use ($dbPath, $dbDir): bool|string {
                 if (is_file($dbPath)) {
                     return true;
                 }
-                if (!is_dir($dbDir)) {
-                    return 'The database/ directory does not exist — check project structure.';
+                if (! is_dir($dbDir)) {
+                    return 'The database/ directory does not exist -- check project structure.';
                 }
-                if (!@touch($dbPath)) {
-                    return "Cannot create database file — check permissions on {$dbDir}";
+                if (! @touch($dbPath)) {
+                    return 'Cannot create database file -- check permissions on the database directory.';
                 }
                 return true;
             },
         )
 
-        // ── Step 4: migrations (deferred) ──────────────────────────
-        // Shown on all pages as a pending step — runs at framework boot.
+        // ── Step 5: migrations (deferred) ─────────────────────────────────────
+
         ->pendingStep('Run database migrations (deferred to first boot)')
 
-        // ── Complete page ──────────────────────────────────────────
+        // ── Complete page ──────────────────────────────────────────────────────
+
         ->completePage(
-            title:       'Setup Complete',
+            title:       'Environment ready',
             message:     '<b>The environment has been initialised successfully.</b>'
                        . ' Database migrations will run automatically on first boot.'
-                       . ' Click the button below to open the application.',
-            buttonLabel: 'Open Application',
-            redirectTo:  '/',
+                       . ' Click the button below to continue to the application installer,'
+                       . ' where you will create the first administrator account.',
+            buttonLabel: 'Continue to installer',
+            redirectTo:  '/installer',
         )
 
-        // ── Post-setup redirect ────────────────────────────────────
-        //->redirectThenTo('/')
-
-        // ── Dispatch ───────────────────────────────────────────────
-        // If the current URL matches a setup route → handle + exit.
-        // If not → redirect to the preview page (setup still needed).
-        // If fast-path returned true → return here, Laravel boots.
         ->run();
 
 })();

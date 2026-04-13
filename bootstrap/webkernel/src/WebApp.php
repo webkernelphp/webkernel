@@ -11,6 +11,7 @@ use Webkernel\Exceptions\Handler as WebkernelExceptionHandler;
 use RuntimeException;
 use Webkernel\System\Security\CoreManifest;
 use Webkernel\System\Security\SealEnforcer;
+use Webkernel\Platform\SystemPanel\Support\InstallationState;
 
 /**
  * Application entry point.
@@ -156,21 +157,30 @@ final class WebApp extends Application
     }
 }
 
+
+// -----------------------------------------------------------------------------
+
 /**
- * Global installation guard — blocks every request until deployment.php exists.
- * Defined here to avoid a standalone middleware file.
+ * Global installation guard.
+ *
+ * Blocks every HTML request that is not already targeting the installer or
+ * the health endpoint, redirecting to /installer when installation is
+ * incomplete for any reason (missing infrastructure OR missing admin).
  */
 final class InstallationGuard
 {
     public function handle(\Illuminate\Http\Request $request, \Closure $next): mixed
     {
-        if (
-            ! is_file(WEBKERNEL_DEPLOYMENT_FILE)
-            && str_starts_with($request->header('Accept', ''), 'text/html')
-            && ! str_starts_with($request->decodedPath(), WEBKERNEL_INSTALLER_PATH_PREFIX)
-            && $request->decodedPath() !== WEBKERNEL_HEALTH_PATH
-        ) {
-            return redirect(WEBKERNEL_INSTALLER_URL);
+        $isHtmlRequest = str_starts_with($request->header('Accept', ''), 'text/html');
+        $isInstallerPath = str_starts_with($request->decodedPath(), WEBKERNEL_INSTALLER_PATH_PREFIX);
+        $isHealthPath = $request->decodedPath() === WEBKERNEL_HEALTH_PATH;
+
+        if ($isHtmlRequest && ! $isInstallerPath && ! $isHealthPath) {
+            $state = InstallationState::resolve();
+
+            if ($state !== InstallationState::INSTALLED) {
+                return redirect(WEBKERNEL_INSTALLER_URL);
+            }
         }
 
         return $next($request);

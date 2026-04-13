@@ -1,8 +1,24 @@
 <?php declare(strict_types=1);
 
-// ═══════════════════════════════════════════════════════════════════
+// =============================================================================
 //  § 4  EmergencyPageBuilder
-// ═══════════════════════════════════════════════════════════════════
+// =============================================================================
+/**
+ * Declarative emergency / setup page renderer.
+ *
+ * Unchanged public API. One addition:
+ *   ->notice(string $level, string $heading, string $body): self
+ *
+ * Notices are rendered as a full-width informational band between the logo
+ * block and the incident title, before any message or step content.
+ * Multiple notices may be stacked; they render in registration order.
+ *
+ * $level controls the band color:
+ *   'info'    -> blue  (#3b82f6)
+ *   'warning' -> amber (#f59e0b)
+ *   'error'   -> red   (#ff3333)
+ *   anything else -> neutral (#555)
+ */
 final class EmergencyPageBuilder
 {
     // ── Mode ──────────────────────────────────────────────────────
@@ -49,6 +65,12 @@ final class EmergencyPageBuilder
     private ?string $logoLight = null;
     private ?string $logoDark  = null;
 
+    // ── Notices ───────────────────────────────────────────────────
+    /**
+     * @var list<array{level:string, heading:string, body:string}>
+     */
+    private array $notices = [];
+
     // ── Factory ───────────────────────────────────────────────────
     public static function create(): self { return new self(); }
 
@@ -60,15 +82,15 @@ final class EmergencyPageBuilder
     }
 
     // ── Fluent setters ────────────────────────────────────────────
-    public function title(string $title): self          { $this->title         = $title;               return $this; }
-    public function message(string $message): self      { $this->message       = $message;             return $this; }
-    public function code(int $code): self               { $this->code          = $code;                return $this; }
-    public function severity(string $severity): self    { $this->severity      = strtoupper(trim($severity)); return $this; }
-    public function systemState(string $state): self    { $this->systemState   = $state;               return $this; }
-    public function footer(string $footer): self        { $this->footerMessage = $footer;              return $this; }
-    public function logTo(?string $basePath): self      { $this->logBasePath   = $basePath;            return $this; }
-    public function canonicalize(string $url): self     { $this->canonicalUrl  = $url;                 return $this; }
-    public function withSigner(HmacSigner $signer): self { $this->hmacSigner   = $signer;              return $this; }
+    public function title(string $title): self          { $this->title         = $title;                              return $this; }
+    public function message(string $message): self      { $this->message       = $message;                           return $this; }
+    public function code(int $code): self               { $this->code          = $code;                              return $this; }
+    public function severity(string $severity): self    { $this->severity      = strtoupper(trim($severity));        return $this; }
+    public function systemState(string $state): self    { $this->systemState   = $state;                            return $this; }
+    public function footer(string $footer): self        { $this->footerMessage = $footer;                           return $this; }
+    public function logTo(?string $basePath): self      { $this->logBasePath   = $basePath;                         return $this; }
+    public function canonicalize(string $url): self     { $this->canonicalUrl  = $url;                              return $this; }
+    public function withSigner(HmacSigner $signer): self { $this->hmacSigner   = $signer;                           return $this; }
 
     public function hmac(string $data): string
     {
@@ -84,6 +106,23 @@ final class EmergencyPageBuilder
     {
         $this->logoLight = self::resolveLogoSrc($light ?? $dark);
         $this->logoDark  = self::resolveLogoSrc($dark  ?? $light);
+        return $this;
+    }
+
+    /**
+     * Add an informational notice band rendered above the page content.
+     *
+     * @param string $level   'info' | 'warning' | 'error'
+     * @param string $heading Short bold label.
+     * @param string $body    Longer explanation. HTML is allowed.
+     */
+    public function notice(string $level, string $heading, string $body): self
+    {
+        $this->notices[] = [
+            'level'   => $level,
+            'heading' => $heading,
+            'body'    => $body,
+        ];
         return $this;
     }
 
@@ -150,7 +189,7 @@ final class EmergencyPageBuilder
     public function renderIfGuardFails(): self
     {
         foreach ($this->guards as $guard) {
-            if (!$guard()) {
+            if (! $guard()) {
                 $this->render();
             }
         }
@@ -193,7 +232,7 @@ final class EmergencyPageBuilder
         string $extraCss = '',
     ): string {
         foreach ($checks as $check) {
-            if (!$check()) {
+            if (! $check()) {
                 return sprintf(
                     '<button type="button" disabled'
                     . ' style="margin-top:1rem;padding:.55rem 1.3rem;background:transparent;'
@@ -334,7 +373,10 @@ HTML;
             header('X-Canonical-Url: ' . $this->canonicalUrl);
         }
 
-        // ── Execute steps → build step HTML ──────────────────────
+        // ── Notices HTML ──────────────────────────────────────────
+        $noticesHtml = $this->buildNoticesHtml();
+
+        // ── Execute steps -> build step HTML ──────────────────────
         $stepsHtml = '';
         $allPassed = true;
 
@@ -417,18 +459,72 @@ HTML;
             : '';
 
         http_response_code($this->code);
+
         echo self::buildDocument(
-            eState: $eState, eTitle: $eTitle, eSeverity: $eSeverity,
-            eFooter: $eFooter, incidentId: $incidentId, timestamp: $timestamp,
-            accent: $accent, accentDim: $accentDim, accentBorder: $accentBorder,
-            iconSvg: $iconSvg, msgBlock: $msgBlock, stepsHtml: $stepsHtml,
-            extraHtml: $extraHtml, buttonsHtml: $buttonsHtml,
-            logoHtml: $logoHtml, canonicalTag: $canonicalTag,
+            eState:       $eState,
+            eTitle:       $eTitle,
+            eSeverity:    $eSeverity,
+            eFooter:      $eFooter,
+            incidentId:   $incidentId,
+            timestamp:    $timestamp,
+            accent:       $accent,
+            accentDim:    $accentDim,
+            accentBorder: $accentBorder,
+            iconSvg:      $iconSvg,
+            msgBlock:     $msgBlock,
+            stepsHtml:    $stepsHtml,
+            extraHtml:    $extraHtml,
+            buttonsHtml:  $buttonsHtml,
+            logoHtml:     $logoHtml,
+            canonicalTag: $canonicalTag,
+            noticesHtml:  $noticesHtml,
         );
+
         exit(1);
     }
 
     // ── Internal helpers ──────────────────────────────────────────
+
+    /**
+     * Build the notice band HTML for all registered notices.
+     * Rendered between the logo block and the incident title.
+     */
+    private function buildNoticesHtml(): string
+    {
+        if ($this->notices === []) {
+            return '';
+        }
+
+        $html = '';
+        foreach ($this->notices as $n) {
+            $color = match ($n['level']) {
+                'warning' => '#f59e0b',
+                'error'   => '#ff3333',
+                default   => '#3b82f6',  // info
+            };
+            $bg = match ($n['level']) {
+                'warning' => 'rgba(245,158,11,.08)',
+                'error'   => 'rgba(255,51,51,.08)',
+                default   => 'rgba(59,130,246,.08)',
+            };
+            $eHeading = htmlspecialchars($n['heading'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            // body may contain safe HTML (e.g. file paths in <code> tags) — passed through as-is.
+            $html .= sprintf(
+                '<div class="notice-band" style="'
+                . 'background:%s;border-left:2px solid %s;'
+                . 'padding:.6rem .85rem;margin-bottom:.75rem;'
+                . 'font-size:.74rem;line-height:1.55;color:#d0d0d0;">'
+                . '<span style="color:%s;font-weight:700;text-transform:uppercase;'
+                . 'letter-spacing:.07em;font-size:.68rem;">%s</span>'
+                . '<span style="display:block;margin-top:.2rem;">%s</span>'
+                . '</div>',
+                $bg, $color, $color, $eHeading, $n['body'],
+            );
+        }
+
+        return $html;
+    }
+
     private function buildLogoHtml(): string
     {
         if ($this->logoLight === null && $this->logoDark === null) {
@@ -458,7 +554,7 @@ HTML;
         [$icon, $color] = match ($status) {
             'ok'    => ['✓', $accent],
             'fail'  => ['✕', '#ff3333'],
-            default => ['⋯', '#555'],
+            default => ['...', '#555'],
         };
         $detail = $eDetail !== '' ? "<span class=\"step-detail\">{$eDetail}</span>" : '';
         return sprintf(
@@ -522,6 +618,7 @@ HTML;
         string $buttonsHtml,
         string $logoHtml,
         string $canonicalTag,
+        string $noticesHtml = '',
     ): string {
         return <<<HTML
 <!DOCTYPE html>
@@ -585,6 +682,7 @@ HTML;
       font-size: .8rem; font-weight: 600; color: {$accent};
       text-transform: uppercase; letter-spacing: .1em;
     }
+    .notice-band + .notice-band { margin-top: .4rem; }
     .msg-block {
       background: {$accentDim}; border-left: 2px solid {$accentBorder};
       padding: .8rem .9rem; margin: .85rem 0; font-size: .8rem;
@@ -648,6 +746,7 @@ HTML;
         {$logoHtml}
         <div class="incident-title">{$eTitle}</div>
       </div>
+      {$noticesHtml}
       {$msgBlock}
       {$stepsHtml}
       {$extraHtml}
@@ -670,7 +769,7 @@ HTML;
         string $basePath,
     ): void {
         $logDir = rtrim($basePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'logs';
-        if (!is_dir($logDir)) {
+        if (! is_dir($logDir)) {
             @mkdir($logDir, 0755, true);
         }
         $entry = sprintf(

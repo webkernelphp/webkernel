@@ -26,6 +26,7 @@ spl_autoload_register(static function (string $class): void {
                 'Webkernel\\Pages\\'                 => WEBKERNEL_PATH . '/platform/pages',
                 'Webkernel\\Widgets\\'               => WEBKERNEL_PATH . '/platform/widgets',
                 'Webkernel\\Platform\\SystemPanel\\' => WEBKERNEL_PATH . '/platform/system_panel',
+                'Webkernel\\Users\\'                 => WEBKERNEL_PATH . '/aptitudes/users',
                 //
                 // Example of a namespace backed by multiple directories:
                 //   'Webkernel\\Shared\\' => [
