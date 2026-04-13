@@ -7,6 +7,7 @@ use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\{Page,SimplePage};
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Facades\Artisan;
 use Webkernel\System\Support\CapabilityMap;
 
@@ -52,6 +53,7 @@ class InstallerPage extends Page
             Action::make('install')
                 ->label('Install Webkernel')
                 ->icon('heroicon-o-rocket-launch')
+                ->size("sm")
                 ->color('primary')
                 ->visible(fn (): bool => $this->phase === 'pre')
                 ->disabled(fn (): bool => ! collect($this->buildRequirements())->every(fn ($r) => $r['ok']))
@@ -178,6 +180,18 @@ class InstallerPage extends Page
     public function getTitle(): string|Htmlable
     {
         return 'Webkernel Setup';
+    }
+
+    public function getHeading(): string|Htmlable
+    {
+    return new HtmlString('
+            <img src="' . e(webkernelBrandingUrl('logo-light')) . '"
+                 alt="Webkernel"
+                 class="fi-logo fi-logo-light">
+            <img src="' . e(webkernelBrandingUrl('logo-dark')) . '"
+                 alt="Webkernel"
+                 class="fi-logo fi-logo-dark">
+        ');
     }
 
     public function getSubheading(): ?string

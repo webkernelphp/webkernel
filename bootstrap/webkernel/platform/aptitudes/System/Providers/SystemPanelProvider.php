@@ -29,6 +29,7 @@ final class SystemPanelProvider extends PanelProvider
             ->id('system')
             ->path('system')
             ->default()
+            ->favicon(webkernelBrandingUrl('favicon'))
             ->brandLogo(webkernelBrandingUrl('logo-light'))
             ->darkModeBrandLogo(webkernelBrandingUrl('logo-dark'))
             ->brandLogoHeight('2.1rem')

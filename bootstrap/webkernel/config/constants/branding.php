@@ -29,6 +29,7 @@ if (! defined('WEBKERNEL_BRANDING_ASSETS')) {
     /* ── Load branding assets (each define() call auto-registers via the function above) ── */
     $GLOBALS['_wk_branding'] = [];
     $_wkBrandPath = __DIR__ . '/../branding/';
+    require $_wkBrandPath . 'favicon.php';
     require $_wkBrandPath . 'logo-for-dark-mode.php';
     require $_wkBrandPath . 'logo-for-light-mode.php';
     require $_wkBrandPath . 'bg-login-image-for-dark-mode.php';

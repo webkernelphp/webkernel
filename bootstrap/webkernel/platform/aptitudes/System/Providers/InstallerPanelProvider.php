@@ -36,6 +36,9 @@ final class InstallerPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Blue,
             ])
+            ->favicon(webkernelBrandingUrl('favicon'))
+            ->brandLogo(webkernelBrandingUrl('logo-light'))
+            ->darkModeBrandLogo(webkernelBrandingUrl('logo-dark'))
             ->sidebarFullyCollapsibleOnDesktop()
             ->maxContentWidth(Width::ExtraSmall)
             ->brandLogoHeight('2rem')
