@@ -5,6 +5,20 @@
 //  Depends on: WebkernelRouter (030)
 // ═══════════════════════════════════════════════════════════════════
 
+// ── Internal store (static-backed, no globals) ────────────────────
+
+/**
+ * Returns a reference to the branding asset store.
+ * Using a static variable avoids $GLOBALS and keeps state encapsulated.
+ *
+ * @return array<string, array<string, array{format: string, data: string}>>
+ */
+function &_wkBrandingStore(): array
+{
+    static $store = [];
+    return $store;
+}
+
 // ── Registry ──────────────────────────────────────────────────────
 
 if (! function_exists('webkernelAddBrandingSource')) {
@@ -14,10 +28,8 @@ if (! function_exists('webkernelAddBrandingSource')) {
         string $format,
         string $base64
     ): string {
-        $GLOBALS['_wk_branding'][$brand][$key] = [
-            'format' => $format,
-            'data'   => $base64,
-        ];
+        $store           = &_wkBrandingStore();
+        $store[$brand][$key] = ['format' => $format, 'data' => $base64];
 
         return "data:image/{$format};base64,{$base64}";
     }
@@ -26,7 +38,7 @@ if (! function_exists('webkernelAddBrandingSource')) {
 if (! function_exists('webkernelMakeBase64BrandingUrl')) {
     /**
      * Register a branding asset and return its data URI.
-     * Extracts the brand name from the key prefix (e.g. 'webkernel-logo-light' → 'webkernel').
+     * Extracts the brand from the key prefix (e.g. 'webkernel-logo-light' → 'webkernel').
      * Called by brand asset files in boot-services/brands/{brand}/*.php.
      */
     function webkernelMakeBase64BrandingUrl(string $key, string $format, string $base64): string
@@ -38,13 +50,14 @@ if (! function_exists('webkernelMakeBase64BrandingUrl')) {
 
 if (! function_exists('webkernelBrandingUrl')) {
     /**
-     * Return the URL for a registered branding asset.
-     * The brand is extracted from the key prefix (e.g. 'webkernel-logo-light' → brand 'webkernel').
+     * Return the router URL for a registered branding asset.
+     * The brand is extracted from the key prefix (e.g. 'webkernel-logo-light' → 'webkernel').
      */
     function webkernelBrandingUrl(string $key): string
     {
         $brand = explode('-', $key, 2)[0];
-        $asset = $GLOBALS['_wk_branding'][$brand][$key] ?? null;
+        $store = &_wkBrandingStore();
+        $asset = $store[$brand][$key] ?? null;
 
         if (! $asset) {
             return '';
@@ -59,7 +72,9 @@ if (! function_exists('webkernelBrandingUrl')) {
 if (! function_exists('webkernelRegisterBrandingRoutes')) {
     function webkernelRegisterBrandingRoutes(): void
     {
-        foreach ($GLOBALS['_wk_branding'] as $brand => $assets) {
+        $store = &_wkBrandingStore();
+
+        foreach ($store as $brand => $assets) {
             foreach ($assets as $key => $asset) {
                 WebkernelRouter::register("branding/{$brand}/{$key}", static function () use ($asset): never {
                     $etag = '"' . substr(md5($asset['data']), 0, 16) . '"';
@@ -82,13 +97,6 @@ if (! function_exists('webkernelRegisterBrandingRoutes')) {
             }
         }
     }
-}
-
-// ── Initialise registry ───────────────────────────────────────────
-
-if (! defined('WEBKERNEL_BRANDING_ASSETS')) {
-    $GLOBALS['_wk_branding'] = [];
-    define('WEBKERNEL_BRANDING_ASSETS', true);
 }
 
 // ── Load all brand asset files ────────────────────────────────────
