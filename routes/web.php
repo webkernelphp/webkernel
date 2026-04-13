@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-use Webkernel\Aptitudes\System\Presentation\Controllers\RootController;
+use Webkernel\Platform\SystemPanel\Presentation\Controllers\RootController;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;

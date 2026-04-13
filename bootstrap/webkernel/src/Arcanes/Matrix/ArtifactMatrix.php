@@ -8,16 +8,20 @@ namespace Webkernel\Arcanes\Matrix;
  * cache payload, validation rules, blaze specs.
  *
  * Extension rules:
- *   Add a slot   → one entry in slots()
- *   Add a preset → one entry in PRESETS
- *   Add a field  → one entry in ENTRY_BASE
+ *   Add a slot   -- one entry in slots()
+ *   Add a preset -- one entry in PRESETS
+ *   Add a field  -- one entry in ENTRY_BASE
+ *
+ * Required keys per artifact kind are declared in
+ * support/constants/arcanes.php (WEBKERNEL_ARTIFACT_REQUIRED_KEYS).
+ * ArtifactMatrix::required() reads from that constant at runtime so that
+ * adding a new kind requires zero changes here.
  */
 final class ArtifactMatrix
 {
     public const CACHE_PROTOCOL_VERSION = 2;
 
-    // ── Cache payload ─────────────────────────────────────────────────────────
-
+    // -- Cache payload --------------------------------------------------------
     private const PAYLOAD_BASE = [
         'wk_version'      => self::CACHE_PROTOCOL_VERSION,
         'generated_at'    => '',
@@ -29,8 +33,7 @@ final class ArtifactMatrix
         'entries'         => [],
     ];
 
-    // ── Entry defaults ────────────────────────────────────────────────────────
-
+    // -- Entry defaults -------------------------------------------------------
     private const ENTRY_BASE = [
         'id' => '', 'label' => '', 'description' => '',
         'version' => '', 'active' => false,
@@ -61,16 +64,14 @@ final class ArtifactMatrix
         '_registry'   => '', '_vendor' => '', '_slug' => '',
     ];
 
-    // ── Required keys per type ────────────────────────────────────────────────
-
-    private const REQUIRED = [
+    // -- Fallback required keys (used only when constant is absent) -----------
+    private const REQUIRED_FALLBACK = [
         'module'   => ['id', 'namespace', 'version', 'vendor', 'slug', 'party', 'active', 'registry'],
-        'aptitude' => ['label', 'version', 'active'],
+        'platform' => ['label', 'version', 'active'],
     ];
 
-    // ── Slot registry ─────────────────────────────────────────────────────────
+    // -- Slot registry --------------------------------------------------------
     // slot(label, manifestKey, value, dirs, gitkeep)
-
     private static function slot(string $label, string $key, mixed $value, array $dirs = [], array $gitkeep = []): array
     {
         return ['label' => $label, 'manifestKey' => $key, 'value' => $value, 'dirs' => $dirs, 'gitkeep' => $gitkeep];
@@ -79,24 +80,23 @@ final class ArtifactMatrix
     public static function slots(): array
     {
         return [
-            'helpers'    => self::slot('Create helpers/?',           'helpers_paths',           [['path' => 'helpers', 'depth' => 0]], ['helpers'], ['helpers']),
-            'views'      => self::slot('Create resources/views?',    'view_namespaces',          ['__HANDLE__' => 'resources/views'],   ['resources/views'], ['resources/views']),
-            'lang'       => self::slot('Create lang/?',              'lang_paths',               ['__HANDLE__' => 'lang'],              ['lang', 'lang/en']),
-            'config'     => self::slot('Create config/?',            'config_paths',             ['config'],                           ['config']),
-            'migrations' => self::slot('Create database/migrations?','migration_paths',          ['database/migrations'],              ['database/migrations'], ['database/migrations']),
-            'seeders'    => self::slot('Create database/seeders?',   'seeder_paths',             ['database/seeders'],                 ['database/seeders'],    ['database/seeders']),
-            'console'    => self::slot('Create src/Console?',        'command_paths',            ['src/Console'],                      ['src/Console'],         ['src/Console']),
-            'livewire'   => self::slot('Create src/Livewire?',       'livewire_paths',           ['src/Livewire'],                     ['src/Livewire'],        ['src/Livewire']),
-            'filament'   => self::slot('Create src/Filament?',       'filament_paths',           ['src/Filament'],                     ['src/Filament/Pages', 'src/Filament/Resources', 'src/Filament/Widgets']),
-            'assets'     => self::slot('Create resources/assets?',   'asset_paths',              ['resources/assets'],                 ['resources/assets/js', 'resources/assets/css']),
+            'helpers'    => self::slot('Create helpers/?',            'helpers_paths',           [['path' => 'helpers', 'depth' => 0]], ['helpers'],          ['helpers']),
+            'views'      => self::slot('Create resources/views?',     'view_namespaces',          ['__HANDLE__' => 'resources/views'],   ['resources/views'],  ['resources/views']),
+            'lang'       => self::slot('Create lang/?',               'lang_paths',               ['__HANDLE__' => 'lang'],              ['lang', 'lang/en']),
+            'config'     => self::slot('Create config/?',             'config_paths',             ['config'],                            ['config']),
+            'migrations' => self::slot('Create database/migrations?', 'migration_paths',          ['database/migrations'],               ['database/migrations'],  ['database/migrations']),
+            'seeders'    => self::slot('Create database/seeders?',    'seeder_paths',             ['database/seeders'],                  ['database/seeders'],     ['database/seeders']),
+            'console'    => self::slot('Create src/Console?',         'command_paths',            ['src/Console'],                       ['src/Console'],          ['src/Console']),
+            'livewire'   => self::slot('Create src/Livewire?',        'livewire_paths',           ['src/Livewire'],                      ['src/Livewire'],         ['src/Livewire']),
+            'filament'   => self::slot('Create src/Filament?',        'filament_paths',           ['src/Filament'],                      ['src/Filament/Pages', 'src/Filament/Resources', 'src/Filament/Widgets']),
+            'assets'     => self::slot('Create resources/assets?',    'asset_paths',              ['resources/assets'],                  ['resources/assets/js', 'resources/assets/css']),
             'blaze'      => self::slot('Enable Blaze optimization?',  'blade_to_optimize_paths',  [['path' => 'resources/views', 'compile' => true, 'fold' => false, 'memo' => false, 'safe' => [], 'unsafe' => []]]),
-            'routes_web' => self::slot('Create web routes?',         'route_groups',             ['web' => ['routes/web.php']],        ['routes']),
-            'routes_api' => self::slot('Create api routes?',         'route_groups',             ['api' => ['routes/api.php']],        ['routes']),
+            'routes_web' => self::slot('Create web routes?',          'route_groups',             ['web' => ['routes/web.php']],         ['routes']),
+            'routes_api' => self::slot('Create api routes?',          'route_groups',             ['api' => ['routes/api.php']],         ['routes']),
         ];
     }
 
-    // ── Presets ───────────────────────────────────────────────────────────────
-
+    // -- Presets --------------------------------------------------------------
     private const DEFAULT_SLOTS = [
         'routes_web', 'routes_api', 'config', 'views', 'lang',
         'migrations', 'seeders', 'console', 'livewire', 'filament', 'assets', 'blaze',
@@ -104,7 +104,7 @@ final class ArtifactMatrix
 
     private const PRESETS = [
         'classic' => [
-            'label' => 'Classic — standard Laravel layout',
+            'label' => 'Classic -- standard Laravel layout',
             'extra' => [
                 'src/Models', 'src/Services', 'src/Http/Controllers',
                 'src/Http/Requests', 'src/Http/Middleware', 'src/Providers',
@@ -113,9 +113,9 @@ final class ArtifactMatrix
             ],
         ],
         'custom' => [
-            'label' => 'Custom — define everything manually',
-            'extra'  => [],
-            'slots'  => [],
+            'label' => 'Custom -- define everything manually',
+            'extra' => [],
+            'slots' => [],
         ],
     ];
 
@@ -135,12 +135,10 @@ final class ArtifactMatrix
     public static function preset(string $key): array
     {
         return self::presets()[$key]
-            ?? throw new \InvalidArgumentException("Unknown preset [$key]");
+            ?? throw new \InvalidArgumentException("Unknown preset [{$key}]");
     }
 
-    // ── Manifest sections ─────────────────────────────────────────────────────
-    // Sections are generated — not duplicated
-
+    // -- Manifest sections ----------------------------------------------------
     private const SECTIONS_COMMON = [
         'IDENTITY'      => ['label', 'description', 'version', 'active'],
         'NAMESPACE'     => ['namespace'],
@@ -165,7 +163,7 @@ final class ArtifactMatrix
     public static function sections(string $type): array
     {
         $base = self::SECTIONS_COMMON;
-        if ($type === 'aptitude') {
+        if ($type === 'platform') {
             return $base;
         }
         return ['IDENTITY' => ['id', 'label', 'description', 'version', 'active']]
@@ -178,8 +176,7 @@ final class ArtifactMatrix
             + ['CERTIFICATION' => ['certification']];
     }
 
-    // ── Slot resolution ───────────────────────────────────────────────────────
-
+    // -- Slot resolution ------------------------------------------------------
     public static function resolveSlotValue(string $name, string $handle): mixed
     {
         $value = self::slots()[$name]['value'] ?? null;
@@ -200,8 +197,7 @@ final class ArtifactMatrix
         return $existing;
     }
 
-    // ── Accessors ─────────────────────────────────────────────────────────────
-
+    // -- Accessors ------------------------------------------------------------
     public static function normalize(array $entry): array
     {
         return array_merge(self::ENTRY_BASE, $entry);
@@ -212,9 +208,23 @@ final class ArtifactMatrix
         return array_merge(self::PAYLOAD_BASE, $overrides);
     }
 
+    /**
+     * Return required manifest keys for a given artifact kind.
+     *
+     * Reads WEBKERNEL_ARTIFACT_REQUIRED_KEYS first (declared in
+     * support/constants/arcanes.php).  Falls back to the internal
+     * REQUIRED_FALLBACK constant so the class stays self-contained
+     * even when the constant file has not been loaded.
+     *
+     * Unknown kinds fall back to the 'module' rule set.
+     */
     public static function required(string $type): array
     {
-        return self::REQUIRED[$type] ?? self::REQUIRED['module'];
+        $source = defined('WEBKERNEL_ARTIFACT_REQUIRED_KEYS')
+            ? WEBKERNEL_ARTIFACT_REQUIRED_KEYS
+            : self::REQUIRED_FALLBACK;
+
+        return $source[$type] ?? $source['module'] ?? [];
     }
 
     public static function entryGet(array $entry, string $key, mixed $fallback = null): mixed
@@ -233,6 +243,7 @@ final class ArtifactMatrix
         if (!is_array($raw)) {
             return [];
         }
+
         return array_values(array_map(static fn (mixed $spec) => [
             'path'    => (string) ($spec['path']    ?? ''),
             'compile' => (bool)   ($spec['compile'] ?? true),

@@ -83,8 +83,8 @@ class MakeModule extends Command
             ? $this->collectCustomSlots()
             : [$preset['slots'], $preset['extraDirs']];
 
-        $namespace  = NamingHelper::moduleNamespace($vendor, $slug);
-        $id         = NamingHelper::moduleId($registry, $vendor, $slug);
+        $namespace  = NamingHelper::defaultNamespace('module', $slug, $vendor);
+        $id         = NamingHelper::buildId('module', $registry, $vendor, $slug);
         $targetPath = base_path("modules/{$registry}/{$vendor}/{$slug}");
 
         note("ID: {$id} | Namespace: {$namespace} | Path: {$targetPath}");
@@ -114,7 +114,7 @@ class MakeModule extends Command
         $slug = text(label: 'Aptitude slug', required: true, validate: static fn ($v) => preg_match('/^[a-z0-9\-]+$/', $v) ? null : 'Lowercase, hyphens only.');
 
         $aptitudesRoot = defined('WEBKERNEL_APTITUDES_ROOT') ? WEBKERNEL_APTITUDES_ROOT : base_path('bootstrap/webkernel/src/Aptitudes');
-        $folderName    = NamingHelper::aptitudeFolderName($slug);
+        $folderName    = NamingHelper::folderFromSlug($slug);
         $targetPath    = $aptitudesRoot . '/' . $folderName;
 
         if (is_dir($targetPath)) {
@@ -130,8 +130,8 @@ class MakeModule extends Command
 
         $slots = $this->promptSlots(['helpers', 'views', 'lang', 'config', 'migrations', 'console', 'blaze']);
 
-        $namespace = NamingHelper::aptitudeNamespace($slug);
-        $id        = NamingHelper::aptitudeId($slug);
+        $namespace = NamingHelper::defaultNamespace('platform', $slug);
+        $id        = NamingHelper::buildId('platform', defined('WEBKERNEL_PLATFORM_DEFAULT_SCOPE') ? WEBKERNEL_PLATFORM_DEFAULT_SCOPE : 'platform', $slug);
 
         note("ID: {$id} | Namespace: {$namespace} | Path: {$targetPath}");
         if (!confirm(label: 'Generate?', default: true)) {
