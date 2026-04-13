@@ -35,45 +35,55 @@ defined('WEBKERNEL_COMPATIBLE_WITH') || define('WEBKERNEL_COMPATIBLE_WITH', [
 // -- Constants ----------------------------------------------------------------
 $_support = WEBKERNEL_PATH . '/support/';
 
-require $_support . 'boot-constants/010-paths.php';
-require $_support . 'boot-constants/020-registry.php';
-require $_support . 'boot-constants/030-runtime.php';
-require $_support . 'boot-constants/040-thresholds.php';
-require $_support . 'boot-constants/050-security.php';
-require $_support . 'boot-constants/060-globals.php';
-require $_support . 'boot-constants/070-arcanes.php';   // Arcanes subsystem constants (must come before autoloaders)
+require "{$_support}boot-constants/010-paths.php";
+require "{$_support}boot-constants/020-registry.php";
+require "{$_support}boot-constants/030-runtime.php";
+require "{$_support}boot-constants/040-thresholds.php";
+require "{$_support}boot-constants/050-security.php";
+require "{$_support}boot-constants/060-globals.php";
+
+/* Arcanes subsystem constants (must come before autoloaders) */
+require "{$_support}boot-constants/070-arcanes.php";
 
 /* Dev mode + dev namespace map */
-require $_support . 'boot-actions/010-check-devmode.php';
+require "{$_support}boot-actions/010-check-devmode.php";
 
 /* Cache directory bootstrap */
-require $_support . 'boot-actions/020-cache-dir-bootstrap.php';
+require "{$_support}boot-actions/020-cache-dir-bootstrap.php";
 
 /* PSR-4: Webkernel packages */
-require $_support . 'boot-actions/030-autoload-platform.php';
+require "{$_support}boot-actions/030-autoload-platform.php";
 
 /* PSR-4: WebModule\* -- external modules */
-require $_support . 'boot-actions/040-autoload-modules.php';
+require "{$_support}boot-actions/040-autoload-modules.php";
 
 /* Boot services */
-$_bs = $_support . 'boot-services/';
-require_once $_bs . '010-hmac-signer.php';
-require_once $_bs . '020-webkernel-session.php';
-require_once $_bs . '030-webkernel-router.php';
-require_once $_bs . '040-branding.php';             // needs WebkernelRouter; defines WEBKERNEL_BRAND_LOGO_*
-require_once $_bs . '050-emergency-page-builder.php';
-require_once $_bs . '060-server-side-validator.php';
-require_once $_bs . '070-http-client.php';
-require_once $_bs . '080-setup-flow.php';           // needs WEBKERNEL_BRAND_LOGO_*
-require_once $_bs . '090-global-helpers.php';
+$_bs = "{$_support}boot-services/";
+require_once "{$_bs}010-hmac-signer.php";
+require_once "{$_bs}020-webkernel-session.php";
+require_once "{$_bs}030-webkernel-router.php";
+
+/* Branding needs WebkernelRouter; defines WEBKERNEL_BRAND_LOGO_* */
+require_once "{$_bs}040-branding.php";
+require_once "{$_bs}050-emergency-page-builder.php";
+require_once "{$_bs}060-server-side-validator.php";
+require_once "{$_bs}070-http-client.php";
+
+/* needs WEBKERNEL_BRAND_LOGO_* */
+require_once "{$_bs}080-setup-flow.php";
+require_once "{$_bs}090-global-helpers.php";
 unset($_bs);
 
 /* First-boot guard (.env + SQLite) */
-require $_support . 'setup_env.php';
+require "{$_support}boot-actions/050-setup_env.php";
+
+/* Platform helpers loader */
+require "{$_support}platform-actions/010-load-helpers.php";
 
 // Cleanup
 unset($_support);
 
 // -- Boot ---------------------------------------------------------------------
-return fn (): \Webkernel\WebApp =>
-    \Webkernel\WebApp::configure(basePath: BASE_PATH, version: WEBKERNEL_VERSION)->create();
+return \Webkernel\WebApp::configure(...)
+    (basePath: BASE_PATH, version: WEBKERNEL_VERSION)
+    ->create(...);

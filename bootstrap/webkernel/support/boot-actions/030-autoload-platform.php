@@ -20,7 +20,7 @@ spl_autoload_register(static function (string $class): void {
     if ($prefixes === null) {
         $prefixes = array_merge(
             [
-                'App\\Models\\'                      => WEBKERNEL_PATH . '/platform/app-models',
+                'App\\Models\\'                      => WEBKERNEL_PATH . '/support/app-models',
                 'Webkernel\\Arcanes\\'               => WEBKERNEL_PATH . '/platform/arcanes',
                 'Webkernel\\Panel\\'                 => WEBKERNEL_PATH . '/platform/panel',
                 'Webkernel\\Pages\\'                 => WEBKERNEL_PATH . '/platform/pages',

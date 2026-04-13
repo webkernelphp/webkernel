@@ -144,13 +144,41 @@
         </div>
     @endif
 
-    {{-- THEME SWITCHER --}}
-    <div style="margin-top: 0rem; padding: 0 1rem; max-width: 384px; margin-inline: auto;">
-        @includeIf('filament-panels::components.theme-switcher.index')
-    </div>
+    {{-- THEME SWITCHER & LINKS --}}
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+
+            {{-- Left side: Theme Switcher --}}
+            <div style="transform: scale(0.8); transform-origin: left;">
+                @includeIf('filament-panels::components.theme-switcher.index')
+            </div>
+
+            {{-- Right side: Links & Copyright --}}
+            <div class="fi-header-subheading" style="display: flex; flex-direction: column; align-items: flex-end; text-align: right; line-height: 1.1;">
+                <a href="https://webkernelphp.com" target="_blank" style="text-decoration: none; margin-bottom: 0;">
+                    Webkernel
+                </a>
+                <a href="https://numerimondes.com" target="_blank" style="text-decoration: none; margin-bottom: 0;">
+                    Numerimondes
+                </a>
+            </div>
+
+        </div>
 
     <style>
         /* --- OVERRIDES ---*/
+
+        .fi-header {
+            padding-top: .7rem;
+        }
+
+        .fi-page-content {
+            row-gap: calc(var(--spacing) * 3);
+        }
+
+        .fi-page-header-main-ctn {
+            row-gap: calc(var(--spacing) * 9);
+        }
+
         .fi-btn {
             font-weight: unset;
         }
