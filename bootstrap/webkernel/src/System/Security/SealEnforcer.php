@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Webkernel\System\Security;
 
+use EmergencyPageBuilder;
+
 /**
  * Webkernel — Kernel Boundary Enforcement
  *
@@ -281,8 +283,15 @@ final class SealViolation
 
         $message = sprintf('Kernel boundary violation — class: %s — %s', $violator, $reason);
 
-        if (function_exists('renderCriticalErrorHtml')) {
-            renderCriticalErrorHtml('CORE INTEGRITY VIOLATION', $message, 500, 'CRITICAL');
+        if (class_exists(EmergencyPageBuilder::class)) {
+            EmergencyPageBuilder::create()
+                ->title('CORE INTEGRITY VIOLATION')
+                ->message($message)
+                ->code(500)
+                ->severity('CRITICAL')
+                ->systemState('KERNEL BOUNDARY VIOLATED')
+                ->footer('WEBKERNEL — SEAL ENFORCER')
+                ->render();
         }
 
         throw new SealException($message);
