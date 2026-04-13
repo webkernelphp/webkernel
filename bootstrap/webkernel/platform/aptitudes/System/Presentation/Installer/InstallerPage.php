@@ -52,7 +52,8 @@ class InstallerPage extends Page
             // Install — only in pre phase, disabled when requirements fail
             Action::make('install')
                 ->label('Install Webkernel')
-                ->icon('heroicon-o-rocket-launch')
+                ->icon('download')
+                ->iconPosition('after')
                 ->size("sm")
                 ->color('primary')
                 ->visible(fn (): bool => $this->phase === 'pre')
@@ -119,6 +120,7 @@ class InstallerPage extends Page
                 ->title('Webkernel installed')
                 ->body('All steps completed successfully.')
                 ->success()
+                ->persistent()
                 ->send();
         } catch (\Throwable $e) {
             $this->phase        = 'error';

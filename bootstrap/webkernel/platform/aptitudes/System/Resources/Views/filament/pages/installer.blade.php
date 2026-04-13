@@ -12,35 +12,65 @@
         $allCapsOk   = count($capFailing) === 0;
     @endphp
 
+    @php
+        $states = [
+            'installing' => [
+                'icon' => 'heroicon-o-arrow-path',
+                'iconClass' => 'text-primary-500 animate-spin',
+                'title' => 'Installing Webkernel…',
+                'subtitle' => 'Environment, database and deployment setup',
+                'body' => null,
+            ],
+            'done' => [
+                'icon' => 'heroicon-m-check-circle',
+                'iconClass' => 'text-success-500',
+                'title' => 'Installation complete',
+                'subtitle' => 'Webkernel is ready',
+                'body' => null,
+            ],
+            'error' => [
+                'icon' => 'heroicon-m-x-circle',
+                'iconClass' => 'text-danger-500',
+                'title' => 'Installation failed',
+                'subtitle' => null,
+                'body' => $this->errorMessage ?? null,
+            ],
+        ];
 
-    @if($this->phase === 'installing')
-        <div class="wds-center">
-            <x-filament::loading-indicator class="w-8 h-8"/>
-            <div>
-                <p class="wds-title">Installing Webkernel…</p>
-                <p class="wds-sub">Environment, database and deployment setup</p>
-            </div>
-        </div>
+        $state = $states[$this->phase] ?? null;
+    @endphp
 
-    @elseif($this->phase === 'done')
-        <x-filament::fieldset>
-            <div class="flex items-center gap-3">
-                <x-filament::icon icon="heroicon-m-check-circle" class="w-5 h-5 text-success-500"/>
-                <div>
-                    <p class="wds-title">Installation complete</p>
-                    <p class="wds-sub">Webkernel is ready</p>
+    @if($state)
+        <x-filament::fieldset class="wds-card">
+            <div style="padding-left:.6rem;display:flex;align-items:flex-start;gap:12px;flex-direction:column;">
+
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <x-filament::icon
+                        :icon="$state['icon']"
+                        class="w-5 h-5 {{ $state['iconClass'] }}"
+                    />
+
+                    <div style="display:flex;flex-direction:column;">
+                        <p style="font-weight:600;font-size:16px;margin:0;">
+                            {{ $state['title'] }}
+                        </p>
+
+                        @if($state['subtitle'])
+                            <p style="font-size:14px;color:#555;margin:0;">
+                                {{ $state['subtitle'] }}
+                            </p>
+                        @endif
+                    </div>
                 </div>
-            </div>
-        </x-filament::fieldset>
 
-    @elseif($this->phase === 'error')
-        <x-filament::fieldset>
-            <div class="flex items-center gap-2">
-                <x-filament::icon icon="heroicon-m-x-circle" class="w-5 h-5 text-danger-500"/>
-                <p class="wds-title">Installation failed</p>
+                @if($state['body'])
+                    <pre style="background:#111;color:#eee;padding:8px;border-radius:4px;font-size:13px;overflow:auto;margin:0;width:100%;">
+                            {{ $state['body'] }}
+                    </pre>
+                @endif
+
             </div>
         </x-filament::fieldset>
-        <pre class="wds-console">{{ $this->errorMessage }}</pre>
 
     @else
         <div class="wds-grid">
@@ -120,10 +150,10 @@
     </div>
 
     <style>
-        /* ── HIDE FILAMENT HEADING ──
-        .fi-header-heading,
-        .fi-header-subheading { display: none !important; }
-        */
+        /* --- OVERRIDES ---*/
+        .fi-btn {
+            font-weight: unset;
+        }
         /* ── LOGO ── */
         .wds-logo-wrap {
             display: flex;
