@@ -43,8 +43,8 @@ final class DeclareCommands extends ServiceProvider
     private function loadOverrides(): array
     {
         $path = defined('WEBKERNEL_PATH')
-            ? WEBKERNEL_PATH . '/platform/config/overrides/commands-overrides.php'
-            : base_path('bootstrap/webkernel/platform/config/overrides/commands-overrides.php');
+            ? WEBKERNEL_PATH . '/support/boot-actions/commands-overrides.php'
+            : base_path('bootstrap/webkernel/support/boot-actions/commands-overrides.php');
 
         /** @var array<string, class-string<\Illuminate\Console\Command>> $map */
         $map = is_file($path) ? (require $path) : [];
