@@ -35,27 +35,27 @@ defined('WEBKERNEL_COMPATIBLE_WITH') || define('WEBKERNEL_COMPATIBLE_WITH', [
 // -- Constants ----------------------------------------------------------------
 $_support = WEBKERNEL_PATH . '/support/';
 
-require $_support . 'boot-constants/paths.php';
-require $_support . 'boot-constants/registry.php';
-require $_support . 'boot-constants/runtime.php';
-require $_support . 'boot-constants/thresholds.php';
-require $_support . 'boot-constants/security.php';
-require $_support . 'boot-constants/globals.php';
-require $_support . 'boot-constants/arcanes.php';   // Arcanes subsystem constants (must come before autoloaders)
+require $_support . 'boot-constants/010-paths.php';
+require $_support . 'boot-constants/020-registry.php';
+require $_support . 'boot-constants/030-runtime.php';
+require $_support . 'boot-constants/040-thresholds.php';
+require $_support . 'boot-constants/050-security.php';
+require $_support . 'boot-constants/060-globals.php';
+require $_support . 'boot-constants/070-arcanes.php';   // Arcanes subsystem constants (must come before autoloaders)
 
-// -- Dev mode + dev namespace map ---------------------------------------------
-require $_support . 'boot-actions/devmode.php';
+/* Dev mode + dev namespace map */
+require $_support . 'boot-actions/010-check-devmode.php';
 
-// -- Cache directory bootstrap ------------------------------------------------
-is_dir(WEBKERNEL_CACHE_PATH) || @mkdir(WEBKERNEL_CACHE_PATH, 0750, true);
+/* Cache directory bootstrap */
+require $_support . 'boot-actions/020-cache-dir-bootstrap.php';
 
-// -- PSR-4: Webkernel packages ------------------------------------------------
-require $_support . 'boot-actions/autoload-platform.php';
+/* PSR-4: Webkernel packages */
+require $_support . 'boot-actions/030-autoload-platform.php';
 
-// -- PSR-4: WebModule\* -- external modules -----------------------------------
-require $_support . 'boot-actions/autoload-modules.php';
+/* PSR-4: WebModule\* -- external modules */
+require $_support . 'boot-actions/040-autoload-modules.php';
 
-// -- Boot services ------------------------------------------------------------
+/* Boot services */
 $_bs = $_support . 'boot-services/';
 require_once $_bs . '010-hmac-signer.php';
 require_once $_bs . '020-webkernel-session.php';
@@ -68,7 +68,7 @@ require_once $_bs . '080-setup-flow.php';           // needs WEBKERNEL_BRAND_LOG
 require_once $_bs . '090-global-helpers.php';
 unset($_bs);
 
-// -- First-boot guard (.env + SQLite) -----------------------------------------
+/* First-boot guard (.env + SQLite) */
 require $_support . 'setup_env.php';
 
 // Cleanup
