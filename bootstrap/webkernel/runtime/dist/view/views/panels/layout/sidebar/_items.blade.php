@@ -5,7 +5,7 @@
 aside .fi-sidebar-item,
 aside .fi-sidebar-group-btn {
     margin-left:  var(--wds-sidebar-item-margin-left) !important;
-    margin-right: var(--wds-sidebar-item-margin-right) !important;
+    margin-right: calc(var(--wds-sidebar-item-margin-right) * 1.4) !important;
 }
 
 aside .fi-sidebar-group-items .fi-sidebar-item.fi-active.fi-sidebar-item-has-url {

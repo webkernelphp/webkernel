@@ -1,5 +1,4 @@
 <?php declare(strict_types=1);
-
 // ═══════════════════════════════════════════════════════════════════
 //  § 5  ServerSideValidator
 // ═══════════════════════════════════════════════════════════════════
@@ -10,7 +9,15 @@
  *   min:N | max:N | min_value:N | max_value:N
  *   in:a,b,c | not_in:a,b,c | regex:/pattern/
  *
- * Closure rules receive ($value, $fullDataArray) → true|false|string.
+ * Closure rules receive ($value, $fullDataArray) → true | false | string.
+ *
+ * Usage:
+ *   ServerSideValidator::check($_POST)
+ *       ->field('email', 'required|email')
+ *       ->field('name',  'required|min:2|max:120', 'Full name')
+ *       ->field('age',   'required|integer|min_value:18', 'Age')
+ *       ->renderOnFail()   // auto-renders MicroWebPage and exits on failure
+ *       ->passes();        // true / false
  */
 final class ServerSideValidator
 {
@@ -18,10 +25,10 @@ final class ServerSideValidator
     private array $data;
 
     /** @var list<array{field:string, rule:string|\Closure, label:string}> */
-    private array $rules    = [];
+    private array $rules = [];
 
     /** @var list<string> */
-    private array $errors   = [];
+    private array $errors = [];
 
     private bool $evaluated = false;
 
@@ -62,20 +69,17 @@ final class ServerSideValidator
 
             foreach (explode('|', $rule) as $token) {
                 $error = self::applyToken($token, $label, $value);
-                if ($error !== null) {
-                    $this->errors[] = $error;
-                    break;
-                }
+                if ($error !== null) { $this->errors[] = $error; break; }
             }
         }
         return $this;
     }
 
-    public function passes(): bool        { return $this->evaluate()->errors === []; }
-    public function fails(): bool         { return !$this->passes(); }
+    public function passes(): bool       { return $this->evaluate()->errors === []; }
+    public function fails(): bool        { return !$this->passes(); }
     /** @return list<string> */
-    public function errors(): array       { return $this->evaluate()->errors; }
-    public function firstError(): string  { return $this->evaluate()->errors[0] ?? ''; }
+    public function errors(): array      { return $this->evaluate()->errors; }
+    public function firstError(): string { return $this->evaluate()->errors[0] ?? ''; }
 
     /** @param \Closure(string, list<string>): void $callback */
     public function onFail(\Closure $callback): self
@@ -84,11 +88,11 @@ final class ServerSideValidator
         return $this;
     }
 
-    /** @param \Closure(EmergencyPageBuilder, string): void|null $customise */
+    /** @param \Closure(MicroWebPage, string): void|null $customise */
     public function renderOnFail(?\Closure $customise = null): self
     {
         if ($this->fails()) {
-            $builder = EmergencyPageBuilder::create()->validationFailed($this->firstError());
+            $builder = MicroWebPage::create()->validationFailed($this->firstError());
             if ($customise !== null) $customise($builder, $this->firstError());
             $builder->render();
         }
@@ -97,7 +101,7 @@ final class ServerSideValidator
 
     private static function applyToken(string $token, string $label, mixed $value): ?string
     {
-        $str = is_string($value) ? trim($value) : (string) ($value ?? '');
+        $str    = is_string($value) ? trim($value) : (string) ($value ?? '');
         [$name, $param] = str_contains($token, ':') ? explode(':', $token, 2) : [$token, ''];
 
         return match ($name) {

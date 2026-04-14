@@ -15,9 +15,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\HtmlString;
 use Webkernel\Platform\SystemPanel\Support\InstallationState;
 use Webkernel\System\Support\CapabilityMap;
-use Webkernel\Users\UserPrivilege;
-use Webkernel\Users\Models\UserPrivilegeModel;
-use App\Models\User;
+use Webkernel\Users\Enum\UserPrivilegeLevel;
+use Webkernel\Users\Models\{UserPrivilege,User};
 
 /**
  * First-run installation wizard page.
@@ -87,11 +86,7 @@ class InstallerPage extends Page
 
             Notification::make()
                 ->title('Installation resumed')
-                ->body(
-                    'The platform infrastructure is ready but no Application Owner or '
-                    . 'Super Administrator account has been created yet. '
-                    . 'Please create one now to complete setup.'
-                )
+                ->body('The platform infrastructure is ready but no Application Owner or Super Administrator account has been created yet. Please create one now to complete setup.')
                 ->warning()
                 ->persistent()
                 ->send();
@@ -113,7 +108,7 @@ class InstallerPage extends Page
                     ->label('Full name')
                     ->required()
                     ->maxLength(255)
-                    ->placeholder('John Doe'),
+                    ->placeholder('El Moumen Yassine'),
 
                 TextInput::make('email')
                     ->label('Email address')
@@ -121,7 +116,7 @@ class InstallerPage extends Page
                     ->required()
                     ->maxLength(255)
                     ->unique(table: 'users', column: 'email')
-                    ->placeholder('admin@example.com'),
+                    ->placeholder('email@example.com'),
 
                 TextInput::make('password')
                     ->label('Password')
@@ -134,7 +129,7 @@ class InstallerPage extends Page
                 Select::make('privilege')
                     ->label('Your Privilege')
                     ->options(self::privilegedOptions())
-                    ->default(UserPrivilege::APP_OWNER->value)
+                    ->default(UserPrivilegeLevel::APP_OWNER->value)
                     ->native(false)
                     ->searchable()
                     ->required()
@@ -253,9 +248,9 @@ class InstallerPage extends Page
         // Validate that the chosen privilege is app-owner or super-user.
         // Members cannot be the first account -- that would leave the platform
         // permanently unmanageable.
-        $privilege = UserPrivilege::fromKey($data['privilege'] ?? '');
+        $privilege = UserPrivilegeLevel::fromKey($data['privilege'] ?? '');
 
-        if ($privilege === null || $privilege === UserPrivilege::MEMBER) {
+        if ($privilege === null || $privilege === UserPrivilegeLevel::MEMBER) {
             Notification::make()
                 ->title('Invalid role')
                 ->body(
@@ -275,7 +270,7 @@ class InstallerPage extends Page
                 'password' => Hash::make($data['password']),
             ]);
 
-            UserPrivilegeModel::create([
+            UserPrivilege::create([
                 'user_id'   => $user->id,
                 'privilege' => $privilege->value,
             ]);
@@ -389,8 +384,8 @@ class InstallerPage extends Page
     private static function privilegedOptions(): array
     {
         return [
-            UserPrivilege::APP_OWNER->value  => UserPrivilege::APP_OWNER->label(),
-            UserPrivilege::SUPER_USER->value => UserPrivilege::SUPER_USER->label(),
+            UserPrivilegeLevel::APP_OWNER->value  => UserPrivilegeLevel::APP_OWNER->label(),
+            UserPrivilegeLevel::SUPER_USER->value => UserPrivilegeLevel::SUPER_USER->label(),
         ];
     }
 

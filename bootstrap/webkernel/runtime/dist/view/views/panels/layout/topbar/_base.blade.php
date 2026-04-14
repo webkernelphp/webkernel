@@ -4,7 +4,7 @@
 @php
     $topbarPaddingY      = '0.25rem';
     $topbarPaddingX      = '0.75rem';
-    $topbarMinHeight     = '2.75rem';
+    $topbarMinHeight     = '3.25rem';
     $topbarLogoHeight    = '1.75rem';
     $topbarAvatarSize    = '1.75rem';
 @endphp

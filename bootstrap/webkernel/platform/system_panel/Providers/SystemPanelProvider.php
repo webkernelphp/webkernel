@@ -35,11 +35,11 @@ final class SystemPanelProvider extends PanelProvider
             ->brandLogoHeight('2.1rem')
             ->darkMode(true)
             ->maxContentWidth(Width::Full)
-            ->sidebarWidth("17rem")
+            ->topbar()
             ->spa()
-            ->globalSearch(position: \Filament\Enums\GlobalSearchPosition::Sidebar)
+            ->globalSearch()
             ->sidebarCollapsibleOnDesktop()
-            ->maxContentWidth('screen-2xl')
+            ->maxContentWidth('screen-xxl')
             ->colors([
                 'primary' => Color::Blue,
             ])

@@ -71,7 +71,7 @@
 
     {{-- ── CREATE USER ─────────────────────────────────────────────────── --}}
     @elseif ($this->phase === 'create_user')
-        @php $selPriv = \Webkernel\Users\UserPrivilege::fromKey($this->adminData['privilege'] ?? 'app-owner'); @endphp
+        @php $selPriv = \Webkernel\Users\Enum\UserPrivilegeLevel::fromKey($this->adminData['privilege'] ?? 'app-owner'); @endphp
             <x-filament::fieldset
                 label="First {{ $selPriv?->label() }} account "
             >            <div class="wds-card-inner">
@@ -79,7 +79,7 @@
                 {{--
                 <div class="wds-head">
                    @if ($selPriv)
-                       <x-filament::badge color="{{ $selPriv === \Webkernel\Users\UserPrivilege::APP_OWNER ? 'primary' : ($selPriv === \Webkernel\Users\UserPrivilege::SUPER_USER ? 'warning' : 'gray') }}">
+                       <x-filament::badge color="{{ $selPriv === \Webkernel\Users\Enum\UserPrivilegeLevel::APP_OWNER ? 'primary' : ($selPriv === \Webkernel\Users\Models\UserPrivilegeModel::SUPER_USER ? 'warning' : 'gray') }}">
                            {{ $selPriv->label() }}
                        </x-filament::badge>
                    @endif

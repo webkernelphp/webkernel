@@ -1,18 +1,13 @@
 <?php declare(strict_types=1);
 
-// -- PSR-4: Only invoked if the Webkernel sovereign packages loader -----------
+// -- PSR-4: Webkernel Sovereign Autoloader ------------------------------------
 //
 // @link https://php.net/manual/en/function.spl-autoload-register.php
 //
-// Supports multiple base directories for the same namespace prefix.
-// Map format:
-//   'Prefix\\' => '/single/path'            -- single directory (string)
-//   'Prefix\\' => ['/path/one', '/path/two'] -- multiple directories (array)
-//
-// The autoloader resolves the relative class file against each directory in
-// order and requires the first match.  This mirrors the way Composer handles
-// multiple PSR-4 roots for the same namespace.
-//
+// High-performance PSR-4 implementation for air-gapped environment stability.
+// Handles multiple base directories and ensures absolute path resolution.
+// This autoloader is prepended to the stack to ensure sovereign packages
+// override vendor-space dependencies.
 
 /** @disregard */
 spl_autoload_register(static function (string $class): void {
@@ -21,37 +16,56 @@ spl_autoload_register(static function (string $class): void {
     if ($prefixes === null) {
         $prefixes = array_merge(
             [
-                'App\\Models\\'                    => WEBKERNEL_PATH . '/support/app-models',
-                'Webkernel\\Arcanes\\'             => WEBKERNEL_PATH . '/platform/arcanes',
-                'Webkernel\\Panel\\'               => WEBKERNEL_PATH . '/platform/panel',
-                'Webkernel\\Pages\\'               => WEBKERNEL_PATH . '/platform/pages',
-                'Webkernel\\Widgets\\'             => WEBKERNEL_PATH . '/platform/widgets',
+                /* Aptitudes Layer: Core Business Logic */
+                'Webkernel\\Pages\\'    => WEBKERNEL_PATH . '/aptitudes/pages',
+                'Webkernel\\Panels\\'   => WEBKERNEL_PATH . '/aptitudes/panels',
+                'Webkernel\\Plugins\\'  => WEBKERNEL_PATH . '/aptitudes/plugins',
+                'Webkernel\\Users\\'    => WEBKERNEL_PATH . '/aptitudes/users',
+
+                /* Backend Layer: System Infrastructure */
+                'Webkernel\\System\\'   => WEBKERNEL_PATH . '/backend/src',
+                'Webkernel\\Exceptions\\'   => WEBKERNEL_PATH . '/backend/exceptions',
+                'Webkernel\\Providers\\'   => WEBKERNEL_PATH . '/backend/providers',
+
+                /* Support Layer: Application Data Models */
+                'App\\Models\\'         => WEBKERNEL_PATH . '/support/app-models',
+
+                /* Platform Layer: Interface and Widgets */
+                'Webkernel\\Arcanes\\'  => WEBKERNEL_PATH . '/platform/arcanes',
+                'Webkernel\\Panel\\'    => WEBKERNEL_PATH . '/platform/panel',
+                'Webkernel\\Widgets\\'  => WEBKERNEL_PATH . '/platform/widgets',
+
+                /* System Panel Specific Assets */
                 'Webkernel\\Platform\\SystemPanel\\' => WEBKERNEL_PATH . '/platform/system_panel',
-                'Webkernel\\Users\\'               => WEBKERNEL_PATH . '/aptitudes/users',
             ],
             WEBKERNEL_DEV_NAMESPACES,
             [
-                // Catch-all: must come last so specific prefixes above win.
-                'Webkernel\\' => WEBKERNEL_PATH . '/src',
+                /* Fallback: Generic Webkernel Namespace */
+                'Webkernel\\'           => WEBKERNEL_PATH . '/src',
             ]
         );
     }
 
     foreach ($prefixes as $prefix => $baseDirs) {
+        // Ensure exact namespace match
         if (!str_starts_with($class, $prefix)) {
             continue;
         }
 
-        $relative = str_replace('\\', '/', substr($class, strlen($prefix))) . '.php';
+        // Calculate relative class name by removing the prefix
+        $relativeClass = substr($class, strlen($prefix));
+
+        // Convert namespace separators to directory separators
+        $normalizedPath = str_replace('\\', DIRECTORY_SEPARATOR, $relativeClass) . '.php';
 
         foreach ((array) $baseDirs as $baseDir) {
-            $file = rtrim((string) $baseDir, '/') . '/' . $relative;
+            // Build absolute path
+            $file = rtrim((string) $baseDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $normalizedPath;
+
             if (is_file($file)) {
-                require $file;
+                require_once $file;
                 return;
             }
         }
     }
-},
-/* $throw: Force a crash if registration fails (No silent failure) */ true,
-/* $prepend: Jump to the very top of the priority stack */ true);
+}, true, true);

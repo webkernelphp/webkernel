@@ -23,7 +23,7 @@ final class RootController extends Controller
     public function __invoke(): RedirectResponse
     {
         return match (InstallationState::resolve()) {
-            InstallationState::INSTALLED => redirect('/system'),
+            InstallationState::INSTALLED => redirect(filament()->getPanel('system')->getUrl()),
             default                      => redirect('/installer'),
         };
     }

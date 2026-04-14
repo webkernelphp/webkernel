@@ -143,7 +143,7 @@ return [
 
     'model_locations' => [
         'app',
-        'bootstrap/webkernel/app/.locked/AppModels',
+        'bootstrap/webkernel/aptitudes/users/Models',
     ],
 
     /*

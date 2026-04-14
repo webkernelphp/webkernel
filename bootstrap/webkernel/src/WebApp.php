@@ -1,24 +1,23 @@
 <?php declare(strict_types=1);
+
 namespace Webkernel;
 
+use Illuminate\Config\Repository as ConfigRepository;
+use Illuminate\Contracts\Debug\ExceptionHandler as ExceptionHandlerContract;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\ApplicationBuilder;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Config\Repository as ConfigRepository;
-use Illuminate\Contracts\Debug\ExceptionHandler as ExceptionHandlerContract;
-use Webkernel\Exceptions\Handler as WebkernelExceptionHandler;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\View;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Webkernel\Exceptions\Handler as WebkernelExceptionHandler;
+use Webkernel\Platform\SystemPanel\Support\InstallationState;
 use Webkernel\System\Security\CoreManifest;
 use Webkernel\System\Security\SealEnforcer;
-use Webkernel\Platform\SystemPanel\Support\InstallationState;
 
-/**
- * Application entry point.
- *
- * Owns: integrity bootstrap, application factory, metadata accessors.
- * Does NOT own: module/aptitude booting (that is Arcanes\Modules exclusively).
- */
 final class WebApp extends Application
 {
     private static bool    $integrityBooted        = false;
@@ -26,33 +25,33 @@ final class WebApp extends Application
     private static ?string $webkernelVersion        = null;
     private static ?array  $instanceData            = null;
 
-    // ── Integrity ─────────────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
 
     public function __construct($basePath = null)
     {
         parent::__construct($basePath);
 
-        // Defensive: ensure config is bound even if bootstrapping fails early.
         if (! $this->bound('config')) {
             $this->instance('config', new ConfigRepository([]));
         }
 
-        // Defensive: force a bootstrap-safe exception handler instance.
-        $handler = new WebkernelExceptionHandler($this);
-        $this->instance(ExceptionHandlerContract::class, $handler);
-        $this->instance(\Illuminate\Foundation\Exceptions\Handler::class, $handler);
+       // $handler = new WebkernelExceptionHandler($this);
+       // $this->instance(ExceptionHandlerContract::class, $handler);
+       // $this->instance(\Illuminate\Foundation\Exceptions\Handler::class, $handler);
     }
+
+    // -------------------------------------------------------------------------
 
     public static function bootstrapCoreIntegrity(string $basePath): void
     {
-        $status       = CoreManifest::verify(basePath: $basePath, manifestPath: WEBKERNEL_CACHE_PATH_MANIFEST);
-        $fingerprint  = $status['fingerprint'] ?? null;
+        $status      = CoreManifest::verify(basePath: $basePath, manifestPath: WEBKERNEL_CACHE_PATH_MANIFEST);
+        $fingerprint = $status['fingerprint'] ?? null;
 
-        if (!self::$integrityBooted) {
+        if (! self::$integrityBooted) {
             class_exists(SealEnforcer::class);
             spl_autoload_register(static fn(string $c) => SealEnforcer::inspect($c), prepend: true);
             SealEnforcer::boot(paranoid: true, trustedBasePath: WEBKERNEL_PATH);
-            self::$integrityBooted         = true;
+            self::$integrityBooted        = true;
             self::$lastManifestFingerprint = $fingerprint;
             return;
         }
@@ -63,7 +62,7 @@ final class WebApp extends Application
         }
     }
 
-    // ── Factory ───────────────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
 
     public static function configure(?string $basePath = null, string $version = 'dev'): ApplicationBuilder
     {
@@ -92,17 +91,31 @@ final class WebApp extends Application
             ->withMiddleware(function (Middleware $m): void {
                 $m->prepend(InstallationGuard::class);
             })
-            ->withExceptions(fn(Exceptions $e): null => null);
+            //->withExceptions(fn(Exceptions $e): null => null);
 
-        // Override the default exception handler with a bootstrap-safe instance.
-        $handler = new WebkernelExceptionHandler($app);
-        $app->instance(ExceptionHandlerContract::class, $handler);
-        $app->instance(\Illuminate\Foundation\Exceptions\Handler::class, $handler);
+            ->withExceptions(function (Exceptions $exceptions) {
+                // This ensures that right before an exception is rendered,
+                // the 'errors' namespace points to your custom directory.
+                $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e) {
+                    $path = WEBKERNEL_PATH . '/backend/resources/views/error-pages';
+
+                    // Force the namespace right now
+                    View::replaceNamespace('errors', [$path]);
+
+                    $status = $e->getStatusCode();
+
+                    if (view()->exists("errors::{$status}")) {
+                        return response()->view("errors::{$status}", [
+                            'exception' => $e,
+                        ], $status);
+                    }
+                });
+            });
 
         return $builder;
     }
 
-    // ── Metadata ──────────────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
 
     public function webkernelVersion(): string
     {
@@ -115,10 +128,12 @@ final class WebApp extends Application
             $file = defined('WEBKERNEL_INSTANCE_FILE')
                 ? WEBKERNEL_INSTANCE_FILE
                 : $this->storagePath('webkernel/instance.json');
+
             self::$instanceData = is_file($file)
                 ? (json_decode(file_get_contents($file), true) ?? [])
                 : [];
         }
+
         return self::$instanceData;
     }
 
@@ -127,17 +142,20 @@ final class WebApp extends Application
         return data_get($this->webkernelInstance(), 'data.attributes.' . $key, $default);
     }
 
-    // ── Namespace detection ───────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
 
     public function getNamespace(): string
     {
-        if (!is_null($this->namespace)) {
+        if (! is_null($this->namespace)) {
             return $this->namespace;
         }
+
         $psr4 = $this->readComposerPsr4($this->basePath('composer.json'));
+
         if (empty($psr4) && is_file($fb = $this->basePath('bootstrap/composer.json'))) {
             $psr4 = $this->readComposerPsr4($fb);
         }
+
         foreach ($psr4 as $namespace => $path) {
             foreach ((array) $path as $candidate) {
                 if (realpath($this->path()) === realpath($this->basePath($candidate))) {
@@ -145,39 +163,32 @@ final class WebApp extends Application
                 }
             }
         }
+
         throw new RuntimeException('Unable to detect application namespace.');
     }
 
     private function readComposerPsr4(string $path): array
     {
-        if (!is_file($path)) {
+        if (! is_file($path)) {
             return [];
         }
+
         return (array) data_get(json_decode(file_get_contents($path), true), 'autoload.psr-4');
     }
 }
 
-
 // -----------------------------------------------------------------------------
 
-/**
- * Global installation guard.
- *
- * Blocks every HTML request that is not already targeting the installer or
- * the health endpoint, redirecting to /installer when installation is
- * incomplete for any reason (missing infrastructure OR missing admin).
- */
 final class InstallationGuard
 {
     public function handle(\Illuminate\Http\Request $request, \Closure $next): mixed
     {
-        $isHtmlRequest = str_starts_with($request->header('Accept', ''), 'text/html');
+        $isHtmlRequest   = str_starts_with($request->header('Accept', ''), 'text/html');
         $isInstallerPath = str_starts_with($request->decodedPath(), WEBKERNEL_INSTALLER_PATH_PREFIX);
-        $isHealthPath = $request->decodedPath() === WEBKERNEL_HEALTH_PATH;
+        $isHealthPath    = $request->decodedPath() === WEBKERNEL_HEALTH_PATH;
 
         if ($isHtmlRequest && ! $isInstallerPath && ! $isHealthPath) {
             $state = InstallationState::resolve();
-
             if ($state !== InstallationState::INSTALLED) {
                 return redirect(WEBKERNEL_INSTALLER_URL);
             }

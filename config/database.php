@@ -32,6 +32,18 @@ return [
 
     'connections' => [
 
+        'webkernel' => [
+            'driver'                  => WEBKERNEL_DB_DRIVER,
+            'url'                     => env('DB_URL'),
+            'database'                => WEBKERNEL_MAIN_SQLITE_DB_PATH,
+            'prefix'                  => WEBKERNEL_DB_PREFIX,
+            'foreign_key_constraints' => WEBKERNEL_DB_FOREIGN_KEYS,
+            'busy_timeout'            => WEBKERNEL_DB_TIMEOUT,
+            'journal_mode'            => WEBKERNEL_DB_JOURNAL,
+            'synchronous'             => WEBKERNEL_DB_SYNC,
+            'transaction_mode'        => WEBKERNEL_DB_TX_MODE,
+        ],
+
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DB_URL'),

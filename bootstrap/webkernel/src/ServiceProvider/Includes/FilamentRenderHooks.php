@@ -60,7 +60,7 @@ class FilamentRenderHooks
     //   );
     private function registerAuthPageCss(): void
     {
-        $authPaths = ['login', 'register', 'password-reset', 'profile'];
+        $authPaths = ['login', 'register', 'password-reset'];
 
         if (!str(request()->path())->contains($authPaths)) {
             return;

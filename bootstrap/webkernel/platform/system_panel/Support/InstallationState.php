@@ -2,8 +2,8 @@
 
 namespace Webkernel\Platform\SystemPanel\Support;
 
-use Webkernel\Users\Models\UserPrivilegeModel;
-use Webkernel\Users\UserPrivilege;
+use Webkernel\Users\Models\UserPrivilege;
+use Webkernel\Users\Enum\UserPrivilegeLevel;
 
 /**
  * Canonical installation-state resolver.
@@ -75,10 +75,10 @@ final class InstallationState
     public static function hasPrivilegedUser(): bool
     {
         try {
-            return UserPrivilegeModel::query()
+            return UserPrivilege::query()
                 ->whereIn('privilege', [
-                    UserPrivilege::APP_OWNER->value,
-                    UserPrivilege::SUPER_USER->value,
+                    UserPrivilegeLevel::APP_OWNER->value,
+                    UserPrivilegeLevel::SUPER_USER->value,
                 ])
                 ->exists();
         } catch (\Throwable) {

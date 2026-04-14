@@ -72,7 +72,7 @@ class Dashboard extends Page
     {
         return [
             FilterAction::make('filters')
-                ->form([
+                ->schema([
                     \Filament\Forms\Components\DatePicker::make('startDate'),
                     \Filament\Forms\Components\DatePicker::make('endDate'),
                     \Filament\Forms\Components\Select::make('environment')

@@ -43,7 +43,7 @@ final class WebkernelRouter
             $params = self::match($route['pattern'], $relative);
             if ($params !== null) {
                 ($route['handler'])($params);
-                return true;
+                exit;
             }
         }
         return false;
@@ -88,4 +88,5 @@ final class WebkernelRouter
         }
         return $params;
     }
+
 }
