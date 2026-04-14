@@ -16,6 +16,22 @@ spl_autoload_register(static function (string $class): void {
     if ($prefixes === null) {
         $prefixes = array_merge(
             [
+
+                /* Core Layer: Connectors */
+
+                // General contracts & facades (directly in the connectors package namespace)
+                'Webkernel\\Connectors\\Contracts\\' => WEBKERNEL_PATH . '/aptitudes/connectors/contracts',
+                'Webkernel\\Connectors\\Traits\\'    => WEBKERNEL_PATH . '/aptitudes/connectors/traits',
+                'Webkernel\\Connectors\\'            => WEBKERNEL_PATH . '/aptitudes/connectors/facades',
+
+                // Domain-specific connectors
+                'Webkernel\\Communication\\' => WEBKERNEL_PATH . '/aptitudes/connectors/src/communication',
+                'Webkernel\\Social\\'        => WEBKERNEL_PATH . '/aptitudes/connectors/src/social',
+                'Webkernel\\Payment\\'       => WEBKERNEL_PATH . '/aptitudes/connectors/src/payment',
+                'Webkernel\\Integration\\'   => WEBKERNEL_PATH . '/aptitudes/connectors/src/integration',
+                'Webkernel\\Productivity\\'  => WEBKERNEL_PATH . '/aptitudes/connectors/src/productivity',
+                'Webkernel\\FFI\\'           => WEBKERNEL_PATH . '/aptitudes/connectors/src/native/ffi',
+
                 /* Aptitudes Layer: Core Business Logic */
                 'Webkernel\\Pages\\'    => WEBKERNEL_PATH . '/aptitudes/pages',
                 'Webkernel\\Panels\\'   => WEBKERNEL_PATH . '/aptitudes/panels',
