@@ -20,7 +20,7 @@ use Filament\Pages\Dashboard\Actions\FilterAction;
 
 class Dashboard extends Page
 {
-    use ResolvesWidgets;
+
 
     public ?array $filters = [];
 
@@ -65,7 +65,7 @@ class Dashboard extends Page
     protected function getWidgetsComponent(): Component
     {
         return Grid::make($this->getColumns())
-            ->schema(fn (): array => $this->resolveWidgetComponents());
+            ->schema([]);
     }
 
     protected function getHeaderActions(): array

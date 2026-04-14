@@ -47,16 +47,16 @@ final class SystemPanelProvider extends PanelProvider
             ->registration()
             ->profile(isSimple: false)
             ->discoverResources(
-                in: aptitude_path('System/Presentation/Resources'),
+                in: __DIR__ . '/../Presentation/Resources',
                 for: 'Webkernel\Platform\SystemPanel\Presentation\Resources',
             )
             ->discoverPages(
-                in: aptitude_path('System/Presentation/Pages'),
+                in: __DIR__ . '/../Presentation/Pages',
                 for: 'Webkernel\Platform\SystemPanel\Presentation\Pages',
             )
             ->pages([Dashboard::class, DependencyManager::class])
             ->discoverWidgets(
-                in: aptitude_path('System/Presentation/Widgets'),
+                in: __DIR__ . '/../Presentation/Widgets',
                 for: 'Webkernel\Platform\SystemPanel\Presentation\Widgets',
             )
             ->widgets([AccountWidget::class, FilamentInfoWidget::class])
