@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Webkernel\UI\Concerns;
+namespace Webkernel\Traits;
 
 use Illuminate\Support\Str;
 use ReflectionClass;

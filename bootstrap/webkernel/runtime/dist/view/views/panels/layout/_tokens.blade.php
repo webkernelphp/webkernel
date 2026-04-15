@@ -32,12 +32,12 @@
 
     /* ── Scrollbar ── */
     --wds-scrollbar-size:          3.5px;
-    --wds-scrollbar-opacity:       0.3;
-    --wds-scrollbar-opacity-hover: 0.5;
+    --wds-scrollbar-opacity:       0.7;
+    --wds-scrollbar-opacity-hover: 0.9;
 
     /* ── Colors (light) ── */
     --wds-color-background: #e4e7e9;
-    --wds-color-surface:    oklch(96.8% 0.007 247.896);
+    /*--wds-color-surface:    oklch(96.8% 0.007 247.896);*/
     --wds-color-topbar:     oklch(96.8% 0.007 247.896);
 
     /* ── Sidebar inner spacing ── */

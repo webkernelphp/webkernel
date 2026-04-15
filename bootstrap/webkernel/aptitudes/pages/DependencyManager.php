@@ -10,7 +10,7 @@ use Filament\Support\Enums\ActionSize;
 use Illuminate\Support\Collection;
 use Webkernel\Process;
 use Webkernel\Query\QueryModules;
-use Webkernel\UI\Concerns\HasSelfResolvedView;
+use Webkernel\Traits\HasSelfResolvedView;
 use BackedEnum;
 
 class DependencyManager extends Page implements HasForms

@@ -1,4 +1,4 @@
-{{-- webkernel::panels.layout._scrollbar — thin scrollbar global (webkit + firefox) (private partial) --}}
+{{-- webkernel::panels.layout._scrollbar — thin scrollbar global (webkit + firefox) (private partial)
 <style>
 /* Firefox */
 * {
@@ -20,3 +20,4 @@
 .dark *::-webkit-scrollbar-thumb       { background: rgba(255, 255, 255, var(--wds-scrollbar-opacity)); }
 .dark *::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, var(--wds-scrollbar-opacity-hover)); }
 </style>
+ --}}

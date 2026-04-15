@@ -65,7 +65,9 @@ class Dashboard extends Page
     protected function getWidgetsComponent(): Component
     {
         return Grid::make($this->getColumns())
-            ->schema([]);
+            ->schema([
+
+            ]);
     }
 
     protected function getHeaderActions(): array

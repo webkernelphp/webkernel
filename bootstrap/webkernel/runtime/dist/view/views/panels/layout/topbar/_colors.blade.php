@@ -1,6 +1,5 @@
 {{-- webkernel::panels.layout.topbar._colors — background surface light + dark (private partial) --}}
 <style>
-@media (min-width: 768px) {
     .fi-topbar {
         background-color: var(--wds-color-surface) !important;
         backdrop-filter: blur(var(--wds-backdrop-blur)) !important;
@@ -14,5 +13,5 @@
                 rgba(0, 0, 0, var(--wds-shadow-dark-opacity)),
             0 0 0 1px rgba(255, 255, 255, var(--wds-shadow-dark-border-opacity)) !important;
     }
-}
+
 </style>
