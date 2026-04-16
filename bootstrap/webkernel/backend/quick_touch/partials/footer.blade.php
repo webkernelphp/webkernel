@@ -20,7 +20,7 @@
         </span>
     </span>
 
-    <div style="display:flex;gap:6px;align-items:center;visibility: hidden;">
+    <div style="display:flex;gap:6px;align-items:center;">
         <x-filament::icon-button
             icon="cog"
             color="gray"

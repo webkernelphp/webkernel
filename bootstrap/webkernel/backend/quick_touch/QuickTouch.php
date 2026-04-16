@@ -36,12 +36,7 @@ use Webkernel\Traits\HasSelfResolvedView;
  */
 class QuickTouch
 {
-    use HasSelfResolvedView;
-
     public const string QUICKTOUCH_VERSION = '1.0.0';
-
-    /** Blade view resolved relative to this file's directory */
-    protected static ?string $dynamicView = 'quick-touch';
 
     /** Global enabled flag */
     private static bool $enabled = true;
@@ -198,11 +193,11 @@ class QuickTouch
             return false;
         }
 
-        if (! auth()->check()) {
+        if (! filament()->auth()->check()) {
             return true; // guest — let the view decide
         }
 
-        $authUser = auth()->user();
+        $authUser = filament()->auth()->user();
 
         if (method_exists($authUser, 'hasQuickTouchEnabled')) {
             return $authUser->hasQuickTouchEnabled();
@@ -218,11 +213,11 @@ class QuickTouch
 
     private static function userHasTrait(?array $user): bool
     {
-        if (! auth()->check()) {
+        if (! filament()->auth()->check()) {
             return false;
         }
 
-        return method_exists(auth()->user(), 'getQuickTouchFavorites')
-            || method_exists(auth()->user(), 'getWebkernelTouchFavorites');
+        return method_exists(filament()->auth()->user(), 'getQuickTouchFavorites')
+            || method_exists(filament()->auth()->user(), 'getWebkernelTouchFavorites');
     }
 }
