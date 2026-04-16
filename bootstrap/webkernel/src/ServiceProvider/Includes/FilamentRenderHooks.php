@@ -18,6 +18,59 @@ class FilamentRenderHooks
         $this->registerAuthPageCss();
         $this->registerIcons();
         $this->registerAuthFormHooks();
+        $this->registerWebkernelTouch();
+    }
+
+    /**
+     * Inject Webkernel Touch into all registered Filament panels.
+     *
+     * The component is rendered once before the closing body tag so it sits
+     * above all panel content without interfering with any layout hooks.
+     *
+     * The window.wktPanels array is populated here with every registered panel
+     * so the switcher tab inside the component can list them without any
+     * server round-trip.
+     */
+    private function registerWebkernelTouch(): void
+    {
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::BODY_END,
+            static function (): \Illuminate\Contracts\View\View {
+                $panels = collect(\Filament\Facades\Filament::getPanels())
+                    ->map(fn ($panel) => [
+                        'label' => $panel->getId(),
+                        'url'   => $panel->getUrl() ?? '/',
+                    ])
+                    ->values()
+                    ->toArray();
+
+
+                    $wktEnabled = true;
+
+                    $wktPanels = $panels;
+
+                    $wktUser = [
+                        'name'  => 'Demo User',
+                        'email' => 'demo@webkernel.dev',
+                    ];
+
+                    /*
+                     * Pre-seeded favorites — will be written to localStorage on first load
+                     * so the Main tab is never empty in demo mode.
+                     */
+                    $wktFavorites = [
+                        ['url' => '/admin/users',    'title' => 'Users'],
+                        ['url' => '/admin/settings', 'title' => 'Settings'],
+                        ['url' => '/admin/logs',     'title' => 'Logs'],
+                    ];
+                return view('webkernel-touch', [
+                    'panels' => $panels,
+                    'wktPanelsJson'    => json_encode($wktPanels),
+                    'wktFavoritesJson' => json_encode($wktFavorites),
+                    'wktUser' => json_encode($wktUser),
+                ]);
+            },
+        );
     }
 
     // ── Layout CSS (BODY_START, Octane-safe) ─────────────────────────────────

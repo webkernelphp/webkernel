@@ -82,8 +82,7 @@
          @endif
 
          <div style="padding:1.25rem;">
-            @livewire(\Webkernel\Platform\SystemPanel\Presentation\Widgets\SystemPulseWidget::class)
-            {{ $this->form }}
+             {{ $this->form }}
          </div>
 
       </x-webkernel::dashboard.column>
