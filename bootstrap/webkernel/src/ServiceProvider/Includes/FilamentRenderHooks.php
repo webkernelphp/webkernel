@@ -8,69 +8,23 @@ use Filament\Support\Facades\FilamentIcon;
 use Filament\View\PanelsIconAlias;
 use Filament\Forms\View\FormsIconAlias;
 use Webkernel\View\RenderHooks;
+use Webkernel\QuickTouch\QuickTouch;
 
 class FilamentRenderHooks
 {
     public function boot(): void
     {
         $this->registerLayoutCss();
-        $this->registerVersionBadge();
         $this->registerAuthPageCss();
         $this->registerIcons();
         $this->registerAuthFormHooks();
-        $this->registerWebkernelTouch();
-    }
 
-    /**
-     * Inject Webkernel Touch into all registered Filament panels.
-     *
-     * The component is rendered once before the closing body tag so it sits
-     * above all panel content without interfering with any layout hooks.
-     *
-     * The window.wktPanels array is populated here with every registered panel
-     * so the switcher tab inside the component can list them without any
-     * server round-trip.
-     */
-    private function registerWebkernelTouch(): void
-    {
-        FilamentView::registerRenderHook(
-            PanelsRenderHook::BODY_END,
-            static function (): \Illuminate\Contracts\View\View {
-                $panels = collect(\Filament\Facades\Filament::getPanels())
-                    ->map(fn ($panel) => [
-                        'label' => $panel->getId(),
-                        'url'   => $panel->getUrl() ?? '/',
-                    ])
-                    ->values()
-                    ->toArray();
-
-
-                    $wktEnabled = true;
-
-                    $wktPanels = $panels;
-
-                    $wktUser = [
-                        'name'  => 'Demo User',
-                        'email' => 'demo@webkernel.dev',
-                    ];
-
-                    /*
-                     * Pre-seeded favorites — will be written to localStorage on first load
-                     * so the Main tab is never empty in demo mode.
-                     */
-                    $wktFavorites = [
-                        ['url' => '/admin/users',    'title' => 'Users'],
-                        ['url' => '/admin/settings', 'title' => 'Settings'],
-                        ['url' => '/admin/logs',     'title' => 'Logs'],
-                    ];
-                return view('webkernel-touch', [
-                    'panels' => $panels,
-                    'wktPanelsJson'    => json_encode($wktPanels),
-                    'wktFavoritesJson' => json_encode($wktFavorites),
-                    'wktUser' => json_encode($wktUser),
-                ]);
-            },
-        );
+        /*
+         * QuickTouch — the entire component (render-hook + view data) is
+         * owned by the QuickTouch class. The service provider only needs
+         * this single line to activate everything.
+         */
+        QuickTouch::bootQuickTouch();
     }
 
     // ── Layout CSS (BODY_START, Octane-safe) ─────────────────────────────────
@@ -86,19 +40,7 @@ class FilamentRenderHooks
         );
     }
 
-    // ── Version badge ─────────────────────────────────────────────────────────
-    private function registerVersionBadge(): void
-    {
-        FilamentView::registerRenderHook(
-            PanelsRenderHook::USER_MENU_PROFILE_BEFORE,
-            function (): string {
-                return '<span class="fi-filament-info-widget-version">'
-                    . WEBKERNEL_CODENAME . ' '
-                    . WEBKERNEL_CHANNEL  . ' v'
-                    . WEBKERNEL_VERSION  . '</span>';
-            },
-        );
-    }
+
 
     // ── Auth page CSS ─────────────────────────────────────────────────────────
     //

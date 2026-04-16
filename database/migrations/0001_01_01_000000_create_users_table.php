@@ -61,13 +61,64 @@ return new class extends Migration
             // Filament MFA -- email OTP
             $table->boolean('has_email_authentication')->default(false);
 
+            // Webkernel QuickTouch
+            $table->boolean('quick_touch_enabled')
+                  ->default(true);
+
+            $table->json('quick_touch_favorites')
+                  ->nullable();
+
+            // Why would we need server-side position persistence ?
+            // I think users will be happy with localStorage only.
+            // # Yassine
+            // $table->json('quick_touch_position')
+            //       ->nullable();
+
             $table->timestamps();
         });
 
-        // -- user_privileges --------------------------------------------------
-        // One-to-one: a user has at most one privilege record.
-        // The privilege column stores the UserPrivilegeLevel enum value.
-        // Allowed values: 'app-owner' | 'super-user' | 'member'
+        /**
+        | --- user_privileges --------------------------------------------------
+        |
+        | One-to-one: a user has at most one privilege record.
+        | The privilege column stores the UserPrivilegeLevel enum value.
+        | Allowed values: 'app-owner' | 'super-user' | 'member'
+        |
+        | Still thinking about an extension for external actors (non‑organization users):
+        |
+        | - External users are still represented in the `users` table.
+        | - Their privilege record uses the same enum, but with an additional
+        |   discriminator column `user_origin` to distinguish internal vs external.
+        |   Example values: 'internal' | 'external'.
+        | - External users may be contractors, auditors, or service providers.
+        | - Privilege rules for external users:
+        |     * 'external-super-user' → elevated but scoped to assigned domains/projects.
+        |     * 'external-member'     → limited access, read-only or task-specific.
+        | - App-owner privilege is reserved strictly for internal users.
+        |
+        | Suggested schema:
+        |
+        | CREATE TYPE UserPrivilegeLevel AS ENUM (
+        |   'app-owner',
+        |   'super-user',
+        |   'member',
+        |   'external-super-user',
+        |   'external-member'
+        | );
+        |
+        | CREATE TABLE user_privileges (
+        |   user_id UUID PRIMARY KEY REFERENCES users(id),
+        |   privilege UserPrivilegeLevel NOT NULL,
+        |   user_origin VARCHAR(20) DEFAULT 'internal' CHECK (user_origin IN ('internal','external'))
+        | );
+        |
+        | Notes:
+        | - We need to keep privilege assignment unified in one table ('user_privileges').
+        | - External actors are modeled explicitly, avoiding ad‑hoc role inflation.
+        | - Future-proof: we can extend with more external privilege levels if needed.
+        |   As long as it comes from Webkernel\Users\Enum\UserPrivilegeLevel
+        |   But the column shall be added i think ...
+        */
         Schema::connection($this->connection)->create('user_privileges', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')

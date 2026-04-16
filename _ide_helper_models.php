@@ -44,9 +44,13 @@ namespace Webkernel\Users\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRememberToken($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperUser
+ * @property int $quick_touch_enabled
+ * @property string|null $quick_touch_favorites
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereQuickTouchEnabled($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereQuickTouchFavorites($value)
  */
-	#[\AllowDynamicProperties]
-	class IdeHelperUser {}
+	class User extends \Eloquent implements \Filament\Models\Contracts\FilamentUser, \Filament\Models\Contracts\HasAvatar, \Filament\Models\Contracts\HasName, \Illuminate\Contracts\Auth\MustVerifyEmail {}
 }
 
 namespace Webkernel\Users\Models{
@@ -69,8 +73,8 @@ namespace Webkernel\Users\Models{
  * @method static Builder<static>|UserPrivilege whereUpdatedAt($value)
  * @method static Builder<static>|UserPrivilege whereUserId($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperUserPrivilege
  */
-	#[\AllowDynamicProperties]
-	class IdeHelperUserPrivilege {}
+	class UserPrivilege extends \Eloquent {}
 }
 

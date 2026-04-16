@@ -16,7 +16,6 @@ spl_autoload_register(static function (string $class): void {
     if ($prefixes === null) {
         $prefixes = array_merge(
             [
-
                 /* Core Layer: Connectors */
 
                 // General contracts & facades (directly in the connectors package namespace)
@@ -45,6 +44,7 @@ spl_autoload_register(static function (string $class): void {
                 'Webkernel\\System\\'   => WEBKERNEL_PATH . '/backend/src',
                 'Webkernel\\Exceptions\\'   => WEBKERNEL_PATH . '/backend/exceptions',
                 'Webkernel\\Providers\\'   => WEBKERNEL_PATH . '/backend/providers',
+                'Webkernel\\QuickTouch\\'   => WEBKERNEL_PATH . '/backend/quick_touch',
 
                 /* Support Layer: Application Data Models */
                 'App\\Models\\'         => WEBKERNEL_PATH . '/support/app-models',

@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Webkernel\Traits\HasQuickTouch;
 use Webkernel\Users\Models\User\Concerns\HasPrivilegeLevel;
 
 /**
@@ -63,6 +64,7 @@ class User extends Authenticatable implements
     use HasFactory;
     use Notifiable;
     use HasPrivilegeLevel;
+    use HasQuickTouch;
 
     // -------------------------------------------------------------------------
     // Casts
