@@ -38,6 +38,8 @@ class QuickTouch
 {
     use HasSelfResolvedView;
 
+    public const string QUICKTOUCH_VERSION = '1.0.0';
+
     /** Blade view resolved relative to this file's directory */
     protected static ?string $dynamicView = 'quick-touch';
 
@@ -48,6 +50,8 @@ class QuickTouch
     private static array $resourceCallbacks = [];
 
     // ── public API ──────────────────────────────────────────────────────────
+
+    public static function version(): string { return self::QUICKTOUCH_VERSION; }
 
     public static function enable(): void  { self::$enabled = true; }
     public static function disable(): void { self::$enabled = false; }
