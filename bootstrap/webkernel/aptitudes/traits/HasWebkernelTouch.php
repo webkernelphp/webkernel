@@ -2,73 +2,38 @@
 namespace Webkernel\Traits;
 
 /**
- * HasWebkernelTouch
+ * HasQuickTouch
  *
  * Add this trait to your User model to enable per-user persistence of the
  * Webkernel Touch position and favorites via the database instead of
  * localStorage, and to gate access to the component by role or policy.
  *
  * Usage:
- *   use Webkernel\Traits\HasWebkernelTouch;
+ *   use Webkernel\Traits\HasQuickTouch;
  *
  *   class User extends Authenticatable
  *   {
- *       use HasWebkernelTouch;
+ *       use HasQuickTouch;
  *   }
  *
  * Required migration (add to users table):
- *   $table->json('wkt_position')->nullable();
- *   $table->json('wkt_favorites')->nullable();
- *   $table->boolean('wkt_enabled')->default(true);
+ *   $table->json('quick_touch_favorites')->nullable();
+ *   $table->boolean('quick_touch_enabled')->default(true);
  */
-trait HasWebkernelTouch
+trait HasQuickTouch
 {
     /**
      * Whether this user should see the Webkernel Touch component.
      *
      * Override in the User model or via a policy to restrict access.
      */
-    public function hasWebkernelTouchEnabled(): bool
+    public function hasQuickTouchEnabled(): bool
     {
-        if (isset($this->wkt_enabled)) {
-            return (bool) $this->wkt_enabled;
+        if (isset($this->quick_touch_enabled)) {
+            return (bool) $this->quick_touch_enabled;
         }
 
         return true;
-    }
-
-    /**
-     * Persist the floating button position (called from a lightweight
-     * Livewire component or a dedicated API endpoint).
-     *
-     * @param  array{x: int, y: int}  $position
-     */
-    public function saveWebkernelTouchPosition(array $position): void
-    {
-        $this->update(['wkt_position' => $position]);
-    }
-
-    /**
-     * Retrieve the stored position for this user.
-     *
-     * @return array{x: int, y: int}|null
-     */
-    public function getWebkernelTouchPosition(): ?array
-    {
-        $raw = $this->wkt_position;
-
-        if (is_string($raw)) {
-            $raw = json_decode($raw, true);
-        }
-
-        if (is_array($raw) && isset($raw['x'], $raw['y'])) {
-            return [
-                'x' => (int) $raw['x'],
-                'y' => (int) $raw['y'],
-            ];
-        }
-
-        return null;
     }
 
     /**
@@ -76,9 +41,9 @@ trait HasWebkernelTouch
      *
      * @return array<int, array{url: string, title: string}>
      */
-    public function getWebkernelTouchFavorites(): array
+    public function getQuickTouchFavorites(): array
     {
-        $raw = $this->wkt_favorites;
+        $raw = $this->quick_touch_favorites;
 
         if (is_string($raw)) {
             $raw = json_decode($raw, true);
@@ -92,9 +57,9 @@ trait HasWebkernelTouch
      *
      * @param  array{url: string, title: string}  $favorite
      */
-    public function addWebkernelTouchFavorite(array $favorite): void
+    public function addQuickTouchFavorite(array $favorite): void
     {
-        $favorites = $this->getWebkernelTouchFavorites();
+        $favorites = $this->getQuickTouchFavorites();
 
         $exists = array_filter($favorites, fn ($f) => ($f['url'] ?? '') === ($favorite['url'] ?? ''));
 
@@ -104,30 +69,30 @@ trait HasWebkernelTouch
                 'title' => $favorite['title'] ?? '',
             ];
 
-            $this->update(['wkt_favorites' => $favorites]);
+            $this->update(['quick_touch_favorites' => $favorites]);
         }
     }
 
     /**
      * Remove a favorite by its URL.
      */
-    public function removeWebkernelTouchFavorite(string $url): void
+    public function removeQuickTouchFavorite(string $url): void
     {
         $favorites = array_values(
             array_filter(
-                $this->getWebkernelTouchFavorites(),
+                $this->getQuickTouchFavorites(),
                 fn ($f) => ($f['url'] ?? '') !== $url,
             )
         );
 
-        $this->update(['wkt_favorites' => $favorites]);
+        $this->update(['quick_touch_favorites' => $favorites]);
     }
 
     /**
      * Clear all stored favorites for this user.
      */
-    public function clearWebkernelTouchFavorites(): void
+    public function clearQuickTouchFavorites(): void
     {
-        $this->update(['wkt_favorites' => []]);
+        $this->update(['quick_touch_favorites' => []]);
     }
 }

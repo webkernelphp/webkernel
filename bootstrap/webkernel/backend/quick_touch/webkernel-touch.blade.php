@@ -12,6 +12,8 @@
     If $wktEnabled is false the component renders nothing.
     If HasWebkernelTouch trait is present on the auth user it will be used
     automatically — but nothing breaks if it is absent.
+
+    bootstrap/webkernel/backend/quick_touch/webkernel-touch.blade.php
 --}}
 @php
     // ── resolve variables ────────────────────────────────────────────────────

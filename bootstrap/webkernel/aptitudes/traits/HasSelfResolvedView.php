@@ -19,7 +19,7 @@ use RuntimeException;
  * // In a Blade template to reference sub-views:
  * @include(MyClass::resolveDynamicView('partials.header'))
  *
- * @package Webkernel\UI\Concerns
+ * @package Webkernel\Traits
  */
 trait HasSelfResolvedView
 {
