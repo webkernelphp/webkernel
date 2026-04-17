@@ -7,10 +7,10 @@
     and passed here via the render-hook closure.
 
     Sub-views (all resolved via HasSelfResolvedView namespace):
-      • quick_touch/partials/button.blade.php
-      • quick_touch/partials/panel.blade.php
-      • quick_touch/partials/context-menu.blade.php
-      • quick_touch/partials/scripts.blade.php
+      • partials/button.blade.php
+      • partials/panel.blade.php
+      • partials/context-menu.blade.php
+      • partials/scripts.blade.php
 
     Location: bootstrap/webkernel/backend/quick_touch/quick-touch.blade.php
 --}}

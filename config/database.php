@@ -32,7 +32,7 @@ return [
 
     'connections' => [
 
-        'webkernel' => [
+        'webkernel_sqlite' => [
             'driver'                  => WEBKERNEL_DB_DRIVER,
             'url'                     => env('DB_URL'),
             'database'                => WEBKERNEL_MAIN_SQLITE_DB_PATH,

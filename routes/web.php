@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 
 Route::get('/', RootController::class)->name('webkernel.root');
 
+//Route::get('welcome', fn() => view('welcome'))->name('webkernel.welcome');
 
 Route::get(
   '__back/{token}',

@@ -39,6 +39,7 @@ spl_autoload_register(static function (string $class): void {
                 'Webkernel\\Traits\\'        => WEBKERNEL_PATH . '/aptitudes/traits',
                 'Webkernel\\Users\\'         => WEBKERNEL_PATH . '/aptitudes/users',
                 'Webkernel\\Widgets\\'       => WEBKERNEL_PATH . '/aptitudes/widgets',
+                'Webkernel\\Generators\\'       => WEBKERNEL_PATH . '/aptitudes/generators',
 
                 /* Backend Layer: System Infrastructure */
                 'Webkernel\\System\\'   => WEBKERNEL_PATH . '/backend/src',

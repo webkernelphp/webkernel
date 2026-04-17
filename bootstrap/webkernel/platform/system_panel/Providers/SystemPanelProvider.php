@@ -44,7 +44,6 @@ final class SystemPanelProvider extends PanelProvider
                 'primary' => Color::Blue,
             ])
             ->login()
-            ->registration()
             ->profile(isSimple: false)
             ->discoverResources(
                 in: __DIR__ . '/../Presentation/Resources',

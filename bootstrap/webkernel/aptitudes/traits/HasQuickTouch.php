@@ -5,13 +5,23 @@ namespace Webkernel\Traits;
 /**
  * HasQuickTouch
  *
- * Add this trait to your User model to enable per-user persistence of the
- * QuickTouch position and favorites via the database instead of localStorage,
- * and to gate access to the component by role or policy.
+ * Per-user persistence of QuickTouch favorites (and optionally the floating
+ * button position) via the database.
  *
- * ──────────────────────────────────────────────────────────────────────────
- * Usage
- * ──────────────────────────────────────────────────────────────────────────
+ * ── Required migration columns ───────────────────────────────────────────────
+ *
+ *   $table->boolean('quick_touch_enabled')->default(true);
+ *   $table->json('quick_touch_favorites')->nullable();
+ *
+ * ── Optional: server-side position persistence ────────────────────────────────
+ *
+ * By default the button position is stored in localStorage (client-side).
+ * Add the column below and call saveQuickTouchPosition() from a Livewire /
+ * AJAX endpoint if you want server-side persistence:
+ *
+ *   $table->json('quick_touch_position')->nullable();
+ *
+ * ── Usage ─────────────────────────────────────────────────────────────────────
  *
  *   use Webkernel\Traits\HasQuickTouch;
  *
@@ -20,34 +30,23 @@ namespace Webkernel\Traits;
  *       use HasQuickTouch;
  *   }
  *
- * ──────────────────────────────────────────────────────────────────────────
- * Required migration
- * ──────────────────────────────────────────────────────────────────────────
+ * ── Assumed model columns (already cast in the User model) ───────────────────
  *
- *   $table->json('quick_touch_favorites')->nullable();
- *   $table->boolean('quick_touch_enabled')->default(true);
+ *   quick_touch_enabled   → cast: 'boolean'
+ *   quick_touch_favorites → cast: 'array'
  *
- * ──────────────────────────────────────────────────────────────────────────
- * Optional: position persistence
- * ──────────────────────────────────────────────────────────────────────────
- *
- * By default the floating button position is stored in localStorage (client
- * side). If you want server-side persistence, add:
- *
- *   $table->json('quick_touch_position')->nullable();
- *
- * and call `$user->saveQuickTouchPosition(['x' => 100, 'y' => 200])` from a
- * dedicated AJAX/Livewire endpoint in your application.
+ * @property bool                                                $quick_touch_enabled
+ * @property array<int, array{url: string, title: string}>|null $quick_touch_favorites
  */
 trait HasQuickTouch
 {
-    // ── gate ────────────────────────────────────────────────────────────────
+    // ── Gate ──────────────────────────────────────────────────────────────────
 
     /**
      * Whether this user should see the QuickTouch component.
      *
-     * Override in the User model or via a gate/policy to restrict access.
-     * e.g. return $this->hasRole('admin');
+     * Override in the User model (or via a Gate / policy) to restrict access.
+     * Example: return $this->isAppOwner() || $this->isSuperUser();
      */
     public function hasQuickTouchEnabled(): bool
     {
@@ -56,17 +55,19 @@ trait HasQuickTouch
             : true;
     }
 
-    // ── favorites ───────────────────────────────────────────────────────────
+    // ── Favorites ─────────────────────────────────────────────────────────────
 
     /**
      * Return the list of favorite pages saved by this user.
      *
-     * @return array<int, array{url: string, title: string}>
+     * @return list<array{url: string, title: string}>
      */
     public function getQuickTouchFavorites(): array
     {
         $raw = $this->quick_touch_favorites ?? null;
 
+        // Guard: the model casts the column to 'array', but we handle the
+        // string case defensively for callers that bypass the cast.
         if (is_string($raw)) {
             $raw = json_decode($raw, true);
         }
@@ -75,22 +76,27 @@ trait HasQuickTouch
     }
 
     /**
-     * Persist a new favorite page for this user.
+     * Add a new favorite page for this user.
      *
-     * Duplicate URLs (by exact match) are silently ignored.
+     * Duplicate URLs (exact match) are silently ignored.
      *
      * @param  array{url: string, title: string}  $favorite
      */
     public function addQuickTouchFavorite(array $favorite): void
     {
-        $url       = $favorite['url']   ?? '';
-        $title     = $favorite['title'] ?? '';
+        $url   = (string) ($favorite['url']   ?? '');
+        $title = (string) ($favorite['title'] ?? '');
+
+        if ($url === '') {
+            return;
+        }
+
         $favorites = $this->getQuickTouchFavorites();
 
-        $exists = array_filter($favorites, fn ($f) => ($f['url'] ?? '') === $url);
+        $exists = array_filter($favorites, static fn (array $f): bool => ($f['url'] ?? '') === $url);
 
         if (empty($exists)) {
-            $favorites[] = compact('url', 'title');
+            $favorites[] = ['url' => $url, 'title' => $title];
             $this->update(['quick_touch_favorites' => $favorites]);
         }
     }
@@ -100,20 +106,20 @@ trait HasQuickTouch
      */
     public function removeQuickTouchFavorite(string $url): void
     {
-        $favorites = array_values(
+        $filtered = array_values(
             array_filter(
                 $this->getQuickTouchFavorites(),
-                fn ($f) => ($f['url'] ?? '') !== $url,
+                static fn (array $f): bool => ($f['url'] ?? '') !== $url,
             )
         );
 
-        $this->update(['quick_touch_favorites' => $favorites]);
+        $this->update(['quick_touch_favorites' => $filtered]);
     }
 
     /**
-     * Replace all favorites at once.
+     * Replace all stored favorites at once.
      *
-     * @param  array<int, array{url: string, title: string}>  $favorites
+     * @param  list<array{url: string, title: string}>  $favorites
      */
     public function setQuickTouchFavorites(array $favorites): void
     {
@@ -128,22 +134,31 @@ trait HasQuickTouch
         $this->update(['quick_touch_favorites' => []]);
     }
 
-    // ── optional: server-side position ──────────────────────────────────────
+    // ── Optional: server-side position ───────────────────────────────────────
 
     /**
-     * Save the button position to the database.
-     * Requires: $table->json('quick_touch_position')->nullable();
+     * Save the floating button position to the database.
+     *
+     * Requires the migration column:
+     *   $table->json('quick_touch_position')->nullable();
      *
      * @param  array{x: int|float, y: int|float}  $position
      */
     public function saveQuickTouchPosition(array $position): void
     {
-        if (isset($this->quick_touch_position)) {
-            $this->update(['quick_touch_position' => $position]);
+        if (property_exists($this, 'quick_touch_position') || isset($this->quick_touch_position)) {
+            $this->update([
+                'quick_touch_position' => [
+                    'x' => $position['x'],
+                    'y' => $position['y'],
+                ],
+            ]);
         }
     }
 
     /**
+     * Retrieve the last saved button position, or null when not persisted.
+     *
      * @return array{x: float, y: float}|null
      */
     public function getQuickTouchPosition(): ?array
