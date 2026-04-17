@@ -3,309 +3,109 @@
 namespace Webkernel\Platform\SystemPanel\Presentation\Installer;
 
 use BackedEnum;
-use Filament\Actions\Action;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Schemas\Schema;
 use Illuminate\Contracts\Support\Htmlable;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\HtmlString;
+use Webkernel\Platform\SystemPanel\Presentation\Installer\Concerns\HasInstallerActions;
+use Webkernel\Platform\SystemPanel\Presentation\Installer\Concerns\HasInstallerForms;
+use Webkernel\Platform\SystemPanel\Presentation\Installer\Concerns\HasInstallerPhaseHandlers;
+use Webkernel\Platform\SystemPanel\Presentation\Installer\Concerns\HasInstallerSupport;
 use Webkernel\Platform\SystemPanel\Support\InstallationState;
 use Webkernel\System\Support\CapabilityMap;
-use Webkernel\Users\Enum\UserPrivilegeLevel;
-use Webkernel\Users\Models\{UserPrivilege,User};
+use Filament\Notifications\Notification;
 
 /**
- * First-run installation wizard page.
- *
- * Lives inside the no-auth installer panel (/installer).
- * Redirects to /system once installation is complete.
+ * First-run installation wizard.
  *
  * Phases:
- *   pre          -- pre-flight checks: requirements + capabilities
- *   installing   -- running webkernel:install (synchronous Artisan call)
- *   create_user  -- form to create the first admin account
- *   done         -- install complete, redirect button
- *   error        -- Artisan command threw, surface error with retry option
- *
- * Resume behaviour:
- *   If infrastructure is ready but no privileged user exists
- *   (e.g. a previous run crashed after webkernel:install but before
- *   runCreateAdmin), mount() sets phase = 'create_user' directly so the
- *   operator can finish without re-running the Artisan command.
- *
- *   If everything is fully installed the page redirects to /system.
- *   @extends Page<PageConfiguration>
+ *   pre        — pre-flight checks (requirements + capabilities)
+ *   installing — running webkernel:install
+ *   verify_token — optional token gate (only if WEBKERNEL_SETUP_TOKEN env var is set)
+ *   setup      — Filament Wizard: identity → account → mailer → business
+ *   done       — installation complete → redirect /system
+ *   error      — surface Artisan error with retry
  */
 class InstallerPage extends Page
 {
+    use HasInstallerSupport;
+    use HasInstallerForms;
+    use HasInstallerActions;
+    use HasInstallerPhaseHandlers;
+
     protected string $view = 'webkernel-system::filament.pages.installer';
     protected static string $layout = 'filament-panels::components.layout.simple';
 
-    // -------------------------------------------------------------------------
-    // Livewire state
-    // -------------------------------------------------------------------------
+    // ── Livewire state ────────────────────────────────────────────────────────
 
-    /** @var 'pre'|'installing'|'create_user'|'done'|'error' */
+    /** @var 'pre'|'installing'|'verify_token'|'setup'|'done'|'error' */
     public string $phase = 'pre';
 
-    public string $errorMessage  = '';
-    public string $artisanOutput = '';
+    public string $errorMessage    = '';
+    public string $artisanOutput   = '';
+    public string $setupTokenInput = '';
 
-    /** Bound to the Filament form (phase create_user). */
-    public ?array $adminData = [
-        'name'      => '',
-        'email'     => '',
-        'password'  => '',
-        'privilege' => 'app-owner',
+    /**
+     * All wizard step data in one flat array.
+     * Keys match the field names used in the Wizard steps.
+     */
+    public array $wizardData = [
+        // Step 1 – identity
+        'deployer_role' => 'owner',        // 'owner' | 'sysadmin'
+        // Step 2 – account
+        'name'          => '',
+        'email'         => '',
+        'password'      => '',
+        // Step 3 – mailer (all optional)
+        'smtp_host'       => '',
+        'smtp_port'       => '587',
+        'smtp_username'   => '',
+        'smtp_password'   => '',
+        'smtp_encryption' => 'tls',
+        'smtp_from_name'  => '',
+        'smtp_from_email' => '',
+        // Step 4 – business (all optional)
+        'biz_name'        => '',
+        'biz_slug'        => '',
+        'biz_admin_email' => '',
     ];
 
-    // -------------------------------------------------------------------------
-    // Lifecycle
-    // -------------------------------------------------------------------------
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     public function mount(): void
     {
-        /** @disregard  */
+        /** @disregard */
         $state = InstallationState::resolve();
 
-        /** @disregard  */
+        /** @disregard */
         if ($state === InstallationState::INSTALLED) {
-            // Everything is in order -- nothing to do here.
             $this->redirect('/system');
             return;
         }
 
         if ($state === InstallationState::MISSING_ADMIN) {
-            // Infrastructure is ready but no privileged user exists.
-            // Skip the Artisan step and go straight to account creation.
-            $this->phase = 'create_user';
+            $this->phase = $this->resolvePostInstallPhase();
+
+            if ($this->phase === 'verify_token') {
+                $this->setupTokenInput = $this->resolveSetupToken();
+            }
 
             Notification::make()
                 ->title('Installation resumed')
-                ->body('The platform infrastructure is ready but no Application Owner or Super Administrator account has been created yet. Please create one now to complete setup.')
+                ->body('Infrastructure is ready — complete the wizard to finish setup.')
                 ->warning()
                 ->persistent()
                 ->send();
         }
-
-        // InstallationState::NOT_INSTALLED -- stay on phase 'pre', normal flow.
     }
 
-    // -------------------------------------------------------------------------
-    // Filament v4 form
-    // -------------------------------------------------------------------------
-
-    public function form(Schema $schema): Schema
+    public function updatedPhase(string $value): void
     {
-        return $schema
-            ->statePath('adminData')
-            ->components([
-                TextInput::make('name')
-                    ->label('Full name')
-                    ->required()
-                    ->maxLength(255)
-                    ->placeholder('El Moumen Yassine'),
-
-                TextInput::make('email')
-                    ->label('Email address')
-                    ->email()
-                    ->required()
-                    ->maxLength(255)
-                    ->unique(table: 'users', column: 'email')
-                    ->placeholder('email@example.com'),
-
-                TextInput::make('password')
-                    ->label('Password')
-                    ->password()
-                    ->revealable()
-                    ->required()
-                    ->minLength(8)
-                    ->maxLength(255),
-
-                Select::make('privilege')
-                    ->label('Your Privilege')
-                    ->options(self::privilegedOptions())
-                    ->default(UserPrivilegeLevel::APP_OWNER->value)
-                    ->native(false)
-                    ->searchable()
-                    ->required()
-                    ->live(),
-            ]);
-    }
-
-    // -------------------------------------------------------------------------
-    // Header actions
-    // -------------------------------------------------------------------------
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            Action::make('install')
-                ->label('Install Webkernel')
-                ->icon('heroicon-o-rocket-launch')
-                ->iconPosition('after')
-                ->size('sm')
-                ->color('primary')
-                ->visible(fn (): bool => $this->phase === 'pre')
-                ->disabled(fn (): bool => ! collect($this->buildRequirements())->every(fn ($r) => $r['ok']))
-                ->tooltip(fn (): ?string => collect($this->buildRequirements())->every(fn ($r) => $r['ok'])
-                    ? null
-                    : 'Fix failing requirements first'
-                )
-                ->requiresConfirmation()
-                ->modalHeading('Start installation')
-                ->modalDescription(
-                    'This will: copy .env, generate the app key, create the SQLite database, '
-                    . 'run all migrations, and write deployment.php. This action cannot be undone.'
-                )
-                ->modalSubmitActionLabel('Yes, install now')
-                ->modalIcon('heroicon-o-rocket-launch')
-                ->modalIconColor('primary')
-                ->action('runInstall'),
-
-            Action::make('createAdmin')
-                ->label('Create account & finish')
-                ->icon('heroicon-o-user-plus')
-                ->size('sm')
-                ->color('success')
-                ->visible(fn (): bool => $this->phase === 'create_user')
-                ->action('runCreateAdmin'),
-
-            Action::make('retry')
-                ->label('Retry')
-                ->icon('heroicon-o-arrow-path')
-                ->color('warning')
-                ->outlined()
-                ->visible(fn (): bool => $this->phase === 'error')
-                ->action('resetToPreFlight'),
-
-            Action::make('goToPanel')
-                ->label('Open Webkernel')
-                ->icon('heroicon-o-arrow-right')
-                ->color('success')
-                ->url('/system')
-                ->visible(fn (): bool => $this->phase === 'done'),
-        ];
-    }
-
-    // -------------------------------------------------------------------------
-    // Livewire methods
-    // -------------------------------------------------------------------------
-
-    public function runInstall(): void
-    {
-        if ($this->phase !== 'pre') {
-            return;
-        }
-
-        $requirements = $this->buildRequirements();
-
-        if (! collect($requirements)->every(fn ($r) => $r['ok'])) {
-            Notification::make()
-                ->title('Requirements not met')
-                ->body('Fix the failing checks before installing.')
-                ->danger()
-                ->send();
-            return;
-        }
-
-        $this->phase = 'installing';
-
-        try {
-            Artisan::call('webkernel:install');
-            $this->artisanOutput = Artisan::output();
-            $this->phase         = 'create_user';
-
-            Notification::make()
-                ->title('Installation successful')
-                ->body('Now create the first administrator account.')
-                ->success()
-                ->send();
-        } catch (\Throwable $e) {
-            $this->phase        = 'error';
-            $this->errorMessage = $e->getMessage();
-
-            Notification::make()
-                ->title('Installation failed')
-                ->body('Check the error output for details.')
-                ->danger()
-                ->send();
+        if ($value === 'verify_token') {
+            $this->setupTokenInput = $this->resolveSetupToken();
         }
     }
 
-    public function runCreateAdmin(): void
-    {
-        if ($this->phase !== 'create_user') {
-            return;
-        }
-
-        $data = $this->form->getState();
-
-        // Validate that the chosen privilege is app-owner or super-user.
-        // Members cannot be the first account -- that would leave the platform
-        // permanently unmanageable.
-        $privilege = UserPrivilegeLevel::fromKey($data['privilege'] ?? '');
-
-        if ($privilege === null || $privilege === UserPrivilegeLevel::MEMBER) {
-            Notification::make()
-                ->title('Invalid role')
-                ->body(
-                    'The first account must be an Application Owner or Super Administrator. '
-                    . 'A Member account cannot manage the platform.'
-                )
-                ->danger()
-                ->send();
-            return;
-        }
-
-        try {
-            /** @var User $user */
-            $user = User::create([
-                'name'     => $data['name'],
-                'email'    => $data['email'],
-                'password' => Hash::make($data['password']),
-            ]);
-
-            UserPrivilege::create([
-                'user_id'   => $user->id,
-                'privilege' => $privilege->value,
-            ]);
-
-            $this->phase = 'done';
-
-            Notification::make()
-                ->title('Account created')
-                ->body(sprintf(
-                    '%s has been created as %s.',
-                    $user->name,
-                    $privilege->label(),
-                ))
-                ->success()
-                ->persistent()
-                ->send();
-        } catch (\Throwable $e) {
-            Notification::make()
-                ->title('Could not create account')
-                ->body($e->getMessage())
-                ->danger()
-                ->send();
-        }
-    }
-
-    public function resetToPreFlight(): void
-    {
-        $this->phase         = 'pre';
-        $this->errorMessage  = '';
-        $this->artisanOutput = '';
-    }
-
-    // -------------------------------------------------------------------------
-    // View data
-    // -------------------------------------------------------------------------
+    // ── View data ─────────────────────────────────────────────────────────────
 
     public function getViewData(): array
     {
@@ -328,9 +128,7 @@ class InstallerPage extends Page
         ];
     }
 
-    // -------------------------------------------------------------------------
-    // Navigation
-    // -------------------------------------------------------------------------
+    // ── Navigation ────────────────────────────────────────────────────────────
 
     public static function getNavigationIcon(): string|BackedEnum|Htmlable|null
     {
@@ -351,60 +149,22 @@ class InstallerPage extends Page
     {
         return new HtmlString('
             <img src="' . e(webkernelBrandingUrl('webkernel-logo-light')) . '"
-                 alt="Webkernel"
-                 class="fi-logo fi-logo-light">
+                 alt="Webkernel" class="fi-logo fi-logo-light">
             <img src="' . e(webkernelBrandingUrl('webkernel-logo-dark')) . '"
-                 alt="Webkernel"
-                 class="fi-logo fi-logo-dark">
+                 alt="Webkernel" class="fi-logo fi-logo-dark">
         ');
     }
 
     public function getSubheading(): ?string
     {
         return match ($this->phase) {
-            'pre'         => 'Run pending migrations in order and store host profile',
-            'installing'  => 'Installation in progress...',
-            'create_user' => 'Create the first administrator account',
-            'done'        => 'Webkernel is ready',
-            'error'       => 'Installation encountered an error',
-            default       => null,
+            'pre'          => 'Pre-flight checks — requirements and capabilities',
+            'installing'   => 'Installation in progress…',
+            'verify_token' => 'Enter your one-time Setup Token to continue',
+            'setup'        => 'Complete the setup wizard',
+            'done'         => 'Webkernel is ready',
+            'error'        => 'Installation encountered an error',
+            default        => null,
         };
-    }
-
-    // -------------------------------------------------------------------------
-    // Private
-    // -------------------------------------------------------------------------
-
-    /**
-     * Only app-owner and super-user are valid choices for the first account.
-     * Offering 'member' here would leave the platform without any administrator.
-     *
-     * @return array<string, string>
-     */
-    private static function privilegedOptions(): array
-    {
-        return [
-            UserPrivilegeLevel::APP_OWNER->value  => UserPrivilegeLevel::APP_OWNER->label(),
-            UserPrivilegeLevel::SUPER_USER->value => UserPrivilegeLevel::SUPER_USER->label(),
-        ];
-    }
-
-    /**
-     * @return list<array{id: string, label: string, ok: bool, value: string}>
-     */
-    private function buildRequirements(): array
-    {
-        return [
-            ['id' => 'php',      'label' => 'PHP >= 8.4',                'ok' => version_compare(PHP_VERSION, '8.4.0', '>='), 'value' => PHP_VERSION],
-            ['id' => 'openssl',  'label' => 'OpenSSL extension',         'ok' => extension_loaded('openssl'),                 'value' => ''],
-            ['id' => 'pdo',      'label' => 'PDO extension',             'ok' => extension_loaded('pdo'),                     'value' => ''],
-            ['id' => 'mbstring', 'label' => 'Mbstring extension',        'ok' => extension_loaded('mbstring'),                'value' => ''],
-            ['id' => 'xml',      'label' => 'XML / DOM extension',       'ok' => extension_loaded('xml'),                     'value' => ''],
-            ['id' => 'json',     'label' => 'JSON extension',            'ok' => extension_loaded('json'),                    'value' => ''],
-            ['id' => 'ctype',    'label' => 'Ctype extension',           'ok' => extension_loaded('ctype'),                   'value' => ''],
-            ['id' => 'bcmath',   'label' => 'BCMath extension',          'ok' => extension_loaded('bcmath'),                  'value' => ''],
-            ['id' => 'storage',  'label' => 'storage/ writable',         'ok' => is_writable(storage_path()),                 'value' => ''],
-            ['id' => 'cache',    'label' => 'bootstrap/cache/ writable', 'ok' => is_writable(base_path('bootstrap/cache')),   'value' => ''],
-        ];
     }
 }

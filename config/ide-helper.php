@@ -143,7 +143,7 @@ return [
 
     'model_locations' => [
         'app',
-        'bootstrap/webkernel/aptitudes/users/Models',
+        'bootstrap/webkernel/aptitudes/instance/**/Models',
     ],
 
     /*
