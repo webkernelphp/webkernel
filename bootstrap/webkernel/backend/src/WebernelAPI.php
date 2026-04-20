@@ -6,7 +6,8 @@ use Webkernel\System\Contracts\WebAppInterface;
 use Webkernel\System\Contracts\Managers\{
     AppManagerInterface, AuthManagerInterface, ContextManagerInterface,
     HostManagerInterface, InstanceManagerInterface, OsManagerInterface,
-    RuntimeManagerInterface, SecurityManagerInterface, VersionManagerInterface};
+    RuntimeManagerInterface, SecurityManagerInterface, UsersManagerInterface,
+    VersionManagerInterface};
 
 /**
  * Webkernel public API entry point.
@@ -35,6 +36,8 @@ use Webkernel\System\Contracts\Managers\{
  *   webkernel()->os()->isLinux()
  *   webkernel()->auth()->user()
  *   webkernel()->auth()->fieldSensitivity('email', Customer::class)
+ *   webkernel()->users()->installerRoleOptions()
+ *   webkernel()->users()->hasAtLeast(UserPrivilegeLevel::SYSADMIN)
  */
 final class WebernelAPI implements WebAppInterface
 {
@@ -108,5 +111,10 @@ final class WebernelAPI implements WebAppInterface
     public function auth(): AuthManagerInterface
     {
         return app(AuthManagerInterface::class);
+    }
+
+    public function users(): UsersManagerInterface
+    {
+        return app(UsersManagerInterface::class);
     }
 }

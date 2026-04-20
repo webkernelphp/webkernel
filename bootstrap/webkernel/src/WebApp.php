@@ -14,7 +14,7 @@ use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Webkernel\Exceptions\Handler as WebkernelExceptionHandler;
-use Webkernel\Platform\SystemPanel\Support\InstallationState;
+use Webkernel\Platform\SystemPanel\Presentation\Installer\InstallationState;
 use Webkernel\System\Security\CoreManifest;
 use Webkernel\System\Security\SealEnforcer;
 

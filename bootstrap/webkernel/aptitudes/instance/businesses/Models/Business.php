@@ -28,11 +28,9 @@ use Webkernel\Users\Models\User;
  * @property-read User|null  $creator
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- *
  * @method static \Illuminate\Database\Eloquent\Builder<static> active()
  * @method static \Illuminate\Database\Eloquent\Builder<static> pending()
  * @method static \Illuminate\Database\Eloquent\Builder<static> forSlug(string $slug)
- *
  * @mixin \Eloquent
  * @mixin IdeHelperBusiness
  */

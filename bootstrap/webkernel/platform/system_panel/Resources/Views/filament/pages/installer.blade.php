@@ -1,4 +1,24 @@
 <x-filament-panels::page>
+<style>
+ /* Mobile */
+:is(.fi-main,.fi-simple-main).fi-width-lg {
+  max-width: var(--container-lg);
+}
+.fi-sc-wizard:not(.fi-sc-wizard-header-hidden) .fi-sc-wizard-step.fi-active {
+    margin-top: calc(var(--spacing) * 2);
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step .fi-sc-wizard-header-step-btn {
+      padding-left: calc(var(--spacing) * 3) !important;
+  }
+
+  :is(.fi-main,.fi-simple-main).fi-width-lg {
+    min-width: calc(var(--container-lg) * 1.45);
+  }
+}
+</style>
 @includeIf('webkernel::panels.auth.css', [
     'bgLight' => webkernelBrandingUrl('webkernel-bg-login-light'),
     'bgDark'  => webkernelBrandingUrl('webkernel-bg-login-dark'),
@@ -21,13 +41,6 @@
                 'subtitle'  => 'Environment, database and deployment setup',
                 'body'      => null,
             ],
-            'done' => [
-                'icon'      => 'heroicon-m-check-circle',
-                'iconClass' => 'text-success-500',
-                'title'     => 'Installation complete',
-                'subtitle'  => 'Webkernel is ready',
-                'body'      => null,
-            ],
             'error' => [
                 'icon'      => 'heroicon-m-x-circle',
                 'iconClass' => 'text-danger-500',
@@ -40,7 +53,7 @@
         $state = $states[$this->phase] ?? null;
     @endphp
 
-    {{-- ── INSTALLING / DONE / ERROR ────────────────────────────────────── --}}
+    {{-- ── INSTALLING / ERROR ──────────────────────────────────────────── --}}
     @if ($state)
         <x-filament::fieldset class="wds-card">
             <div style="padding-left:.6rem;display:flex;align-items:flex-start;gap:12px;flex-direction:column;">
@@ -196,14 +209,13 @@
         .fi-fieldset legend {font-weight:var(--font-weight-normal); font-size: 100%;}
         .fi-header { padding-top:.7rem; }
         .fi-page-content { row-gap:calc(var(--spacing)*3); }
-        .fi-page-header-main-ctn { row-gap:calc(var(--spacing)*9); }
+        .fi-page-header-main-ctn { row-gap:calc(var(--spacing)*2); }
         .fi-btn { font-weight:unset; }
 
         .fi-logo { height:2rem;width:auto;display:none; }
         html:not(.dark) .fi-logo-light { display:block; }
         html.dark       .fi-logo-dark  { display:block; }
 
-        :is(.fi-main,.fi-simple-main).fi-width-lg { max-width:calc(var(--container-lg)*1.5); }
         .fi-simple-main .fi-width-lg,
         .fi-page-header-main-ctn,
         .fi-simple-main { padding:.5rem !important; }
@@ -215,7 +227,7 @@
         .wds-card-inner { display:flex;flex-direction:column;height:100%; }
 
         .fi-fo-radio-label-description { font-size:12.5px; }
-        .fi-header-subheading { font-size:12px; }
+        .fi-header-subheading { font-size:14px; }
 
         .wds-head { display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:600;letter-spacing:.02em;margin-bottom:6px; }
         .wds-required { color:#ef4444; }

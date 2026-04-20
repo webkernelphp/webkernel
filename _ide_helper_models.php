@@ -13,33 +13,44 @@
 
 namespace Webkernel\Businesses\Models{
 /**
- * Organisation — the multi-tenant unit of a Webkernel instance.
+ * Business — one tenant unit inside a Webkernel instance.
  *
- * Each Organisation is an isolated namespace. It is owned by the App Owner
- * at the infrastructure level but managed day-to-day by its Org-Admin.
+ * The App Owner owns the instance at the infrastructure level.
+ * A Business is the isolated workspace they create for a client or
+ * internal team. Each Business has exactly one Business-Admin who
+ * manages their own users, departments, and modules without touching
+ * the infrastructure layer.
  *
- * The App Owner creates Organisations; they never map directly to one.
- * This separation keeps infrastructure authority out of organisational scope.
+ * The App Owner never maps directly to a Business — that separation
+ * keeps infrastructure authority out of business-level scope.
  *
- * @property string                $id            cuid2 string PK
- * @property string                $name          Display name
- * @property string                $slug          URL-safe unique identifier
- * @property OrganisationStatus    $status        pending | active | suspended
- * @property string                $org_admin_email  Invited Org-Admin email
- * @property string|null           $created_by    FK → users.id (App Owner or Super-User)
- * @property-read User|null        $creator       The user who created this org
+ * @property string          $id            cuid2 string PK
+ * @property string          $name          Display name
+ * @property string          $slug          URL-safe unique identifier
+ * @property BusinessStatus  $status        pending | active | suspended
+ * @property string          $admin_email   Invited Business-Admin email
+ * @property string|null     $created_by    FK → users.id (App Owner or Super-User)
+ * @property-read User|null  $creator
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @method static \Illuminate\Database\Eloquent\Builder<static> active()
  * @method static \Illuminate\Database\Eloquent\Builder<static> pending()
  * @method static \Illuminate\Database\Eloquent\Builder<static> forSlug(string $slug)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Organisation newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Organisation newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Organisation query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Business newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Business newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Business query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Business whereAdminEmail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Business whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Business whereCreatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Business whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Business whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Business whereSlug($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Business whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Business whereUpdatedAt($value)
  * @mixin \Eloquent
  */
 	#[\AllowDynamicProperties]
-	class IdeHelperOrganisation {}
+	class IdeHelperBusiness {}
 }
 
 namespace Webkernel\Users\Models{

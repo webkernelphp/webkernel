@@ -148,15 +148,13 @@ class User extends Authenticatable implements
     /**
      * Gate for panel access.
      *
-     * - APP_OWNER and SUPER_USER: always allowed.
-     * - MEMBER: allowed (email verification is enforced separately via MustVerifyEmail).
-     * - EXTERNAL_SUPER_USER / EXTERNAL_MEMBER: allowed (scope restrictions are
-     *   enforced at the policy / resource level, not here).
-     * - No privilege record: deny.
+     * Any user with a valid privilege record (down to EXTERNAL_STAFF, the lowest
+     * level) is allowed in. Scope restrictions are enforced at the policy /
+     * resource level, not here. No privilege record → deny.
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->hasPrivilegeOrAbove(UserPrivilegeLevel::EXTERNAL_MEMBER);
+        return $this->hasPrivilegeOrAbove(UserPrivilegeLevel::EXTERNAL_STAFF);
     }
 
     // ── HasAvatar ─────────────────────────────────────────────────────────────

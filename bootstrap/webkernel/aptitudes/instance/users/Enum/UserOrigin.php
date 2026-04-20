@@ -3,26 +3,41 @@
 namespace Webkernel\Users\Enum;
 
 /**
- * Discriminator that describes where a user originates.
+ * ════════════════════════════════════════════════════════════════════════════
+ * UserOrigin
+ * ════════════════════════════════════════════════════════════════════════════
  *
- * Stored in user_privileges.user_origin as a plain string so that the column
- * remains portable across SQLite, MySQL and PostgreSQL without requiring a
- * native ENUM type.
+ * Discriminator describing where a platform user originates.
  *
- * Invariants enforced at the application layer:
- *   - APP_OWNER is only valid when origin = INTERNAL.
- *   - EXTERNAL_SUPER_USER / EXTERNAL_MEMBER require origin = EXTERNAL.
- *   - SUPER_USER and MEMBER may only be used with INTERNAL.
+ * This is ORTHOGONAL to UserPrivilegeLevel:
+ *   → Origin    = WHO the person is (inside the org vs external collaborator)
+ *   → Privilege = WHAT they can do (their rank in the hierarchy)
+ *
+ * The combination (origin + privilege) lets the app owner make decisions like:
+ *   "Show module X to internal super-admins but NOT to external super-admins."
+ *   "Allow sysadmin actions to internal sysadmins only."
+ *
+ * Stored as a plain string for DB portability (SQLite / MySQL / PostgreSQL).
+ *
+ * ── Invariants (enforced at application layer) ───────────────────────────────
+ *   • APP_OWNER → INTERNAL only. No external equivalent exists.
+ *   • All other privilege levels → available to both INTERNAL and EXTERNAL,
+ *     but must use the correct variant (SUPER_ADMIN vs EXTERNAL_SUPER_ADMIN…).
+ *
+ * @see UserPrivilegeLevel  for the hierarchy/rank enum.
  */
 enum UserOrigin: string
 {
-    /** Regular organisation member managed directly by Webkernel. */
+    /** Regular organisation member, managed directly by Webkernel. */
     case INTERNAL = 'internal';
 
-    /** Contractor, auditor, or external service provider. */
+    /** Contractor, auditor, integrator, or external service provider. */
     case EXTERNAL = 'external';
 
-    // ── Labels ───────────────────────────────────────────────────────────────
+
+    // ════════════════════════════════════════════════════════════════════════
+    // Labels
+    // ════════════════════════════════════════════════════════════════════════
 
     public function label(): string
     {
@@ -32,43 +47,68 @@ enum UserOrigin: string
         };
     }
 
-    // ── Validation helpers ────────────────────────────────────────────────────
+    public function description(): string
+    {
+        return match ($this) {
+            self::INTERNAL => 'Direct organisation member managed by the platform.',
+            self::EXTERNAL => 'External contractor, auditor, integrator, or service provider.',
+        };
+    }
+
+
+    // ════════════════════════════════════════════════════════════════════════
+    // Compatibility with UserPrivilegeLevel
+    // ════════════════════════════════════════════════════════════════════════
 
     /**
-     * Asserts that the given privilege level is compatible with this origin.
+     * Asserts that this origin is consistent with the given privilege level.
      *
-     * @throws \LogicException when the combination is invalid.
+     * APP_OWNER is internal-only. All other levels are valid for both origins
+     * but must use the matching variant (e.g. SUPER_ADMIN for INTERNAL,
+     * EXTERNAL_SUPER_ADMIN for EXTERNAL).
+     *
+     * @throws \LogicException on incompatible combination.
      */
     public function assertCompatible(UserPrivilegeLevel $level): void
     {
-        $valid = match ($this) {
-            self::INTERNAL => $level->isInternalOnly(),
-            self::EXTERNAL => $level->isExternalLevel(),
-        };
-
-        if (! $valid) {
+        if (! $this->isCompatibleWith($level)) {
             throw new \LogicException(sprintf(
-                'Privilege level "%s" is not compatible with origin "%s".',
+                'Privilege level "%s" is not compatible with origin "%s". ' .
+                'APP_OWNER is reserved for internal users only.',
                 $level->value,
                 $this->value,
             ));
         }
     }
 
-    /**
-     * Returns true when $level is valid for this origin, false otherwise.
-     */
     public function isCompatibleWith(UserPrivilegeLevel $level): bool
     {
-        return match ($this) {
-            self::INTERNAL => $level->isInternalOnly(),
-            self::EXTERNAL => $level->isExternalLevel(),
-        };
+        if ($level === UserPrivilegeLevel::APP_OWNER) {
+            return $this === self::INTERNAL;
+        }
+
+        return $level->origin() === $this;
     }
 
     /**
-     * @return array<string, string>
+     * Returns all privilege levels compatible with this origin, rank descending.
+     *
+     * @return list<UserPrivilegeLevel>
      */
+    public function compatibleLevels(): array
+    {
+        return array_values(array_filter(
+            UserPrivilegeLevel::allByRank(),
+            fn (UserPrivilegeLevel $level) => $this->isCompatibleWith($level),
+        ));
+    }
+
+
+    // ════════════════════════════════════════════════════════════════════════
+    // Utilities
+    // ════════════════════════════════════════════════════════════════════════
+
+    /** @return array<string, string> value → label map for form selects. */
     public static function options(): array
     {
         return [
@@ -77,6 +117,7 @@ enum UserOrigin: string
         ];
     }
 
+    /** Returns null if the key does not match any case (no exception). */
     public static function fromKey(string $key): ?self
     {
         return self::tryFrom($key);

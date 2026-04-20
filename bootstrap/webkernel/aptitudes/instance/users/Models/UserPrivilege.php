@@ -169,7 +169,7 @@ class UserPrivilege extends Model
     /** @param Builder<static> $query */
     public function scopeSuperUsers(Builder $query): Builder
     {
-        return $query->where('privilege', UserPrivilegeLevel::SUPER_USER->value);
+        return $query->where('privilege', UserPrivilegeLevel::SUPER_ADMIN->value);
     }
 
     /** @param Builder<static> $query */
@@ -202,10 +202,9 @@ class UserPrivilege extends Model
         return $this->privilege === UserPrivilegeLevel::APP_OWNER;
     }
 
-    public function isSuperUserOrAbove(): bool
+    public function isSuperAdminOrAbove(): bool
     {
-        return $this->privilege === UserPrivilegeLevel::SUPER_USER
-            || $this->privilege->isAbove(UserPrivilegeLevel::MEMBER);
+        return $this->privilege->isAtLeast(UserPrivilegeLevel::SUPER_ADMIN);
     }
 
     public function isExternal(): bool

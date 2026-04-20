@@ -63,14 +63,13 @@ trait HasPrivilegeLevel
     }
 
     /**
-     * True when the user is SUPER_USER or higher (includes APP_OWNER).
+     * True when the user is SUPER_ADMIN or higher (includes APP_OWNER).
      */
-    public function isSuperUser(): bool
+    public function isSuperAdmin(): bool
     {
         $level = $this->getPrivilegeLevel();
 
-        return $level === UserPrivilegeLevel::SUPER_USER
-            || ($level !== null && $level->isAbove(UserPrivilegeLevel::SUPER_USER));
+        return $level !== null && $level->isAtLeast(UserPrivilegeLevel::SUPER_ADMIN);
     }
 
     public function isExternal(): bool

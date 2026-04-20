@@ -13,6 +13,7 @@ use Webkernel\System\Contracts\Managers\InstanceManagerInterface;
 use Webkernel\System\Contracts\Managers\OsManagerInterface;
 use Webkernel\System\Contracts\Managers\RuntimeManagerInterface;
 use Webkernel\System\Contracts\Managers\SecurityManagerInterface;
+use Webkernel\System\Contracts\Managers\UsersManagerInterface;
 use Webkernel\System\Contracts\Managers\VersionManagerInterface;
 use Webkernel\System\Managers\VersionManager;
 use Webkernel\System\WebernelAPI;
@@ -24,6 +25,7 @@ use Webkernel\System\Managers\InstanceManager;
 use Webkernel\System\Managers\OsManager;
 use Webkernel\System\Managers\RuntimeManager;
 use Webkernel\System\Managers\SecurityManager;
+use Webkernel\System\Managers\UsersManager;
 /**
  * Binds all Webkernel manager interfaces to their concrete implementations.
  *
@@ -63,6 +65,12 @@ final class SystemManagerServiceProvider extends ServiceProvider
                 Auth::guard($guard),
                 $this->app->make(\Illuminate\Contracts\Auth\Access\Gate::class),
             );
+        });
+
+        $this->app->scoped(UsersManagerInterface::class, function (): UsersManager {
+            $guard = config('webkernel-auth.guard', 'web');
+
+            return new UsersManager(Auth::guard($guard));
         });
     }
 

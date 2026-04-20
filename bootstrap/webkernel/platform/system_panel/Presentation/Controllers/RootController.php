@@ -4,7 +4,7 @@ namespace Webkernel\Platform\SystemPanel\Presentation\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
-use Webkernel\Platform\SystemPanel\Support\InstallationState;
+use Webkernel\Platform\SystemPanel\Presentation\Installer\InstallationState;
 
 /**
  * Handles the application root (/).

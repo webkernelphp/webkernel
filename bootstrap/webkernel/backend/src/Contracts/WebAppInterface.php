@@ -10,6 +10,7 @@ use Webkernel\System\Contracts\Managers\InstanceManagerInterface;
 use Webkernel\System\Contracts\Managers\OsManagerInterface;
 use Webkernel\System\Contracts\Managers\RuntimeManagerInterface;
 use Webkernel\System\Contracts\Managers\SecurityManagerInterface;
+use Webkernel\System\Contracts\Managers\UsersManagerInterface;
 use Webkernel\System\Contracts\Managers\VersionManagerInterface;
 
 /**
@@ -63,6 +64,16 @@ interface WebAppInterface
      * Authentication, user identity, role checks, and AI-field ACL.
      */
     public function auth(): AuthManagerInterface;
+
+    /**
+     * Platform-level user management: installer role setup, privilege queries.
+     *
+     * webkernel()->users()->installerRoleOptions()
+     * webkernel()->users()->createWithPrivilege(name: ..., email: ..., password: ..., level: ...)
+     * webkernel()->users()->currentLevel()
+     * webkernel()->users()->hasAtLeast(UserPrivilegeLevel::SYSADMIN)
+     */
+    public function users(): UsersManagerInterface;
 
     /**
      * Webkernel version and release information.
