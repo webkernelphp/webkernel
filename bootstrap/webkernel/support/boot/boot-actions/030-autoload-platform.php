@@ -51,7 +51,7 @@ spl_autoload_register(static function (string $class): void {
                 'Webkernel\\QuickTouch\\'   => WEBKERNEL_PATH . '/backend/quick_touch',
 
                 /* Support Layer: Application Data Models */
-                'App\\Models\\'         => WEBKERNEL_PATH . '/support/app-models',
+                'App\\Models\\'         => WEBKERNEL_PATH . '/support/boot/app-models',
 
                 /* Platform Layer: Interface and Widgets */
                 'Webkernel\\Arcanes\\'  => WEBKERNEL_PATH . '/platform/arcanes',

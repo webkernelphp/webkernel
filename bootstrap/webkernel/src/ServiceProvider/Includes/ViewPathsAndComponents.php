@@ -12,16 +12,15 @@ class ViewPathsAndComponents
 
     public function boot(): void
     {
-        $errorPath = WEBKERNEL_PATH . '/backend/resources/views/error-pages';
         // Use prependNamespace instead of replace to ensure we don't break
         // Laravel's internal fallbacks if your custom folder is missing a specific file.
-        View::prependNamespace('errors', [$errorPath]);
+        View::prependNamespace('errors', [WEBKERNEL_ERRORS_PAGES_PATH]);
 
         // --- Load Views ---
-        $webkernelViewsPath      = WEBKERNEL_PATH . '/runtime/dist/view/views';
         $quickTouchViewsPath     = WEBKERNEL_PATH . '/backend/quick_touch';
+        $webkernelViewsPath      = WEBKERNEL_PATH . '/views';
         $webkernelComponentsPath = $webkernelViewsPath . '/components';
-        $svgExportPath           = WEBKERNEL_PATH . '/runtime/dist/export-svg';
+        $svgExportPath           = WEBKERNEL_PATH . '/support/dist/export-svg';
         $layupViewsPath          = resource_path('views');
 
         app('view')->addNamespace('webkernel', $webkernelViewsPath);

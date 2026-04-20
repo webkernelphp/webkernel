@@ -10,3 +10,6 @@ defined('WEBKERNEL_DIST_ROOT')
 
 defined('WEBKERNEL_STATIC_ROOT')
     || define('WEBKERNEL_STATIC_ROOT', WEBKERNEL_PATH . '/runtime/static');
+
+defined('WEBKERNEL_ERRORS_PAGES_PATH')
+    || define('WEBKERNEL_ERRORS_PAGES_PATH', WEBKERNEL_PATH . '/support/error-pages');

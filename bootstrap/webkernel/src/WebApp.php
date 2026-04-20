@@ -97,7 +97,7 @@ final class WebApp extends Application
                 // This ensures that right before an exception is rendered,
                 // the 'errors' namespace points to your custom directory.
                 $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e) {
-                    $path = WEBKERNEL_PATH . '/backend/resources/views/error-pages';
+                    $path = WEBKERNEL_ERRORS_PAGES_PATH;
 
                     // Force the namespace right now
                     View::replaceNamespace('errors', [$path]);
