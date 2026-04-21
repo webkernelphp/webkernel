@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Webkernel\Widgets;
+namespace Webkernel\Platform\SystemPanel\Presentation\Widgets;
 
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Webkernel\Widgets\Contracts\ConfigurableWidget;
 
-class SystemStats extends StatsOverviewWidget implements ConfigurableWidget
+class SystemStats extends StatsOverviewWidget
 {
     use InteractsWithPageFilters;
 

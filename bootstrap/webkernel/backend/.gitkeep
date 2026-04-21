@@ -1,4 +1,0 @@
-├── src/        ← system plumbing (Contracts, Managers, API)
-├── server/     ← server manager (process control, sockets, workers)
-├── webserver/  ← HTTP server layer (routing, middleware, request handling)
-└── resources/  ← configs, views, manifests
