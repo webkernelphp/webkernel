@@ -19,12 +19,70 @@ class FilamentRenderHooks
         $this->registerIcons();
         $this->registerAuthFormHooks();
 
+        /**
+         * Add a banner to the top of the page for priviledged users.
+         */
+        $this->priviledgesUsersBanners();
+
         /*
          * QuickTouch — the entire component (render-hook + view data) is
          * owned by the QuickTouch class. The service provider only needs
          * this single line to activate everything.
          */
         QuickTouch::bootQuickTouch();
+    }
+
+    private function priviledgesUsersBanners(): void
+    {
+        \Filament\Support\Facades\FilamentView::registerRenderHook(
+            \Filament\View\PanelsRenderHook::TOPBAR_BEFORE,
+            function (): string {
+
+                $users   = webkernel()->users();
+                $current = $users->current();
+
+                if ($current === null) {
+                    return '';
+                }
+
+                if (!$users->hasAtLeast(\Webkernel\Users\Enum\UserPrivilegeLevel::SYSADMIN)) {
+                    return '';
+                }
+
+                $warnings = [];
+
+                if (!$users->hasOwner()) {
+                    $warnings[] = [
+                        'id'          => 'wkt-no-owner',
+                        'content'     => '<strong>No application owner set.</strong>&nbsp;Assign an APP_OWNER to complete the platform setup.',
+                        'start_color' => '#7f1d1d',
+                        'end_color'   => '#991b1b',
+                        'closeable'   => false,
+                    ];
+                }
+
+                if ($current->isExternal()) {
+                    $name  = e($current->name);
+                    $level = $current->getPrivilegeLevel()?->label() ?? 'External';
+                    $warnings[] = [
+                        'id'          => 'wkt-external-' . $current->getKey(),
+                        'content'     => "Connected as&nbsp;<strong>external collaborator</strong>&nbsp;— {$level}: {$name}.",
+                        'start_color' => '#78350f',
+                        'end_color'   => '#92400e',
+                        'closeable'   => true,
+                    ];
+                }
+
+                if (empty($warnings)) {
+                    return '';
+                }
+
+                return view('components.banner.floating-banner', [
+                    'warnings' => $warnings,
+                    'speed'    => 18,
+                ])->render();
+            }
+        );
     }
 
     // ── Layout CSS (BODY_START, Octane-safe) ─────────────────────────────────

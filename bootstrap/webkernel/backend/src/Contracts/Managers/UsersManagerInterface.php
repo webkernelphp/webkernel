@@ -5,6 +5,7 @@ namespace Webkernel\System\Contracts\Managers;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Webkernel\Users\Enum\UserOrigin;
 use Webkernel\Users\Enum\UserPrivilegeLevel;
+use Webkernel\Users\Models\User;
 
 /**
  * Platform-level user management contract.
@@ -17,10 +18,13 @@ use Webkernel\Users\Enum\UserPrivilegeLevel;
  * Module-level end-users are handled by each module's own RBAC system.
  *
  * Usage:
- *   webkernel()->users()->installerRoleOptions()
- *   webkernel()->users()->createWithPrivilege(name: ..., email: ..., password: ..., level: ...)
- *   webkernel()->users()->currentLevel()
+ *   webkernel()->users()->current()                        → ?User
+ *   webkernel()->users()->current()->isExternal()          → bool
+ *   webkernel()->users()->current()->isInternal()          → bool
+ *   webkernel()->users()->current()->getPrivilegeLevel()   → ?UserPrivilegeLevel
+ *   webkernel()->users()->currentLevel()                   → ?UserPrivilegeLevel
  *   webkernel()->users()->hasAtLeast(UserPrivilegeLevel::SYSADMIN)
+ *   webkernel()->users()->hasOwner()                       → bool
  *
  * @api
  */
@@ -63,6 +67,11 @@ interface UsersManagerInterface
     // ── Current-user queries (request-scoped) ─────────────────────────────────
 
     /**
+     * The currently authenticated platform User, or null for guests.
+     */
+    public function current(): ?User;
+
+    /**
      * Privilege level of the currently authenticated user, or null for guests.
      */
     public function currentLevel(): ?UserPrivilegeLevel;
@@ -82,4 +91,11 @@ interface UsersManagerInterface
      * True when the current user belongs to the given origin.
      */
     public function isOrigin(UserOrigin $origin): bool;
+
+    // ── Instance-level queries ────────────────────────────────────────────────
+
+    /**
+     * True when at least one APP_OWNER exists on this platform instance.
+     */
+    public function hasOwner(): bool;
 }

@@ -44,4 +44,12 @@ final class IdentifierClass
 {
     use HasIdentifiers;
 
+    /**
+     * Proxy fluent UniqueIdGenerator methods directly on the helper instance.
+     * Enables webkernel_id_generator()->using('nano')->get() as documented.
+     */
+    public function __call(string $method, array $args): mixed
+    {
+        return $this->makeUniqueIdentifier()->{$method}(...$args);
+    }
 }

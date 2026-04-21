@@ -25,13 +25,13 @@ use Webkernel\Users\Models\User;
 final class UsersManager implements UsersManagerInterface
 {
     /** Privilege levels shown in the installer role selector, in display order. */
-    private const INSTALLER_ROLES = [
-        UserPrivilegeLevel::APP_OWNER,
-        UserPrivilegeLevel::SUPER_ADMIN,
-        UserPrivilegeLevel::SYSADMIN,
-        UserPrivilegeLevel::EXTERNAL_SUPER_ADMIN,
-        UserPrivilegeLevel::EXTERNAL_SYSADMIN,
-    ];
+    // private const INSTALLER_ROLES = [
+    //     UserPrivilegeLevel::APP_OWNER,
+    //     UserPrivilegeLevel::SUPER_ADMIN,
+    //     UserPrivilegeLevel::SYSADMIN,
+    //     UserPrivilegeLevel::EXTERNAL_SUPER_ADMIN,
+    //     UserPrivilegeLevel::EXTERNAL_SYSADMIN,
+    // ];
 
     public function __construct(private readonly Guard $guard) {}
 
@@ -102,19 +102,16 @@ final class UsersManager implements UsersManagerInterface
 
     // ── Current-user queries ──────────────────────────────────────────────────
 
-    public function currentLevel(): ?UserPrivilegeLevel
+    public function current(): ?User
     {
         $user = $this->guard->user();
 
-        if ($user === null) {
-            return null;
-        }
+        return $user instanceof User ? $user : null;
+    }
 
-        if (method_exists($user, 'privilegeLevel')) {
-            return $user->privilegeLevel();
-        }
-
-        return null;
+    public function currentLevel(): ?UserPrivilegeLevel
+    {
+        return $this->current()?->getPrivilegeLevel();
     }
 
     public function hasAtLeast(UserPrivilegeLevel $level): bool
@@ -134,5 +131,12 @@ final class UsersManager implements UsersManagerInterface
         $current = $this->currentLevel();
 
         return $current !== null && $current->origin() === $origin;
+    }
+
+    public function hasOwner(): bool
+    {
+        return User::whereHas('privilegeRelation', fn ($q) =>
+            $q->where('privilege', UserPrivilegeLevel::APP_OWNER->value)
+        )->exists();
     }
 }
