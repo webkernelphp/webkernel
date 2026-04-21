@@ -6,8 +6,8 @@ use Webkernel\Console\CommandReplacer;
 use Webkernel\Panel\Concerns\RemoteComponentRegistry;
 use Webkernel\Panel\Store\PanelConfigStore;
 use Webkernel\Panel\Support\DefaultRemoteComponentRegistry;
-use Webkernel\ServiceProvider\Includes\FilamentRenderHooks;
-use Webkernel\ServiceProvider\Includes\ViewPathsAndComponents;
+use Webkernel\Providers\FilamentRenderHooks;
+use Webkernel\Providers\ViewPathsAndComponents;
 
 /**
  * Root Webkernel service provider.

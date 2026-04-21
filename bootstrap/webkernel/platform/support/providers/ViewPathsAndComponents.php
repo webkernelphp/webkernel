@@ -1,5 +1,5 @@
 <?php declare(strict_types=1);
-namespace Webkernel\ServiceProvider\Includes;
+namespace Webkernel\Providers;
 
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Blade;
@@ -17,10 +17,10 @@ class ViewPathsAndComponents
         View::prependNamespace('errors', [WEBKERNEL_ERRORS_PAGES_PATH]);
 
         // --- Load Views ---
-        $quickTouchViewsPath     = WEBKERNEL_PATH . '/backend/quick_touch';
-        $webkernelViewsPath      = WEBKERNEL_PATH . '/views';
+        $quickTouchViewsPath     = WEBKERNEL_PLATFORM_ROOT . '/quick_touch';
+        $webkernelViewsPath      = WEBKERNEL_PATH . '/screens/views';
         $webkernelComponentsPath = $webkernelViewsPath . '/components';
-        $svgExportPath           = WEBKERNEL_PATH . '/support/dist/export-svg';
+        $svgExportPath           = WEBKERNEL_MAIN_SUPPORT_PATH . '/_dist/export-svg';
         $layupViewsPath          = resource_path('views');
 
         app('view')->addNamespace('webkernel', $webkernelViewsPath);

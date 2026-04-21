@@ -37,26 +37,22 @@ spl_autoload_register(static function (string $class): void {
                 'Webkernel\\Panels\\'        => WEBKERNEL_PATH . '/aptitudes/panels',
                 'Webkernel\\Plugins\\'       => WEBKERNEL_PATH . '/aptitudes/plugins',
                 'Webkernel\\Traits\\'        => WEBKERNEL_PATH . '/aptitudes/traits',
-                'Webkernel\\Widgets\\'       => WEBKERNEL_PATH . '/aptitudes/widgets',
-                'Webkernel\\Generators\\'       => WEBKERNEL_PATH . '/aptitudes/generators',
+                'Webkernel\\Generators\\'    => WEBKERNEL_PATH . '/aptitudes/generators',
 
                 /* Instance Layer: High-Level Business Logic */
                 'Webkernel\\Businesses\\'    => WEBKERNEL_PATH . '/aptitudes/instance/businesses',
                 'Webkernel\\Users\\'         => WEBKERNEL_PATH . '/aptitudes/instance/users',
 
                 /* Backend Layer: System Infrastructure */
-                'Webkernel\\System\\'   => WEBKERNEL_PATH . '/backend/src',
-                'Webkernel\\Exceptions\\'   => WEBKERNEL_PATH . '/backend/exceptions',
-                'Webkernel\\Providers\\'   => WEBKERNEL_PATH . '/backend/providers',
-                'Webkernel\\QuickTouch\\'   => WEBKERNEL_PATH . '/backend/quick_touch',
+                'Webkernel\\System\\'        => WEBKERNEL_PATH . '/_backend',
 
                 /* Support Layer: Application Data Models */
-                'App\\Models\\'         => WEBKERNEL_PATH . '/support/boot/app-models',
+                'App\\Models\\'              => WEBKERNEL_PATH . '/platform/support/boot/app-models',
 
-                /* Platform Layer: Interface and Widgets */
-                'Webkernel\\Arcanes\\'  => WEBKERNEL_PATH . '/platform/arcanes',
-                'Webkernel\\Panel\\'    => WEBKERNEL_PATH . '/platform/panel',
-                'Webkernel\\Widgets\\'  => WEBKERNEL_PATH . '/platform/widgets',
+                /* Platform Layer */
+                'Webkernel\\Providers\\'     => WEBKERNEL_PATH . '/platform/support/providers',
+                'Webkernel\\Arcanes\\'       => WEBKERNEL_PATH . '/platform/arcanes',
+                'Webkernel\\QuickTouch\\'    => WEBKERNEL_PATH . '/platform/quick_touch',
 
                 /* System Panel Specific Assets */
                 'Webkernel\\Platform\\SystemPanel\\' => WEBKERNEL_PATH . '/platform/system_panel',

@@ -1,5 +1,5 @@
 <?php declare(strict_types=1);
-namespace Webkernel\ServiceProvider\Includes;
+namespace Webkernel\Providers;
 
 use Illuminate\View\FileViewFinder;
 

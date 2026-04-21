@@ -33,7 +33,7 @@ defined('WEBKERNEL_COMPATIBLE_WITH') || define('WEBKERNEL_COMPATIBLE_WITH', [
 ]);
 
 // -- Constants ----------------------------------------------------------------
-$_support_boot = WEBKERNEL_PATH . '/support/boot/';
+$_support_boot = WEBKERNEL_PATH . '/platform/support/boot/';
 
 require "{$_support_boot}boot-constants/010-paths.php";
 require "{$_support_boot}boot-constants/020-registry.php";
