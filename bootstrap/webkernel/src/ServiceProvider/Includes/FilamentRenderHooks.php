@@ -37,7 +37,6 @@ class FilamentRenderHooks
         \Filament\Support\Facades\FilamentView::registerRenderHook(
             \Filament\View\PanelsRenderHook::TOPBAR_BEFORE,
             function (): string {
-
                 $users   = webkernel()->users();
                 $current = $users->current();
 
@@ -45,41 +44,39 @@ class FilamentRenderHooks
                     return '';
                 }
 
-                if (!$users->hasAtLeast(\Webkernel\Users\Enum\UserPrivilegeLevel::SYSADMIN)) {
-                    return '';
-                }
-
-                $warnings = [];
+                $banners = [];
 
                 if (!$users->hasOwner()) {
-                    $warnings[] = [
-                        'id'          => 'wkt-no-owner',
-                        'content'     => '<strong>No application owner set.</strong>&nbsp;Assign an APP_OWNER to complete the platform setup.',
-                        'start_color' => '#7f1d1d',
-                        'end_color'   => '#991b1b',
-                        'closeable'   => false,
+                    $banners[] = [
+                        'id'           => 'wkt-no-owner',
+                        'type'         => 'danger',
+                        'title'        => 'No application owner set.',
+                        'message'      => 'Assign an APP_OWNER in your environment to complete platform setup.',
+                        'action_label' => 'Go to settings',
+                        'action_url'   => url('filament.admin.pages.settings'),
+                        'closeable'    => false,
                     ];
                 }
 
                 if ($current->isExternal()) {
-                    $name  = e($current->name);
+                    $name  = filament()->auth()->user()->name;
                     $level = $current->getPrivilegeLevel()?->label() ?? 'External';
-                    $warnings[] = [
-                        'id'          => 'wkt-external-' . $current->getKey(),
-                        'content'     => "Connected as&nbsp;<strong>external collaborator</strong>&nbsp;— {$level}: {$name}.",
-                        'start_color' => '#78350f',
-                        'end_color'   => '#92400e',
-                        'closeable'   => true,
+
+                    $banners[] = [
+                        'id'        => 'wkt-external-' . $current->getKey(),
+                        'type'      => 'warning',
+                        'title'     => 'External collaborator session.',
+                        'message'   => "Logged in as {$level}: {$name}. Some actions may be restricted.",
+                        'closeable' => false,
                     ];
                 }
 
-                if (empty($warnings)) {
+                if (empty($banners)) {
                     return '';
                 }
 
                 return view('components.banner.floating-banner', [
-                    'warnings' => $warnings,
-                    'speed'    => 18,
+                    'banners' => $banners,
                 ])->render();
             }
         );
