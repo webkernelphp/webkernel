@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Webkernel\BackOffice\System\Presentation\Installer;
+namespace Webkernel\BackOffice\Installer\Presentation\Installer;
 
 use Webkernel\Users\Models\UserPrivilege;
 

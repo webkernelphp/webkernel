@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Webkernel\BackOffice\System\Providers;
+namespace Webkernel\BackOffice\Installer\Providers;
 
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -12,7 +12,7 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Illuminate\Session\Middleware\StartSession;
-use Webkernel\BackOffice\System\Presentation\Installer\InstallerPage;
+use Webkernel\BackOffice\Installer\Presentation\Installer\InstallerPage;
 use Filament\Support\Enums\Width;
 use Filament\Support\Colors\Color;
 

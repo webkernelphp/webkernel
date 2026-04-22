@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Webkernel\BackOffice\System\Presentation\Installer;
+namespace Webkernel\BackOffice\Installer\Presentation\Installer;
 
 use BackedEnum;
 use Filament\Actions\Action;
@@ -19,7 +19,7 @@ use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use Webkernel\Businesses\Models\Business;
 use Webkernel\Connectors\Mailer;
-use Webkernel\BackOffice\System\Presentation\Installer\InstallationState;
+use Webkernel\BackOffice\Installer\Presentation\Installer\InstallationState;
 use Webkernel\System\Support\CapabilityMap;
 use Webkernel\Users\Enum\UserPrivilegeLevel;
 use Webkernel\Users\Models\User;
@@ -36,7 +36,7 @@ use Webkernel\Users\Models\User;
  */
 class InstallerPage extends Page
 {
-    protected string $view         = 'webkernel-system::filament.pages.installer';
+    protected string $view         = 'webkernel-installer::filament.pages.installer';
     protected static string $layout = 'filament-panels::components.layout.simple';
 
     // ── Livewire state ────────────────────────────────────────────────────────

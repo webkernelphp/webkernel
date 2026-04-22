@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Webkernel\BackOffice\System\Presentation\Controllers;
+namespace Webkernel\Routes;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
-use Webkernel\BackOffice\System\Presentation\Installer\InstallationState;
+use Webkernel\BackOffice\Installer\Presentation\Installer\InstallationState;
 
 /**
  * Handles the application root (/).
