@@ -21,7 +21,7 @@ use Webkernel\Integration\WebkernelUpdateChecker;
  */
 class WebkernelUpgrade extends Page
 {
-    protected string $view = 'webkernel-system::filament.pages.kernel-update';
+    protected string $view = 'webkernel-system::filament.pages.webkernel-upgrade';
 
     protected static ?int                 $navigationSort           = 6;
     protected static bool                 $shouldRegisterNavigation = true;
