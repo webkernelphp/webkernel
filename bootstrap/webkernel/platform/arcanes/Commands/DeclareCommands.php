@@ -33,6 +33,21 @@ final class DeclareCommands extends ServiceProvider
     }
 
     /**
+     * Bootstrap application Commands.
+     *
+     * @return void
+     */
+    public function boot(): void
+    {
+        // Check if the application is running in the console to avoid unnecessary overhead
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                MakeModule::class,
+            ]);
+        }
+    }
+
+    /**
      * Load the canonical override map from disk.
      *
      * Returns an empty array when the file is absent so the application
