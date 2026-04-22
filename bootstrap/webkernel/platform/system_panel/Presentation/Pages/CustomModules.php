@@ -79,7 +79,7 @@ class CustomModules extends Page implements HasForms
                         ->schema([
                             Select::make('registry')
                                 ->label('Registry')
-                                ->options(Registries::options())
+                                ->options(Registries::customOptions())
                                 ->required()
                                 ->native(false),
                         ]),
@@ -123,15 +123,15 @@ class CustomModules extends Page implements HasForms
                         ->icon('heroicon-o-check-circle')
                         ->description('Review and install')
                         ->schema([
-                            TextInput::make('confirm_vendor')
-                                ->label('Vendor')
+                            TextInput::make('vendor')
+                                ->label('Vendor/Owner')
                                 ->disabled()
                                 ->dehydrated(false),
-                            TextInput::make('confirm_slug')
+                            TextInput::make('slug')
                                 ->label('Module')
                                 ->disabled()
                                 ->dehydrated(false),
-                            TextInput::make('confirm_version')
+                            TextInput::make('version')
                                 ->label('Version')
                                 ->disabled()
                                 ->dehydrated(false),

@@ -26,11 +26,25 @@ enum Registries: string
         return $this === self::WebkernelRegistry;
     }
 
+    public function isCustom(): bool
+    {
+        return in_array($this, [self::GitHub, self::GitLab, self::Custom]);
+    }
+
     public static function options(): array
     {
         return array_combine(
             array_map(fn ($case) => $case->value, self::cases()),
             array_map(fn ($case) => $case->label(), self::cases()),
+        );
+    }
+
+    public static function customOptions(): array
+    {
+        $cases = [self::GitHub, self::GitLab, self::Custom];
+        return array_combine(
+            array_map(fn ($case) => $case->value, $cases),
+            array_map(fn ($case) => $case->label(), $cases),
         );
     }
 
