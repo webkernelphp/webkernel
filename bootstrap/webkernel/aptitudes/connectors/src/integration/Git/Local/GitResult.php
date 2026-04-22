@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Webkernel\Integration\Git;
+namespace Webkernel\Integration\Git\Local;
 
 use Webkernel\Process;
 

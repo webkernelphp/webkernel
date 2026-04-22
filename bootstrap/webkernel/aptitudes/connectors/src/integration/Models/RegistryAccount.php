@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class RegistryAccount extends Model
 {
-    protected $table = 'registry_accounts';
+    protected $table = 'inst_registry_accounts';
     protected $connection = 'webkernel_sqlite';
     protected $keyType = 'string';
     public $incrementing = false;

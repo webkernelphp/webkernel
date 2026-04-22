@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class RegistryKey extends Model
 {
-    protected $table = 'modules_src_keys';
+    protected $table = 'inst_modules_src_keys';
     protected $connection = 'webkernel_sqlite';
     protected $keyType = 'string';
     public $incrementing = false;

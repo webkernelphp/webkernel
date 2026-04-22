@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
 
-namespace Webkernel\Integration\Git;
+namespace Webkernel\Integration\Git\Local;
 
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Exception\ProcessSignaledException;
 
 /**
- * Deterministic, observable git runner.
+ * Deterministic, observable local git runner.
  *
  * - No passthru(), no shell_exec(), no backtick operator.
  * - Every operation returns a GitResult; nothing throws by default.
@@ -67,16 +67,16 @@ final class GitRunner
 
     // ── Convenience wrappers ──────────────────────────────────────────────────
 
-    public function revParseShort(string $ref = 'HEAD'): GitResult  { return $this->run(['rev-parse', '--short', $ref]); }
-    public function revParseFull(string $ref = 'HEAD'): GitResult   { return $this->run(['rev-parse', $ref]); }
-    public function symbolicRef(string $ref = 'HEAD'): GitResult    { return $this->run(['symbolic-ref', '--short', $ref]); }
-    public function describeExactTag(string $ref = 'HEAD'): GitResult { return $this->run(['describe', '--exact-match', '--tags', $ref]); }
+    public function revParseShort(string $ref = 'HEAD'): GitResult    { return $this->run(['rev-parse', '--short', $ref]); }
+    public function revParseFull(string $ref = 'HEAD'): GitResult     { return $this->run(['rev-parse', $ref]); }
+    public function symbolicRef(string $ref = 'HEAD'): GitResult      { return $this->run(['symbolic-ref', '--short', $ref]); }
+    public function describeExactTag(string $ref = 'HEAD'): GitResult  { return $this->run(['describe', '--exact-match', '--tags', $ref]); }
     public function remoteGetUrl(string $remote = 'origin'): GitResult { return $this->run(['remote', 'get-url', $remote]); }
-    public function revParseGitDir(): GitResult                     { return $this->run(['rev-parse', '--git-dir']); }
-    public function add(string $pathspec = '.'): GitResult          { return $this->run(['add', $pathspec]); }
-    public function commit(string $message): GitResult              { return $this->run(['commit', '-m', $message]); }
-    public function tag(string $name): GitResult                    { return $this->run(['tag', $name]); }
-    public function push(string $remote, string $ref): GitResult    { return $this->run(['push', $remote, $ref]); }
+    public function revParseGitDir(): GitResult                        { return $this->run(['rev-parse', '--git-dir']); }
+    public function add(string $pathspec = '.'): GitResult             { return $this->run(['add', $pathspec]); }
+    public function commit(string $message): GitResult                 { return $this->run(['commit', '-m', $message]); }
+    public function tag(string $name): GitResult                       { return $this->run(['tag', $name]); }
+    public function push(string $remote, string $ref): GitResult       { return $this->run(['push', $remote, $ref]); }
 
     // ── Introspection ─────────────────────────────────────────────────────────
 

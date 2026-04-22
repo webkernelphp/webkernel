@@ -6,10 +6,11 @@ use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
-use Illuminate\Support\Facades\Http;
 use UnitEnum;
 use Webkernel\Integration\KernelUpdater;
 use Webkernel\Integration\Git\Exceptions\NetworkException;
+use Webkernel\Integration\Models\WebkernelUpdateCheck;
+use Webkernel\Integration\WebkernelUpdateChecker;
 
 /**
  * WebkernelUpgrade
@@ -54,34 +55,57 @@ class WebkernelUpgrade extends Page
         $this->laravelVersion  = app()->version();
         $this->filamentVersion = \Composer\InstalledVersions::getPrettyVersion('filament/filament');
 
-        $this->checkForUpdates();
+        $this->loadFromLocalRegistry();
+    }
+
+    private function loadFromLocalRegistry(): void
+    {
+        try {
+            $checker = WebkernelUpdateChecker::forWebkernel();
+            $latest  = $checker->latestKnownRelease();
+            $lastLog = WebkernelUpdateCheck::lastSuccess(
+                WebkernelUpdateChecker::WEBKERNEL_TARGET_TYPE,
+                WebkernelUpdateChecker::WEBKERNEL_SLUG,
+            );
+
+            if ($latest !== null) {
+                $this->latestVersion = $latest->tag_name;
+                $this->isUpToDate    = $checker->isUpToDate($this->currentVersion);
+                $this->lastChecked   = $lastLog?->checked_at->diffForHumans() ?? WEBKERNEL_RELEASED_AT;
+                return;
+            }
+        } catch (\Throwable) {
+            // DB not yet migrated — will show "never checked" state
+        }
     }
 
     public function checkForUpdates(): void
     {
         try {
-            $this->latestVersion = $this->fetchLatestVersionFromGitHub();
-            $this->lastChecked = now()->diffForHumans();
-            $this->isUpToDate = version_compare($this->currentVersion, $this->latestVersion, '>=');
+            $checker = WebkernelUpdateChecker::forWebkernel()->force();
+            $log     = $checker->check();
+
+            if ($log->status === WebkernelUpdateCheck::STATUS_SUCCESS) {
+                $latest              = $checker->latestKnownRelease();
+                $this->latestVersion = $latest?->tag_name ?? '';
+                $this->isUpToDate    = $checker->isUpToDate($this->currentVersion);
+                $this->lastChecked   = $log->checked_at->diffForHumans();
+
+                if ($this->isUpToDate) {
+                    $this->dispatch('webkernel-toast', type: 'success', message: 'Webkernel is up to date (v' . $this->currentVersion . ').');
+                } else {
+                    $this->dispatch('webkernel-toast', type: 'warning', message: "Update available: v{$this->latestVersion}");
+                }
+            } elseif ($log->status === WebkernelUpdateCheck::STATUS_RATE_LIMITED) {
+                $this->dispatch('webkernel-toast', type: 'warning', message: 'GitHub rate limit reached. Try again later.');
+            } elseif ($log->status === WebkernelUpdateCheck::STATUS_SKIPPED) {
+                $this->dispatch('webkernel-toast', type: 'info', message: 'Already checked recently. Showing cached result.');
+            } else {
+                $this->dispatch('webkernel-toast', type: 'danger', message: 'Check failed: ' . ($log->error_message ?? 'unknown error'));
+            }
         } catch (\Throwable $e) {
-            $this->dispatch('wk-toast', type: 'warning', message: 'Could not check for updates: ' . $e->getMessage());
+            $this->dispatch('webkernel-toast', type: 'danger', message: 'Could not check for updates: ' . $e->getMessage());
         }
-    }
-
-    private function fetchLatestVersionFromGitHub(): string
-    {
-        $response = Http::timeout(5)->get('https://api.github.com/repos/webkernelphp/foundation/releases/latest');
-
-        if (!$response->successful()) {
-            throw new \Exception('GitHub API request failed');
-        }
-
-        $tag = $response->json('tag_name');
-        if (!$tag) {
-            throw new \Exception('No release tag found');
-        }
-
-        return ltrim($tag, 'v');
     }
 
 
@@ -186,14 +210,7 @@ class WebkernelUpgrade extends Page
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
                 ->outlined()
-                ->action(function (): void {
-                    $this->checkForUpdates();
-                    if ($this->isUpToDate) {
-                        $this->dispatch('wk-toast', type: 'success', message: 'Kernel is up to date!');
-                    } else {
-                        $this->dispatch('wk-toast', type: 'warning', message: "Update available: v{$this->latestVersion}");
-                    }
-                }),
+                ->action(fn () => $this->checkForUpdates()),
         ];
     }
 

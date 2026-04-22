@@ -1,9 +1,12 @@
 <?php declare(strict_types=1);
 
-namespace Webkernel\Integration\Git;
+namespace Webkernel\Integration\Git\Hosting;
 
+use Webkernel\Integration\Git\Archive;
+use Webkernel\Integration\Git\Checksum;
 use Webkernel\Integration\Git\Contracts\GitHostAdapter;
 use Webkernel\Integration\Git\Exceptions\NetworkException;
+use Webkernel\Integration\Git\HttpGitClient;
 use Webkernel\Registry\Providers;
 use Webkernel\Registry\Source;
 use Webkernel\Registry\Token;
@@ -16,9 +19,6 @@ use Webkernel\Registry\Token;
  *   1. Token injected via withToken()
  *   2. Token from Registry\Token store (encrypted, persistent)
  *   3. null (anonymous — works for public repos)
- *
- * The adapter never prompts for a token. That responsibility belongs to the
- * caller (command or Filament page). Call needsToken(Source) to check first.
  */
 final class GitHubAdapter implements GitHostAdapter
 {
@@ -69,13 +69,110 @@ final class GitHubAdapter implements GitHostAdapter
         }
 
         $filtered = array_values(array_filter($data, static function (mixed $r) use ($includePreReleases): bool {
-            if (!is_array($r))                                                    { return false; }
-            if (($r['draft'] ?? false) === true)                                  { return false; }
-            if (!$includePreReleases && ($r['prerelease'] ?? false) === true)     { return false; }
+            if (!is_array($r))                                                { return false; }
+            if (($r['draft'] ?? false) === true)                              { return false; }
+            if (!$includePreReleases && ($r['prerelease'] ?? false) === true) { return false; }
             return true;
         }));
 
         return empty($filtered) ? $this->branchFallback($client, $source) : $filtered;
+    }
+
+    /**
+     * Fetch all git tags for a repository — paginated, all pages.
+     * Returns full GitHub tag payloads including commit SHA and node_id.
+     *
+     * @return array<int, array<string, mixed>>
+     * @throws NetworkException
+     */
+    public function tags(Source $source): array
+    {
+        $client  = $this->client($source);
+        $apiBase = $source->apiBase();
+        $all     = [];
+        $page    = 1;
+
+        do {
+            $url    = "{$apiBase}/repos/{$source->vendor}/{$source->slug}/tags?per_page=100&page={$page}";
+            $result = $client->getWithStatus($url);
+
+            if ($result['status'] !== 200) {
+                throw new NetworkException(
+                    "GitHub tags endpoint returned HTTP {$result['status']} for [{$source}]."
+                );
+            }
+
+            $data = json_decode($result['body'], true);
+
+            if (!is_array($data) || empty($data)) {
+                break;
+            }
+
+            $all  = array_merge($all, $data);
+            $page++;
+        } while (count($data) === 100); // GitHub returns exactly 100 per full page
+
+        return $all;
+    }
+
+    /**
+     * Query the GitHub rate-limit API (free — does not consume quota).
+     * Returns remaining request count and the reset timestamp.
+     *
+     * @return array{remaining: int, reset_at: \DateTimeImmutable}
+     * @throws NetworkException
+     */
+    public function rateLimit(Source $source): array
+    {
+        $client = $this->client($source);
+        $result = $client->getWithHeaders("{$source->apiBase()}/rate_limit");
+
+        if ($result['status'] !== 200) {
+            throw new NetworkException("GitHub rate_limit endpoint returned HTTP {$result['status']}.");
+        }
+
+        $data = json_decode($result['body'], true);
+        $core = $data['resources']['core'] ?? $data['rate'] ?? [];
+
+        $remaining = (int) ($core['remaining'] ?? ($result['headers']['x-ratelimit-remaining'] ?? 60));
+        $reset     = (int) ($core['reset']     ?? ($result['headers']['x-ratelimit-reset']     ?? time() + 3600));
+
+        return [
+            'remaining' => $remaining,
+            'reset_at'  => (new \DateTimeImmutable())->setTimestamp($reset),
+        ];
+    }
+
+    /**
+     * Fetch only the latest release — single API call, lighter than releases().
+     *
+     * @return array<string, mixed>
+     * @throws NetworkException
+     */
+    public function latestRelease(Source $source): array
+    {
+        $client = $this->client($source);
+        $url    = "{$source->apiBase()}/repos/{$source->vendor}/{$source->slug}/releases/latest";
+        $result = $client->getWithStatus($url);
+
+        if ($result['status'] === 404) {
+            $all = $this->releases($source);
+            return $all[0] ?? throw new NetworkException("No releases found for [{$source}].");
+        }
+
+        if ($result['status'] !== 200) {
+            throw new NetworkException(
+                "GitHub latest-release endpoint returned HTTP {$result['status']} for [{$source}]."
+            );
+        }
+
+        $data = json_decode($result['body'], true);
+
+        if (!is_array($data) || empty($data)) {
+            throw new NetworkException("Empty response from GitHub latest-release endpoint for [{$source}].");
+        }
+
+        return $data;
     }
 
     /**

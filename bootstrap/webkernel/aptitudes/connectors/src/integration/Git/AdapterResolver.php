@@ -4,6 +4,8 @@ namespace Webkernel\Integration\Git;
 
 use Webkernel\Integration\Git\Contracts\GitHostAdapter;
 use Webkernel\Integration\Git\Exceptions\NetworkException;
+use Webkernel\Integration\Git\Hosting\GitHubAdapter;
+use Webkernel\Integration\Git\Hosting\GitLabAdapter;
 use Webkernel\Registry\Source;
 use Webkernel\Registry\Token;
 

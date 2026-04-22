@@ -6,6 +6,7 @@ use Webkernel\Async\Promise;
 use Webkernel\Integration\Git\AdapterResolver;
 use Webkernel\Integration\Git\Contracts\GitHostAdapter;
 use Webkernel\Integration\Git\Exceptions\NetworkException;
+use Webkernel\Integration\Git\Hosting\GitHubAdapter;
 use Webkernel\Registry\Providers;
 use Webkernel\Registry\Source;
 use Webkernel\Registry\Token;
@@ -22,9 +23,8 @@ use Illuminate\Support\Facades\File;
  */
 final class KernelUpdater
 {
-    private const BOOTSTRAP_REPO  = 'webkernelphp/bootstrap';
     private const BOOTSTRAP_OWNER = 'webkernelphp';
-    private const BOOTSTRAP_SLUG  = 'bootstrap';
+    private const BOOTSTRAP_SLUG  = 'foundation';
     private const HOOK_FILE       = 'webkernel-update.php';
 
     private array   $preservedDirs     = ['var-elements'];
@@ -80,6 +80,32 @@ final class KernelUpdater
     public function async(): Promise
     {
         return Promise::resolve(fn () => $this->execute());
+    }
+
+    /**
+     * Fetch the latest published version tag from the foundation repository.
+     * Uses the proper GitHubAdapter infrastructure — not a raw Http:: call.
+     *
+     * @throws NetworkException
+     */
+    public function latestRelease(): string
+    {
+        $source  = $this->buildSource();
+        $adapter = $this->buildAdapter($source);
+
+        if (!$adapter instanceof GitHubAdapter) {
+            $releases = $adapter->releases($source);
+            $tag      = $releases[0]['tag_name'] ?? '';
+        } else {
+            $release = $adapter->latestRelease($source);
+            $tag     = (string) ($release['tag_name'] ?? '');
+        }
+
+        if ($tag === '') {
+            throw new NetworkException("Could not determine latest version for [{$source}].");
+        }
+
+        return ltrim($tag, 'v');
     }
 
     /**

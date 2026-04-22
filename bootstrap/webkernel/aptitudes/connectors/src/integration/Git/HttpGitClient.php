@@ -65,6 +65,17 @@ final class HttpGitClient
         return $this->requestWithStatus('GET', $url);
     }
 
+    /**
+     * Like getWithStatus() but also returns parsed response headers.
+     *
+     * @return array{status: int, body: string, headers: array<string, string>}
+     * @throws NetworkException
+     */
+    public function getWithHeaders(string $url): array
+    {
+        return $this->requestWithStatus('GET', $url, null, null, true);
+    }
+
     private function request(string $method, string $url, ?string $body = null, ?callable $progress = null): string
     {
         $result = $this->requestWithStatus($method, $url, $body, $progress);
@@ -76,7 +87,7 @@ final class HttpGitClient
         return $result['body'];
     }
 
-    private function requestWithStatus(string $method, string $url, ?string $body = null, ?callable $progress = null): array
+    private function requestWithStatus(string $method, string $url, ?string $body = null, ?callable $progress = null, bool $returnHeaders = false): array
     {
         $currentUrl = $url;
         $hops       = 0;
@@ -147,7 +158,13 @@ final class HttpGitClient
                 continue;
             }
 
-            return ['status' => $code, 'body' => $body_part];
+            $result = ['status' => $code, 'body' => $body_part];
+
+            if ($returnHeaders) {
+                $result['headers'] = $this->parseResponseHeaders($headerText);
+            }
+
+            return $result;
         }
 
         throw new NetworkException("Too many redirects for [{$url}].");
@@ -175,6 +192,20 @@ final class HttpGitClient
         }
 
         return $headers;
+    }
+
+    /** @return array<string, string> */
+    private function parseResponseHeaders(string $headerText): array
+    {
+        $parsed = [];
+        foreach (explode("\r\n", $headerText) as $line) {
+            if (!str_contains($line, ':')) {
+                continue;
+            }
+            [$name, $value] = explode(':', $line, 2);
+            $parsed[strtolower(trim($name))] = trim($value);
+        }
+        return $parsed;
     }
 
     private function extractHeader(string $headers, string $name): ?string

@@ -1,9 +1,12 @@
 <?php declare(strict_types=1);
 
-namespace Webkernel\Integration\Git;
+namespace Webkernel\Integration\Git\Hosting;
 
+use Webkernel\Integration\Git\Archive;
+use Webkernel\Integration\Git\Checksum;
 use Webkernel\Integration\Git\Contracts\GitHostAdapter;
 use Webkernel\Integration\Git\Exceptions\NetworkException;
+use Webkernel\Integration\Git\HttpGitClient;
 use Webkernel\Registry\Providers;
 use Webkernel\Registry\Source;
 use Webkernel\Registry\Token;
@@ -67,10 +70,10 @@ final class GitLabAdapter implements GitHostAdapter
             $sources  = $r['assets']['sources'] ?? [];
             $zipEntry = current(array_filter($sources, static fn ($s) => ($s['format'] ?? '') === 'zip'));
             return [
-                'tag_name'     => $r['tag_name']    ?? $r['name'] ?? '',
-                'name'         => $r['name']         ?? '',
+                'tag_name'     => $r['tag_name']   ?? $r['name'] ?? '',
+                'name'         => $r['name']        ?? '',
                 'zipball_url'  => $zipEntry ? $zipEntry['url'] : '',
-                'published_at' => $r['released_at']  ?? date('c'),
+                'published_at' => $r['released_at'] ?? date('c'),
                 '_source'      => $source,
             ];
         }, $data));
@@ -109,9 +112,9 @@ final class GitLabAdapter implements GitHostAdapter
     /** @return array<int, array<string, mixed>> */
     private function branchFallback(HttpGitClient $client, Source $source): array
     {
-        $projectId = urlencode("{$source->vendor}/{$source->slug}");
-        $apiBase   = $source->apiBase();
-        $result    = $client->getWithStatus("{$apiBase}/projects/{$projectId}");
+        $projectId  = urlencode("{$source->vendor}/{$source->slug}");
+        $apiBase    = $source->apiBase();
+        $result     = $client->getWithStatus("{$apiBase}/projects/{$projectId}");
 
         if ($result['status'] !== 200) {
             throw new NetworkException(
