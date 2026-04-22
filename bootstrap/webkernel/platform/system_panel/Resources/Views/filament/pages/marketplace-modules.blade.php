@@ -18,25 +18,21 @@
         </div>
 
         <!-- Category Tabs -->
-        <div style="margin-bottom: 2rem;">
-            <x-filament::tabs>
-                <x-filament::tabs.item active icon="heroicon-m-cube">
-                    All Modules
-                </x-filament::tabs.item>
-                <x-filament::tabs.item icon="heroicon-m-lock-closed">
-                    Authentication
-                </x-filament::tabs.item>
-                <x-filament::tabs.item icon="heroicon-m-credit-card">
-                    Payments
-                </x-filament::tabs.item>
-                <x-filament::tabs.item icon="heroicon-m-chat-bubble-left">
-                    Communication
-                </x-filament::tabs.item>
-                <x-filament::tabs.item icon="heroicon-m-chart-bar">
-                    Analytics
-                </x-filament::tabs.item>
-            </x-filament::tabs>
-        </div>
+        @if(!empty($this->availableCategories()))
+            <div style="margin-bottom: 2rem;">
+                <x-filament::tabs>
+                    @foreach($this->availableCategories() as $categoryKey => $category)
+                        <x-filament::tabs.item
+                            @if($selectedCategory === $categoryKey) active @endif
+                            icon="{{ $category['icon'] }}"
+                            wire:click="selectCategory('{{ $categoryKey }}')"
+                        >
+                            {{ $category['label'] }}
+                        </x-filament::tabs.item>
+                    @endforeach
+                </x-filament::tabs>
+            </div>
+        @endif
 
         <!-- Loading State -->
         @if($isLoading)

@@ -26,6 +26,7 @@ class MarketplaceModules extends Page
 
     public string $searchQuery = '';
     public string $sortBy = 'name';
+    public string $selectedCategory = 'all';
     public array  $modules = [];
     public bool   $isLoading = false;
 
@@ -54,19 +55,64 @@ class MarketplaceModules extends Page
     }
 
     #[\Livewire\Attributes\Computed]
-    public function filteredModules(): array
+    public function availableCategories(): array
     {
-        if (empty($this->searchQuery)) {
-            return $this->modules;
+        $categories = ['all' => ['label' => 'All Modules', 'icon' => 'heroicon-m-cube']];
+
+        foreach ($this->modules as $module) {
+            foreach ($module['tags'] ?? [] as $tag) {
+                if (!isset($categories[$tag])) {
+                    $categories[$tag] = ['label' => ucfirst($tag), 'icon' => $this->getIconForCategory($tag)];
+                }
+            }
         }
 
-        $query = strtolower($this->searchQuery);
+        return $categories;
+    }
 
-        return array_filter($this->modules, function ($module) use ($query) {
-            return str_contains(strtolower($module['name']), $query)
-                || str_contains(strtolower($module['description']), $query)
-                || str_contains(strtolower($module['author'] ?? ''), $query);
-        });
+    #[\Livewire\Attributes\Computed]
+    public function filteredModules(): array
+    {
+        $filtered = $this->modules;
+
+        if ($this->selectedCategory !== 'all') {
+            $filtered = array_filter($filtered, function ($module) {
+                return in_array($this->selectedCategory, $module['tags'] ?? []);
+            });
+        }
+
+        if (!empty($this->searchQuery)) {
+            $query = strtolower($this->searchQuery);
+            $filtered = array_filter($filtered, function ($module) use ($query) {
+                return str_contains(strtolower($module['name']), $query)
+                    || str_contains(strtolower($module['description']), $query)
+                    || str_contains(strtolower($module['author'] ?? ''), $query);
+            });
+        }
+
+        return $filtered;
+    }
+
+    public function selectCategory(string $category): void
+    {
+        $this->selectedCategory = $category;
+    }
+
+    private function getIconForCategory(string $category): string
+    {
+        return match($category) {
+            'auth' => 'heroicon-m-lock-closed',
+            'security' => 'heroicon-m-shield-check',
+            'payments' => 'heroicon-m-credit-card',
+            'stripe' => 'heroicon-m-credit-card',
+            'paypal' => 'heroicon-m-credit-card',
+            'notifications' => 'heroicon-m-chat-bubble-left',
+            'email' => 'heroicon-m-envelope',
+            'sms' => 'heroicon-m-phone',
+            'analytics' => 'heroicon-m-chart-bar',
+            'oauth2' => 'heroicon-m-key',
+            default => 'heroicon-m-cube',
+        };
     }
 
     public function sortModules(): void
