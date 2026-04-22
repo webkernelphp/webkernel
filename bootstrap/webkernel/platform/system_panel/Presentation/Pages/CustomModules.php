@@ -4,27 +4,27 @@ namespace Webkernel\Platform\SystemPanel\Presentation\Pages;
 
 use BackedEnum;
 use Filament\Actions\Action;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
-use Filament\Pages\Page;
-use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Pages\Page;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Alignment;
 use Illuminate\Contracts\Support\Htmlable;
 use UnitEnum;
 use Webkernel\Integration\ModuleInstaller;
 use Webkernel\Integration\Registries;
+use Webkernel\Integration\RegistryCredentials;
 use Webkernel\Integration\Git\Exceptions\NetworkException;
 
 /**
  * CustomModules
  *
- * Install Webkernel modules from any supported registry (custom/self-hosted).
+ * Install Webkernel modules from custom registries via a guided wizard.
  *
  * @property-read Schema $form
  */
@@ -51,9 +51,10 @@ class CustomModules extends Page implements HasForms
     public function mount(): void
     {
         $this->form->fill([
-            'registry' => Registries::defaultOption(),
+            'registry' => Registries::GitHub->value,
             'backup'   => true,
             'hooks'    => true,
+            'save_token' => false,
         ]);
     }
 
@@ -71,49 +72,82 @@ class CustomModules extends Page implements HasForms
             ->statePath('formData')
             ->alignment(Alignment::Start)
             ->schema([
-                Section::make('Module source')
-                    ->schema([
-                        Select::make('registry')
-                            ->label('Registry')
-                            ->options(Registries::options())
-                            ->required(),
-                        TextInput::make('vendor')
-                            ->label('Vendor/Owner')
-                            ->placeholder('acme')
-                            ->required(),
-                        TextInput::make('slug')
-                            ->label('Module slug')
-                            ->placeholder('my-module')
-                            ->required(),
-                        TextInput::make('version')
-                            ->label('Version')
-                            ->placeholder('latest')
-                            ->helperText('Leave empty for latest version'),
-                        TextInput::make('token')
-                            ->label('Token (optional)')
-                            ->password()
-                            ->helperText('GitHub PAT or GitLab token for private repositories'),
-                    ])
-                    ->columns(2),
+                Wizard::make([
+                    Step::make('Registry')
+                        ->icon('heroicon-o-rectangle-stack')
+                        ->description('Choose where to install from')
+                        ->schema([
+                            Select::make('registry')
+                                ->label('Registry')
+                                ->options(Registries::options())
+                                ->required()
+                                ->native(false),
+                        ]),
 
-                Section::make('Installation options')
-                    ->schema([
-                        Select::make('backup')
-                            ->label('Backup existing?')
-                            ->options([
-                                true  => 'Yes, create backup',
-                                false => 'No, replace directly',
-                            ])
-                            ->native(false),
-                        Select::make('hooks')
-                            ->label('Run hooks?')
-                            ->options([
-                                true  => 'Yes, execute hooks',
-                                false => 'No, skip hooks',
-                            ])
-                            ->native(false),
-                    ])
-                    ->columns(2),
+                    Step::make('Module Details')
+                        ->icon('heroicon-o-cube')
+                        ->description('Specify which module to install')
+                        ->schema([
+                            TextInput::make('vendor')
+                                ->label('Vendor/Owner')
+                                ->placeholder('acme')
+                                ->required()
+                                ->helperText('GitHub username, organization, or vendor slug'),
+                            TextInput::make('slug')
+                                ->label('Module slug')
+                                ->placeholder('my-module')
+                                ->required()
+                                ->helperText('Repository or module name'),
+                            TextInput::make('version')
+                                ->label('Version (optional)')
+                                ->placeholder('latest')
+                                ->helperText('Leave empty for latest version'),
+                        ])
+                        ->columns(1),
+
+                    Step::make('Credentials')
+                        ->icon('heroicon-o-key')
+                        ->description('Authentication if needed')
+                        ->schema([
+                            TextInput::make('token')
+                                ->label('Token (optional)')
+                                ->password()
+                                ->helperText('GitHub PAT, GitLab token, or API key for private repositories'),
+                            Toggle::make('save_token')
+                                ->label('Save token for future use')
+                                ->helperText('Encrypted and stored securely'),
+                        ])
+                        ->columns(1),
+
+                    Step::make('Confirm')
+                        ->icon('heroicon-o-check-circle')
+                        ->description('Review and install')
+                        ->schema([
+                            TextInput::make('confirm_vendor')
+                                ->label('Vendor')
+                                ->disabled()
+                                ->dehydrated(false),
+                            TextInput::make('confirm_slug')
+                                ->label('Module')
+                                ->disabled()
+                                ->dehydrated(false),
+                            TextInput::make('confirm_version')
+                                ->label('Version')
+                                ->disabled()
+                                ->dehydrated(false),
+                            Toggle::make('backup')
+                                ->label('Create backup')
+                                ->default(true)
+                                ->helperText('Recommended: backs up existing installation'),
+                            Toggle::make('hooks')
+                                ->label('Run installation hooks')
+                                ->default(true)
+                                ->helperText('Execute any setup scripts included in the module'),
+                        ])
+                        ->columns(1),
+                ])
+                ->persistStepInQueryString('custom-module-step')
+                ->contained(false),
             ]);
     }
 
@@ -132,6 +166,7 @@ class CustomModules extends Page implements HasForms
         $token    = $data['token'] ?: null;
         $backup   = (bool) ($data['backup'] ?? true);
         $hooks    = (bool) ($data['hooks'] ?? true);
+        $saveToken = (bool) ($data['save_token'] ?? false);
 
         if (!$registry || !$vendor || !$slug) {
             $this->installError = 'Registry, vendor, and slug are required.';
@@ -144,10 +179,16 @@ class CustomModules extends Page implements HasForms
         $this->installStatus = 'Starting installation...';
 
         try {
+            $registryEnum = Registries::tryFrom($registry);
+
+            if (!$registryEnum) {
+                throw new \InvalidArgumentException("Unknown registry: {$registry}");
+            }
+
             $installer = ModuleInstaller::module(
-                from:     $registry,
-                vendor:   $vendor,
-                slug:     $slug,
+                from:   $registry,
+                vendor: $vendor,
+                slug:   $slug,
             )
                 ->withBackup($backup)
                 ->withHooks($hooks);
@@ -158,6 +199,10 @@ class CustomModules extends Page implements HasForms
 
             if ($token !== null) {
                 $installer = $installer->withToken($token);
+
+                if ($saveToken) {
+                    RegistryCredentials::store($registryEnum, $token, $vendor);
+                }
             }
 
             $this->installStatus = 'Downloading module...';
@@ -167,6 +212,13 @@ class CustomModules extends Page implements HasForms
             $this->installPath = $path;
             $this->installStatus = 'Installation complete!';
             $this->dispatch('wk-toast', type: 'success', message: "Module installed at {$path}");
+
+            $this->form->fill([
+                'registry' => Registries::GitHub->value,
+                'backup'   => true,
+                'hooks'    => true,
+                'save_token' => false,
+            ]);
         } catch (NetworkException $e) {
             $this->installError = 'Network error: ' . $e->getMessage();
             $this->dispatch('wk-toast', type: 'error', message: $this->installError);
@@ -185,7 +237,7 @@ class CustomModules extends Page implements HasForms
     {
         return [
             Action::make('install')
-                ->label('Install Module')
+                ->label('Install')
                 ->icon('heroicon-o-arrow-down-tray')
                 ->color('success')
                 ->disabled($this->isInstalling)

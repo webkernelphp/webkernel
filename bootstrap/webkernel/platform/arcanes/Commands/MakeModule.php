@@ -58,7 +58,7 @@ class MakeModule extends Command
     {
         $registry = select(
             label:   'Registry',
-            options: Registries::REGISTRY_DEFAULTS_CLI,
+            options: Registries::cliOptions(),
             default: 'webkernelphp.com',
         );
         if ($registry === 'custom') {

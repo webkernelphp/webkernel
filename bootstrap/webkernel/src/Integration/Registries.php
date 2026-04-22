@@ -2,29 +2,72 @@
 
 namespace Webkernel\Integration;
 
-final class Registries
+enum Registries: string
 {
-    public const REGISTRY_OPTIONS = [
-        'github-com'           => 'GitHub',
-        'gitlab-com'           => 'GitLab',
-        'webkernelphp-com'     => 'Webkernel Registry',
-        'git-numerimondes-com' => 'Numerimondes',
-    ];
+    case WebkernelRegistry = 'webkernelphp-com';
+    case GitHub = 'github-com';
+    case GitLab = 'gitlab-com';
+    case Numerimondes = 'git-numerimondes-com';
+    case Custom = 'custom';
 
-    public const REGISTRY_DEFAULTS_CLI = [
-        'webkernelphp.com' => 'webkernelphp.com',
-        'github.com'       => 'github.com',
-        'gitlab.com'       => 'gitlab.com',
-        'custom'           => 'Custom',
-    ];
+    public function label(): string
+    {
+        return match ($this) {
+            self::WebkernelRegistry => 'Webkernel Registry',
+            self::GitHub            => 'GitHub',
+            self::GitLab            => 'GitLab',
+            self::Numerimondes      => 'Numerimondes',
+            self::Custom            => 'Custom',
+        };
+    }
+
+    public function isMarketplace(): bool
+    {
+        return $this === self::WebkernelRegistry;
+    }
 
     public static function options(): array
     {
-        return self::REGISTRY_OPTIONS;
+        return array_combine(
+            array_map(fn ($case) => $case->value, self::cases()),
+            array_map(fn ($case) => $case->label(), self::cases()),
+        );
+    }
+
+    public static function cliOptions(): array
+    {
+        return [
+            'webkernelphp.com' => 'webkernelphp.com',
+            'github.com'       => 'github.com',
+            'gitlab.com'       => 'gitlab.com',
+            'custom'           => 'Custom',
+        ];
     }
 
     public static function defaultOption(): string
     {
-        return 'github-com';
+        return self::GitHub->value;
+    }
+
+    public function toDomain(): string
+    {
+        return match ($this) {
+            self::WebkernelRegistry => 'webkernelphp.com',
+            self::GitHub            => 'github.com',
+            self::GitLab            => 'gitlab.com',
+            self::Numerimondes      => 'git.numerimondes.com',
+            self::Custom            => 'custom',
+        };
+    }
+
+    public static function fromDomain(string $domain): ?self
+    {
+        return match (strtolower(trim($domain))) {
+            'webkernelphp.com'   => self::WebkernelRegistry,
+            'github.com'         => self::GitHub,
+            'gitlab.com'         => self::GitLab,
+            'git.numerimondes.com' => self::Numerimondes,
+            default              => null,
+        };
     }
 }
