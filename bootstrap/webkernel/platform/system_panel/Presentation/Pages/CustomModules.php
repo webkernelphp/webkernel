@@ -46,8 +46,6 @@ class CustomModules extends Page implements HasForms
     public string $installStatus = '';
     public string $installError = '';
     public string $installPath = '';
-    public bool   $registryVerified = false;
-    public bool   $registryIsPublic = false;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -84,14 +82,29 @@ class CustomModules extends Page implements HasForms
                                 ->label('Registry')
                                 ->options(Registries::customOptions())
                                 ->required()
-                                ->native(false),
-                            TextInput::make('custom_registry')
-                                ->label('Registry Hostname')
-                                ->placeholder('registry.example.com')
-                                ->required()
-                                ->helperText('e.g., git.example.com, registry.internal.io')
-                                ->visible(fn ($get) => $get('registry') === Registries::Custom->value)
-                                ->regex('/^[a-z0-9.\-]+$/', 'Lowercase, dots, and hyphens only'),
+                                ->native(false)
+                                ->createOptionForm([
+                                    TextInput::make('label')
+                                        ->label('Registry Hostname')
+                                        ->placeholder('registry.example.com')
+                                        ->helperText('e.g., git.example.com, registry.internal.io')
+                                        ->required()
+                                        ->regex('/^[a-z0-9.\-]+$/', 'Lowercase, dots, and hyphens only'),
+                                ])
+                                ->createOptionUsing(function (array $data): string {
+                                    $hostname = $data['label'];
+                                    $url = 'https://' . trim($hostname, '/') . '/api';
+
+                                    try {
+                                        $response = Http::timeout(5)->head($url);
+                                        if ($response->status() >= 400) {
+                                            $this->dispatch('wk-toast', type: 'warning', message: "Registry is private - token will be required");
+                                        }
+                                        return Registries::Custom->value . ':' . $hostname;
+                                    } catch (\Throwable $e) {
+                                        throw new \Exception("Registry not found at {$url}. Check the hostname and try again.");
+                                    }
+                                }),
                         ]),
 
                     Step::make('Module Details')
@@ -122,12 +135,10 @@ class CustomModules extends Page implements HasForms
                             TextInput::make('token')
                                 ->label('Token (optional)')
                                 ->password()
-                                ->helperText('GitHub PAT, GitLab token, or API key for private repositories')
-                                ->visible(fn () => !$this->registryIsPublic),
+                                ->helperText('GitHub PAT, GitLab token, or API key for private repositories'),
                             Toggle::make('save_token')
                                 ->label('Save token for future use')
-                                ->helperText('Encrypted and stored securely')
-                                ->visible(fn () => !$this->registryIsPublic),
+                                ->helperText('Encrypted and stored securely'),
                         ])
                         ->columns(1),
 
@@ -165,53 +176,13 @@ class CustomModules extends Page implements HasForms
 
     // ── Livewire actions ──────────────────────────────────────────────────────
 
-    public function verifyRegistry(): void
-    {
-        $data = $this->form->getState();
-        $registry = $data['registry'] ?? null;
-        $customRegistry = $data['custom_registry'] ?? null;
-
-        if (!$registry) {
-            return;
-        }
-
-        if ($registry === Registries::Custom->value && !$customRegistry) {
-            $this->dispatch('wk-toast', type: 'error', message: 'Custom registry hostname is required');
-            return;
-        }
-
-        $registryUrl = $this->getRegistryUrl($registry, $customRegistry);
-
-        try {
-            $response = Http::timeout(5)->head($registryUrl);
-            $this->registryIsPublic = $response->status() < 400;
-            $this->registryVerified = true;
-            $this->dispatch('wk-toast', type: 'success', message: 'Registry verified!');
-        } catch (\Throwable $e) {
-            $this->registryIsPublic = false;
-            $this->registryVerified = true;
-            $this->dispatch('wk-toast', type: 'info', message: 'Registry is private, token will be required');
-        }
-    }
-
-    private function getRegistryUrl(string $registry, ?string $custom = null): string
-    {
-        return match($registry) {
-            Registries::GitHub->value => 'https://api.github.com',
-            Registries::GitLab->value => 'https://gitlab.com/api/v4',
-            Registries::Numerimondes->value => 'https://git.numerimondes.com/api/v3',
-            Registries::Custom->value => 'https://' . trim($custom, '/') . '/api',
-            default => 'https://webkernelphp.com/api',
-        };
-    }
-
     public function installModule(): void
     {
         $this->validate();
 
         $data = $this->form->getState();
 
-        $registry = $data['registry'] ?? null;
+        $registryValue = $data['registry'] ?? null;
         $vendor   = $data['vendor'] ?? null;
         $slug     = $data['slug'] ?? null;
         $version  = $data['version'] ?: null;
@@ -220,7 +191,7 @@ class CustomModules extends Page implements HasForms
         $hooks    = (bool) ($data['hooks'] ?? true);
         $saveToken = (bool) ($data['save_token'] ?? false);
 
-        if (!$registry || !$vendor || !$slug) {
+        if (!$registryValue || !$vendor || !$slug) {
             $this->installError = 'Registry, vendor, and slug are required.';
             return;
         }
@@ -231,6 +202,13 @@ class CustomModules extends Page implements HasForms
         $this->installStatus = 'Starting installation...';
 
         try {
+            // Handle custom registry format: "custom:hostname"
+            $registry = $registryValue;
+            if (str_contains($registryValue, ':')) {
+                [$registryKey, $hostname] = explode(':', $registryValue, 2);
+                $registry = $registryKey;
+            }
+
             $registryEnum = Registries::tryFrom($registry);
 
             if (!$registryEnum) {
