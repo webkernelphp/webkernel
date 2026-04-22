@@ -161,6 +161,13 @@ class MarketplaceModules extends Page
 
     // ── Private helpers ───────────────────────────────────────────────────────
 
+    /**
+     * Fetch marketplace modules from configured source.
+     *
+     * Currently sources from: bootstrap/webkernel/platform/system_panel/src/Config/MarketplaceModules.php
+     * To integrate a live API, replace MarketplaceConfig::all() with an HTTP request:
+     *   return Http::get('https://marketplace.webkernelphp.com/api/modules')->json();
+     */
     private function fetchMarketplaceModules(): array
     {
         return MarketplaceConfig::all();

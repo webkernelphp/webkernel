@@ -17,8 +17,8 @@
             </div>
         </div>
 
-        <!-- Category Tabs -->
-        @if(!empty($this->availableCategories()))
+        <!-- Category Tabs (only show if modules exist and multiple categories) -->
+        @if(!empty($this->modules) && count($this->availableCategories()) > 1)
             <div style="margin-bottom: 2rem;">
                 <x-filament::tabs>
                     @foreach($this->availableCategories() as $categoryKey => $category)

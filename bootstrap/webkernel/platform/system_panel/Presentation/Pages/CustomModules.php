@@ -15,6 +15,7 @@ use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Alignment;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Facades\Http;
 use UnitEnum;
 use Webkernel\Integration\ModuleInstaller;
 use Webkernel\Integration\Registries;
@@ -45,6 +46,8 @@ class CustomModules extends Page implements HasForms
     public string $installStatus = '';
     public string $installError = '';
     public string $installPath = '';
+    public bool   $registryVerified = false;
+    public bool   $registryIsPublic = false;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -82,6 +85,13 @@ class CustomModules extends Page implements HasForms
                                 ->options(Registries::customOptions())
                                 ->required()
                                 ->native(false),
+                            TextInput::make('custom_registry')
+                                ->label('Registry Hostname')
+                                ->placeholder('registry.example.com')
+                                ->required()
+                                ->helperText('e.g., git.example.com, registry.internal.io')
+                                ->visible(fn ($get) => $get('registry') === Registries::Custom->value)
+                                ->regex('/^[a-z0-9.\-]+$/', 'Lowercase, dots, and hyphens only'),
                         ]),
 
                     Step::make('Module Details')
@@ -112,10 +122,12 @@ class CustomModules extends Page implements HasForms
                             TextInput::make('token')
                                 ->label('Token (optional)')
                                 ->password()
-                                ->helperText('GitHub PAT, GitLab token, or API key for private repositories'),
+                                ->helperText('GitHub PAT, GitLab token, or API key for private repositories')
+                                ->visible(fn () => !$this->registryIsPublic),
                             Toggle::make('save_token')
                                 ->label('Save token for future use')
-                                ->helperText('Encrypted and stored securely'),
+                                ->helperText('Encrypted and stored securely')
+                                ->visible(fn () => !$this->registryIsPublic),
                         ])
                         ->columns(1),
 
@@ -152,6 +164,46 @@ class CustomModules extends Page implements HasForms
     }
 
     // ── Livewire actions ──────────────────────────────────────────────────────
+
+    public function verifyRegistry(): void
+    {
+        $data = $this->form->getState();
+        $registry = $data['registry'] ?? null;
+        $customRegistry = $data['custom_registry'] ?? null;
+
+        if (!$registry) {
+            return;
+        }
+
+        if ($registry === Registries::Custom->value && !$customRegistry) {
+            $this->dispatch('wk-toast', type: 'error', message: 'Custom registry hostname is required');
+            return;
+        }
+
+        $registryUrl = $this->getRegistryUrl($registry, $customRegistry);
+
+        try {
+            $response = Http::timeout(5)->head($registryUrl);
+            $this->registryIsPublic = $response->status() < 400;
+            $this->registryVerified = true;
+            $this->dispatch('wk-toast', type: 'success', message: 'Registry verified!');
+        } catch (\Throwable $e) {
+            $this->registryIsPublic = false;
+            $this->registryVerified = true;
+            $this->dispatch('wk-toast', type: 'info', message: 'Registry is private, token will be required');
+        }
+    }
+
+    private function getRegistryUrl(string $registry, ?string $custom = null): string
+    {
+        return match($registry) {
+            Registries::GitHub->value => 'https://api.github.com',
+            Registries::GitLab->value => 'https://gitlab.com/api/v4',
+            Registries::Numerimondes->value => 'https://git.numerimondes.com/api/v3',
+            Registries::Custom->value => 'https://' . trim($custom, '/') . '/api',
+            default => 'https://webkernelphp.com/api',
+        };
+    }
 
     public function installModule(): void
     {
