@@ -1338,7 +1338,7 @@
             class="webkernel-upgrade-page-stat-val"
             style="color: {{ $isUpToDate ? 'var(--wk-success)' : 'var(--wk-warning)' }};"
         >{{ $isUpToDate ? 'OK' : 'PENDING' }}</div>
-        <div class="webkernel-upgrade-page-stat-label">Kernel Status</div>
+        <div class="webkernel-upgrade-page-stat-label">Webkernel Status</div>
     </div>
 </div>
 
