@@ -23,8 +23,8 @@
                 <x-filament::tabs>
                     @foreach($this->availableCategories() as $categoryKey => $category)
                         <x-filament::tabs.item
-                            @if($selectedCategory === $categoryKey) active @endif
-                            icon="{{ $category['icon'] }}"
+                            :active="$selectedCategory === $categoryKey"
+                            :icon="$category['icon']"
                             wire:click="selectCategory('{{ $categoryKey }}')"
                         >
                             {{ $category['label'] }}
