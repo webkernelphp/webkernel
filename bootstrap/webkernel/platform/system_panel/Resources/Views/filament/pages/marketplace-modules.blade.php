@@ -22,14 +22,22 @@
         </div>
 
         <!-- Category Tabs -->
-        <x-filament::tabs class="space-y-6">
-            <x-filament::tabs.tab label="All Modules" active>
-                <!-- This is the active tab content -->
-            </x-filament::tabs.tab>
-            <x-filament::tabs.tab label="Authentication"></x-filament::tabs.tab>
-            <x-filament::tabs.tab label="Payments"></x-filament::tabs.tab>
-            <x-filament::tabs.tab label="Communication"></x-filament::tabs.tab>
-            <x-filament::tabs.tab label="Analytics"></x-filament::tabs.tab>
+        <x-filament::tabs>
+            <x-filament::tabs.item active>
+                All Modules
+            </x-filament::tabs.item>
+            <x-filament::tabs.item>
+                Authentication
+            </x-filament::tabs.item>
+            <x-filament::tabs.item>
+                Payments
+            </x-filament::tabs.item>
+            <x-filament::tabs.item>
+                Communication
+            </x-filament::tabs.item>
+            <x-filament::tabs.item>
+                Analytics
+            </x-filament::tabs.item>
         </x-filament::tabs>
 
         <!-- Loading State -->
