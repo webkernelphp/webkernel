@@ -8,6 +8,7 @@ use Webkernel\Arcanes\Matrix\NamingHelper;
 use Webkernel\Arcanes\Scaffold\ScaffoldParams;
 use Webkernel\Arcanes\Scaffold\ScaffoldResult;
 use Webkernel\Arcanes\Scaffold\Scaffolder;
+use Webkernel\Integration\Registries;
 
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\error;
@@ -57,7 +58,7 @@ class MakeModule extends Command
     {
         $registry = select(
             label:   'Registry',
-            options: ['webkernelphp.com' => 'webkernelphp.com', 'github.com' => 'github.com', 'gitlab.com' => 'gitlab.com', 'custom' => 'Custom'],
+            options: Registries::REGISTRY_DEFAULTS_CLI,
             default: 'webkernelphp.com',
         );
         if ($registry === 'custom') {

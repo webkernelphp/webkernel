@@ -46,16 +46,21 @@ spl_autoload_register(static function (string $class): void {
                 /* Backend Layer: System Infrastructure */
                 'Webkernel\\System\\'        => WEBKERNEL_PATH . '/_backend',
 
-                /* Support Layer: Application Data Models */
-                'App\\Models\\'              => WEBKERNEL_PATH . '/platform/support/boot/app-models',
-
                 /* Platform Layer */
-                'Webkernel\\Providers\\'     => WEBKERNEL_PATH . '/platform/support/providers',
                 'Webkernel\\Arcanes\\'       => WEBKERNEL_PATH . '/platform/arcanes',
                 'Webkernel\\QuickTouch\\'    => WEBKERNEL_PATH . '/platform/quick_touch',
 
                 /* System Panel Specific Assets */
                 'Webkernel\\Platform\\SystemPanel\\' => WEBKERNEL_PATH . '/platform/system_panel',
+
+                /* Support Layer */
+
+                /* Application Data Models */
+                'App\\Models\\'              => WEBKERNEL_PATH . '/platform/support/boot/app-models',
+
+                /* Commands and Providers */
+                'Webkernel\\Providers\\'     => WEBKERNEL_PATH . '/platform/support/providers',
+                'Webkernel\\Commands\\'            => WEBKERNEL_PATH . '/platform/support/commands',
             ],
             WEBKERNEL_DEV_NAMESPACES,
             [

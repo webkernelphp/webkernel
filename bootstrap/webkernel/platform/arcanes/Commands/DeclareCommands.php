@@ -6,6 +6,8 @@ namespace Webkernel\Arcanes\Commands;
 
 use Illuminate\Support\ServiceProvider;
 use Webkernel\Console\CommandReplacer;
+use Webkernel\Commands\Module\InstallCommand as ModuleInstallCommand;
+use Webkernel\Commands\Kernel\UpdateCommand  as KernelUpdateCommand;
 
 /**
  * Registers Webkernel command overrides on the Artisan kernel.
@@ -43,6 +45,8 @@ final class DeclareCommands extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 MakeModule::class,
+                ModuleInstallCommand::class,
+                KernelUpdateCommand::class,
             ]);
         }
     }
