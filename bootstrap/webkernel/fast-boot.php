@@ -5,16 +5,16 @@ defined('BASE_PATH')      || define('BASE_PATH',      dirname(__DIR__, 2));
 defined('WEBKERNEL_PATH') || define('WEBKERNEL_PATH', __DIR__);
 
 // -- Release data -- stamped by Makefile release|patch|minor|major|info -------
-defined('WEBKERNEL_VERSION')     || define('WEBKERNEL_VERSION','1.9.2');
+defined('WEBKERNEL_VERSION')     || define('WEBKERNEL_VERSION','1.9.3');
 defined('WEBKERNEL_BUILD')       || define('WEBKERNEL_BUILD',1);
-defined('WEBKERNEL_SEMVER')      || define('WEBKERNEL_SEMVER','1.9.2+1');
+defined('WEBKERNEL_SEMVER')      || define('WEBKERNEL_SEMVER','1.9.3+1');
 defined('WEBKERNEL_CODENAME')    || define('WEBKERNEL_CODENAME','waterfall');
 defined('WEBKERNEL_CHANNEL')     || define('WEBKERNEL_CHANNEL','stable');
 defined('WEBKERNEL_RELEASED_AT') || define('WEBKERNEL_RELEASED_AT','2026-04-22');
-defined('WEBKERNEL_COMMIT')      || define('WEBKERNEL_COMMIT','7fc1cb6');
-defined('WEBKERNEL_COMMIT_FULL') || define('WEBKERNEL_COMMIT_FULL','7fc1cb680e0d722c0e2512c5c511ddcbf3082c9c');
+defined('WEBKERNEL_COMMIT')      || define('WEBKERNEL_COMMIT','4307189');
+defined('WEBKERNEL_COMMIT_FULL') || define('WEBKERNEL_COMMIT_FULL','43071891caa0c915701ec270e0a247c05a75246d');
 defined('WEBKERNEL_BRANCH')      || define('WEBKERNEL_BRANCH','main');
-defined('WEBKERNEL_TAG')         || define('WEBKERNEL_TAG','1.9.1+1');
+defined('WEBKERNEL_TAG')         || define('WEBKERNEL_TAG','1.9.2+1');
 
 defined('WEBKERNEL_REQUIRES') || define('WEBKERNEL_REQUIRES', [
     'php'       => '8.4.19',

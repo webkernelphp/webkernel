@@ -15,7 +15,7 @@ aside .fi-sidebar-group-items .fi-sidebar-item.fi-active.fi-sidebar-item-has-url
 
 .fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn {
     border: 1px solid transparent;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-lg);
     padding: 0.4rem 0.6rem;
     transition: border-color 0.15s ease;
 }

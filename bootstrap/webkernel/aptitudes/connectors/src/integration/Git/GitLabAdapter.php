@@ -21,7 +21,7 @@ final class GitLabAdapter implements GitHostAdapter
 
     public function __construct(private readonly Token $tokenStore) {}
 
-    public function withToken(string $token): self
+    public function withToken(string $token): static
     {
         $clone                = clone $this;
         $clone->explicitToken = $token;
