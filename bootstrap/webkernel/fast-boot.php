@@ -5,31 +5,31 @@ defined('BASE_PATH')      || define('BASE_PATH',      dirname(__DIR__, 2));
 defined('WEBKERNEL_PATH') || define('WEBKERNEL_PATH', __DIR__);
 
 // -- Release data -- stamped by Makefile release|patch|minor|major|info -------
-defined('WEBKERNEL_VERSION')     || define('WEBKERNEL_VERSION',     '1.9.0');
-defined('WEBKERNEL_BUILD')       || define('WEBKERNEL_BUILD',       1);
-defined('WEBKERNEL_SEMVER')      || define('WEBKERNEL_SEMVER',      '1.9.0+1');
-defined('WEBKERNEL_CODENAME')    || define('WEBKERNEL_CODENAME',    'waterfall');
-defined('WEBKERNEL_CHANNEL')     || define('WEBKERNEL_CHANNEL',     'stable');
-defined('WEBKERNEL_RELEASED_AT') || define('WEBKERNEL_RELEASED_AT', '2026-04-13');
-defined('WEBKERNEL_COMMIT')      || define('WEBKERNEL_COMMIT',      'unknown');
-defined('WEBKERNEL_COMMIT_FULL') || define('WEBKERNEL_COMMIT_FULL', 'unknown');
-defined('WEBKERNEL_BRANCH')      || define('WEBKERNEL_BRANCH',      'main');
-defined('WEBKERNEL_TAG')         || define('WEBKERNEL_TAG',         'v1.9.0');
+defined('WEBKERNEL_VERSION')     || define('WEBKERNEL_VERSION','1.9.2');
+defined('WEBKERNEL_BUILD')       || define('WEBKERNEL_BUILD',1);
+defined('WEBKERNEL_SEMVER')      || define('WEBKERNEL_SEMVER','1.9.2+1');
+defined('WEBKERNEL_CODENAME')    || define('WEBKERNEL_CODENAME','waterfall');
+defined('WEBKERNEL_CHANNEL')     || define('WEBKERNEL_CHANNEL','stable');
+defined('WEBKERNEL_RELEASED_AT') || define('WEBKERNEL_RELEASED_AT','2026-04-22');
+defined('WEBKERNEL_COMMIT')      || define('WEBKERNEL_COMMIT','7fc1cb6');
+defined('WEBKERNEL_COMMIT_FULL') || define('WEBKERNEL_COMMIT_FULL','7fc1cb680e0d722c0e2512c5c511ddcbf3082c9c');
+defined('WEBKERNEL_BRANCH')      || define('WEBKERNEL_BRANCH','main');
+defined('WEBKERNEL_TAG')         || define('WEBKERNEL_TAG','1.9.1+1');
 
 defined('WEBKERNEL_REQUIRES') || define('WEBKERNEL_REQUIRES', [
-    'php'      => '8.4.19',
-    'laravel'  => '13.4.0',
-    'filament' => '5.5.0',
-    'livewire' => '4.2.4',
-    'composer' => '2.9.5',
+    'php'       => '8.4.19',
+    'laravel'   => '13.4.0',
+    'filament'  => '5.5.0',
+    'livewire'  => '4.2.4',
+    'composer'  => '2.9.5',
 ]);
 
 defined('WEBKERNEL_COMPATIBLE_WITH') || define('WEBKERNEL_COMPATIBLE_WITH', [
-    'php'      => '8.3.0',
-    'laravel'  => '13.0.0',
-    'filament' => '5.0.0',
-    'livewire' => '1.0.0',
-    'composer' => '2.5.0',
+    'php'       => '8.3.0',
+    'laravel'   => '13.0.0',
+    'filament'  => '5.0.0',
+    'livewire'  => '1.0.0',
+    'composer'  => '2.5.0',
 ]);
 
 // -- Constants ----------------------------------------------------------------
