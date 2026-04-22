@@ -36,8 +36,6 @@ namespace Webkernel\Businesses\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static> active()
  * @method static \Illuminate\Database\Eloquent\Builder<static> pending()
  * @method static \Illuminate\Database\Eloquent\Builder<static> forSlug(string $slug)
- * @mixin \Eloquent
- * @mixin IdeHelperBusiness
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Business newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Business newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Business query()
@@ -49,8 +47,10 @@ namespace Webkernel\Businesses\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Business whereSlug($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Business whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Business whereUpdatedAt($value)
+ * @mixin \Eloquent
  */
-	class Business extends \Eloquent {}
+	#[\AllowDynamicProperties]
+	class IdeHelperBusiness {}
 }
 
 namespace Webkernel\Users\Models{
@@ -104,11 +104,11 @@ namespace Webkernel\Users\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereQuickTouchEnabled($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRememberToken($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
- * @mixin \Eloquent
- * @mixin IdeHelperUser
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereQuickTouchFavorites($value)
+ * @mixin \Eloquent
  */
-	class User extends \Eloquent implements \Filament\Models\Contracts\FilamentUser, \Filament\Models\Contracts\HasAvatar, \Filament\Models\Contracts\HasName, \Illuminate\Contracts\Auth\MustVerifyEmail {}
+	#[\AllowDynamicProperties]
+	class IdeHelperUser {}
 }
 
 namespace Webkernel\Users\Models{
@@ -145,8 +145,8 @@ namespace Webkernel\Users\Models{
  * @method static Builder<static>|UserPrivilege whereUserId($value)
  * @method static Builder<static>|UserPrivilege whereUserOrigin($value)
  * @mixin \Eloquent
- * @mixin IdeHelperUserPrivilege
  */
-	class UserPrivilege extends \Eloquent {}
+	#[\AllowDynamicProperties]
+	class IdeHelperUserPrivilege {}
 }
 
