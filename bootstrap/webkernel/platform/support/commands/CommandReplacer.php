@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Webkernel\Console;
+namespace Webkernel\Commands;
 
 use Illuminate\Console\Application as Artisan;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;

@@ -32,12 +32,14 @@ spl_autoload_register(static function (string $class): void {
                 'Webkernel\\FFI\\'           => WEBKERNEL_PATH . '/aptitudes/connectors/src/native/ffi',
 
                 /* Aptitudes Layer: Core Business Logic */
+                'Webkernel\\Async\\'         => WEBKERNEL_PATH . '/aptitudes/async',
                 'Webkernel\\Components\\'    => WEBKERNEL_PATH . '/aptitudes/components',
                 'Webkernel\\Pages\\'         => WEBKERNEL_PATH . '/aptitudes/pages',
                 'Webkernel\\Panels\\'        => WEBKERNEL_PATH . '/aptitudes/panels',
                 'Webkernel\\Plugins\\'       => WEBKERNEL_PATH . '/aptitudes/plugins',
                 'Webkernel\\Traits\\'        => WEBKERNEL_PATH . '/aptitudes/traits',
                 'Webkernel\\Generators\\'    => WEBKERNEL_PATH . '/aptitudes/generators',
+                'Webkernel\\Query\\'         => WEBKERNEL_PATH . '/aptitudes/query-builder',
 
                 /* Instance Layer: High-Level Business Logic */
                 'Webkernel\\Businesses\\'    => WEBKERNEL_PATH . '/aptitudes/instance/businesses',

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Webkernel\Arcanes\Commands;
 
 use Illuminate\Support\ServiceProvider;
-use Webkernel\Console\CommandReplacer;
+use Webkernel\Commands\CommandReplacer;
 use Webkernel\Commands\Module\InstallCommand as ModuleInstallCommand;
 use Webkernel\Commands\Kernel\UpdateCommand  as KernelUpdateCommand;
 

@@ -2,7 +2,7 @@
 namespace Webkernel;
 
 use Illuminate\Support\ServiceProvider as Laravel;
-use Webkernel\Console\CommandReplacer;
+use Webkernel\Commands\CommandReplacer;
 use Webkernel\Panel\Concerns\RemoteComponentRegistry;
 use Webkernel\Panel\Store\PanelConfigStore;
 use Webkernel\Panel\Support\DefaultRemoteComponentRegistry;
