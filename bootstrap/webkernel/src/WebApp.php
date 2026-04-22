@@ -1,5 +1,4 @@
 <?php declare(strict_types=1);
-
 namespace Webkernel;
 
 use Illuminate\Config\Repository as ConfigRepository;
@@ -34,10 +33,6 @@ final class WebApp extends Application
         if (! $this->bound('config')) {
             $this->instance('config', new ConfigRepository([]));
         }
-
-       // $handler = new WebkernelExceptionHandler($this);
-       // $this->instance(ExceptionHandlerContract::class, $handler);
-       // $this->instance(\Illuminate\Foundation\Exceptions\Handler::class, $handler);
     }
 
     // -------------------------------------------------------------------------
@@ -66,7 +61,7 @@ final class WebApp extends Application
 
     public static function configure(?string $basePath = null, string $version = 'dev'): ApplicationBuilder
     {
-        $basePath = is_string($basePath) ? $basePath : static::inferBasePath();
+        $basePath = \is_string($basePath) ? $basePath : static::inferBasePath();
         self::$webkernelVersion = $version;
         self::bootstrapCoreIntegrity($basePath);
 
@@ -80,6 +75,7 @@ final class WebApp extends Application
                 \Webkernel\ServiceProvider::class,
                 \Webkernel\Arcanes\Modules::class,
                 \Webkernel\Arcanes\Commands\DeclareCommands::class,
+                \Webkernel\Platform\SystemPanel\Providers\InstallerPanelProvider::class,
             ])
             ->withCommands()
             ->withRouting(
