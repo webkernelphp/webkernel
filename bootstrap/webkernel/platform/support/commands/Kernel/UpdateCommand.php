@@ -3,8 +3,8 @@
 namespace Webkernel\Commands\Kernel;
 
 use Illuminate\Console\Command;
-use Webkernel\Integration\KernelUpdater;
 use Webkernel\Integration\Git\Exceptions\NetworkException;
+use Webkernel\BackOffice\System\Domain\Updates\WebkernelUpdater;
 
 use function Laravel\Prompts\text;
 use function Laravel\Prompts\confirm;
@@ -69,7 +69,7 @@ final class UpdateCommand extends Command
 
         // ── Execute ───────────────────────────────────────────────────────────
         try {
-            $updater = KernelUpdater::kernel()
+            $updater = WebkernelUpdater::webkernel()
                 ->withBackup($backup)
                 ->keepDirs($keepDirs)
                 ->includePreReleases($preRelease);

@@ -14,5 +14,5 @@ defined('WEBKERNEL_PLATFORM_CMD_OVERRIDES')
 defined('WEBKERNEL_PLATFORM_LOCATIONS')
     || define('WEBKERNEL_PLATFORM_LOCATIONS', [
         WEBKERNEL_PATH . '/aptitudes',
-        WEBKERNEL_PATH . '/platform',
+        WEBKERNEL_PATH . '/_back_office',
     ]);

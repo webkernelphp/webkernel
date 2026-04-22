@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-use Webkernel\Platform\SystemPanel\Presentation\Controllers\RootController;
+use Webkernel\BackOffice\System\Presentation\Controllers\RootController;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;

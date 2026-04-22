@@ -53,7 +53,10 @@ spl_autoload_register(static function (string $class): void {
                 'Webkernel\\QuickTouch\\'    => WEBKERNEL_PATH . '/platform/quick_touch',
 
                 /* System Panel Specific Assets */
-                'Webkernel\\Platform\\SystemPanel\\' => WEBKERNEL_PATH . '/platform/system_panel',
+                'Webkernel\\BackOffice\\System\\'       => WEBKERNEL_PATH . '/_back_office/sys_core_panel',
+                'Webkernel\\BackOffice\\Businesses\\'   => WEBKERNEL_PATH . '/_back_office/sys_biz_panel',
+                'Webkernel\\BackOffice\\Installer\\'    => WEBKERNEL_PATH . '/_back_office/installer_panel',
+
 
                 /* Support Layer */
 
