@@ -6,7 +6,8 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
-use Filament\Support\Tabs\Tab;
+use Filament\Resources\Pages\Concerns\InteractsWithTable;
+use Filament\Tables\Concerns\HasTabs;
 use Webkernel\BackOffice\System\Models\WebkernelSetting;
 use Webkernel\BackOffice\System\Presentation\Resources\WebkernelSettings\WebkernelSettingResource;
 use Webkernel\BackOffice\System\Presentation\Resources\WebkernelSettings\Widgets\SettingsStatsWidget;
@@ -29,29 +30,50 @@ class ListWebkernelSettings extends ListRecords
     public function getTabs(): array
     {
         return [
-            'all' => Tab::make('All Settings')
-                ->badge(WebkernelSetting::count()),
-
-            'system' => Tab::make('System')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('registry', 'webkernel')->whereNull('module'))
-                ->badge(WebkernelSetting::where('registry', 'webkernel')->whereNull('module')->count()),
-
-            'custom' => Tab::make('Custom')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('is_custom', true))
-                ->badge(WebkernelSetting::where('is_custom', true)->count()),
-
-            'modules' => Tab::make('Modules')
-                ->modifyQueryUsing(fn (Builder $query) => $query->whereNotNull('module'))
-                ->badge(WebkernelSetting::whereNotNull('module')->count()),
-
-            'modified' => Tab::make('Recently Modified')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('updated_at', '>=', now()->subDays(7))->orderByDesc('updated_at'))
-                ->badge(WebkernelSetting::where('updated_at', '>=', now()->subDays(7))->count()),
-
-            'untouched' => Tab::make('Untouched')
-                ->modifyQueryUsing(fn (Builder $query) => $query->whereRaw('value = default_value OR value IS NULL'))
-                ->badge(DB::table('inst_webkernel_settings')->whereRaw('value = default_value OR value IS NULL')->count()),
+            'all' => [
+                'label' => 'All Settings',
+                'badge' => WebkernelSetting::count(),
+            ],
+            'system' => [
+                'label' => 'System',
+                'badge' => WebkernelSetting::where('registry', 'webkernel')->whereNull('module')->count(),
+                'icon' => 'heroicon-o-shield-check',
+            ],
+            'custom' => [
+                'label' => 'Custom',
+                'badge' => WebkernelSetting::where('is_custom', true)->count(),
+                'icon' => 'heroicon-o-pencil-square',
+            ],
+            'modules' => [
+                'label' => 'Modules',
+                'badge' => WebkernelSetting::whereNotNull('module')->count(),
+                'icon' => 'heroicon-o-puzzle-piece',
+            ],
+            'modified' => [
+                'label' => 'Recently Modified',
+                'badge' => WebkernelSetting::where('updated_at', '>=', now()->subDays(7))->count(),
+                'icon' => 'heroicon-o-clock',
+            ],
+            'untouched' => [
+                'label' => 'Untouched',
+                'badge' => DB::table('inst_webkernel_settings')->whereRaw('value = default_value OR value IS NULL')->count(),
+                'icon' => 'heroicon-o-check-circle',
+            ],
         ];
+    }
+
+    protected function getTableQuery(): Builder
+    {
+        $query = parent::getTableQuery();
+
+        return match ($this->activeTab) {
+            'system' => $query->where('registry', 'webkernel')->whereNull('module'),
+            'custom' => $query->where('is_custom', true),
+            'modules' => $query->whereNotNull('module'),
+            'modified' => $query->where('updated_at', '>=', now()->subDays(7))->orderByDesc('updated_at'),
+            'untouched' => $query->whereRaw('value = default_value OR value IS NULL'),
+            default => $query,
+        };
     }
 
     protected function getHeaderActions(): array
