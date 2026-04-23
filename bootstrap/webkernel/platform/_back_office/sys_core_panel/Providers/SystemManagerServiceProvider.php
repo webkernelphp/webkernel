@@ -67,15 +67,7 @@ final class SystemManagerServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        $this->mergeConfigFrom(
-            __DIR__ . '/../Config/system-manager.php',
-            'webkernel-system',
-        );
 
-        $this->mergeConfigFrom(
-            __DIR__ . '/../Config/webkernel-auth.php',
-            'webkernel-auth',
-        );
 
         // ── Auto-migrate on fresh install ─────────────────────────────────────
         // Idempotent: Schema::hasTable() is a near-instant no-op once done.

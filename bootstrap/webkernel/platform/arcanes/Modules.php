@@ -546,12 +546,7 @@ final class Modules extends ServiceProvider
             foreach (glob($dir . '/*.php') ?: [] as $file) {
                 $key = pathinfo($file, PATHINFO_FILENAME);
                 if (!$this->app['config']->has($key)) {
-                    try {
-                        $this->mergeConfigFrom($file, $key);
-                    } catch (\TypeError $e) {
-                        // Config file returns non-array value, skip
-                        $this->warn("Config file [{$file}] returned non-array value, skipping.");
-                    }
+                    $this->mergeConfigFrom($file, $key);
                 }
             }
         }
