@@ -4,7 +4,6 @@ namespace Webkernel\BackOffice\System\Presentation\Pages;
 
 use BackedEnum;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
@@ -54,8 +53,6 @@ class WebkernelUpgrade extends Page implements UpgradeOperation
     public string $videoId          = '';
     public string $selectedVersion  = '';
 
-    private ?Select $releaseSelector = null;
-
     public function mount(): void
     {
         $this->phpVersion      = PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION . '.' . PHP_RELEASE_VERSION;
@@ -63,25 +60,6 @@ class WebkernelUpgrade extends Page implements UpgradeOperation
         $this->filamentVersion = \Composer\InstalledVersions::getPrettyVersion('filament/filament');
 
         $this->loadFromLocalRegistry();
-    }
-
-    public function getReleaseSelector(): Select
-    {
-        if ($this->releaseSelector !== null) {
-            return $this->releaseSelector;
-        }
-
-        $options = collect($this->releases)->mapWithKeys(fn($r) => [
-            $r['version'] => "v{$r['version']} — {$r['codename']} ({$r['date']})"
-        ])->toArray();
-
-        $this->releaseSelector = Select::make('selectedVersion')
-            ->label('Select Release')
-            ->options($options)
-            ->native(false)
-            ->live();
-
-        return $this->releaseSelector;
     }
 
     public function getProgressPercentage(): int

@@ -1265,7 +1265,15 @@
         </p>
         @if(count($releases) > 0)
         <div style="margin: 1.5rem 0 2rem 0; max-width: 320px;">
-            {{ $this->getReleaseSelector() }}
+            <x-filament::input.wrapper label="Select Release">
+                <x-filament::input.select wire:change="selectReleaseVersion($event.target.value)">
+                    @foreach($releases as $release)
+                        <option value="{{ $release['version'] }}" @if($release['version'] === $selectedVersion) selected @endif>
+                            v{{ $release['version'] }} — {{ $release['codename'] }} ({{ $release['date'] }})
+                        </option>
+                    @endforeach
+                </x-filament::input.select>
+            </x-filament::input.wrapper>
         </div>
         @endif
         <div class="webkernel-upgrade-page-hero-cta">
