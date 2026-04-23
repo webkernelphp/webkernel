@@ -74,12 +74,15 @@ class ListBackgroundTasks extends ListRecords
                     ]),
             ])
             ->actions([
-                Action::make('view-output')
-                    ->label('Output')
-                    ->icon('heroicon-o-document-text')
-                    ->visible(fn (WebkernelBackgroundTask $record): bool => !empty($record->output) || !empty($record->error))
-                    ->modalHeading(fn (WebkernelBackgroundTask $record): string => "Task: {$record->label}")
-                    ->modalContent(fn (WebkernelBackgroundTask $record): string => view('webkernel-system::modals.task-output', [
+                Action::make('details')
+                    ->label('Details')
+                    ->icon('heroicon-o-terminal')
+                    ->color('info')
+                    ->visible(fn (WebkernelBackgroundTask $record): bool => !empty($record->output) || !empty($record->error) || $record->status === 'running')
+                    ->slideOver()
+                    ->modalHeading(fn (WebkernelBackgroundTask $record): string => "Task Details: {$record->label}")
+                    ->modalContent(fn (WebkernelBackgroundTask $record): string => view('webkernel-system::modals.task-details', [
+                        'record' => $record,
                         'output' => $record->output,
                         'error' => $record->error,
                     ])->render())
@@ -91,6 +94,7 @@ class ListBackgroundTasks extends ListRecords
                     ->color('danger')
                     ->visible(fn (WebkernelBackgroundTask $record): bool => $record->status === 'pending' || $record->status === 'running')
                     ->requiresConfirmation()
+                    ->modalDescription('This will cancel the running task.')
                     ->action(fn (WebkernelBackgroundTask $record) => $record->markCancelled()),
 
                 Action::make('retry')
@@ -99,7 +103,17 @@ class ListBackgroundTasks extends ListRecords
                     ->color('warning')
                     ->visible(fn (WebkernelBackgroundTask $record): bool => $record->status === 'failed' || $record->status === 'cancelled')
                     ->requiresConfirmation()
+                    ->modalDescription('This will re-queue the task.')
                     ->action(fn (WebkernelBackgroundTask $record) => $this->retryTask($record)),
+
+                Action::make('delete')
+                    ->label('Delete')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->visible(fn (WebkernelBackgroundTask $record): bool => $record->status !== 'running' && $record->status !== 'pending')
+                    ->requiresConfirmation()
+                    ->modalDescription('This will permanently delete this task record.')
+                    ->action(fn (WebkernelBackgroundTask $record) => $record->delete()),
             ])
             ->defaultSort('created_at', 'desc')
             ->poll('5s');
