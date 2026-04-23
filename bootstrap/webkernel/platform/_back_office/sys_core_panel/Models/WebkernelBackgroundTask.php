@@ -2,10 +2,12 @@
 
 namespace Webkernel\BackOffice\System\Models;
 
+use Webkernel\Users\Models\User;
+use Webkernel\Notifications\BackgroundTaskNotification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\AsCollection;
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Support\Str;
 class WebkernelBackgroundTask extends Model
 {
     protected $connection = 'webkernel_sqlite';
@@ -27,7 +29,7 @@ class WebkernelBackgroundTask extends Model
     {
         static::creating(function (self $model) {
             if (empty($model->id)) {
-                $model->id = \Illuminate\Support\Str::ulid();
+                $model->id = Str::ulid();
             }
         });
     }
@@ -161,18 +163,15 @@ class WebkernelBackgroundTask extends Model
             return;
         }
 
-        $user = \Webkernel\Users\Models\User::find($this->user_id);
+        $user = User::find($this->user_id);
         if (!$user) {
             return;
         }
 
         $title = $this->status === 'failed' ? "Task Failed: {$this->label}" : "Task Completed: {$this->label}";
         $body = $this->suggested_action ?? $this->output;
+        $status = $this->status === 'failed' ? 'danger' : 'success';
 
-        \Filament\Notifications\Notification::make()
-            ->title($title)
-            ->body($body)
-            ->status($this->status === 'failed' ? 'danger' : 'success')
-            ->sendToDatabase($user);
+        $user->notify(new BackgroundTaskNotification($title, $body, $status));
     }
 }
