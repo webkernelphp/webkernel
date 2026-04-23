@@ -333,45 +333,7 @@ final class WebkernelUpdateChecker
                 }
             }
         } catch (\Throwable) {
-            // API fetch failed — will fallback to release-meta.php
-        }
-
-        $this->applyReleaseMetaFallback($record);
-    }
-
-    private function applyReleaseMetaFallback(WebkernelRelease $record): void
-    {
-        $releaseMetaPaths = [
-            defined('WEBKERNEL_PATH') ? WEBKERNEL_PATH . '/release-meta.php' : null,
-            base_path('bootstrap/webkernel/release-meta.php'),
-        ];
-
-        $releaseMetaPath = null;
-        foreach ($releaseMetaPaths as $path) {
-            if ($path && is_file($path)) {
-                $releaseMetaPath = $path;
-                break;
-            }
-        }
-
-        if (!$releaseMetaPath) {
-            return;
-        }
-
-        try {
-            $meta = include $releaseMetaPath;
-            if (!is_array($meta)) {
-                return;
-            }
-
-            if ($record->meta_features === null && isset($meta['features']) && is_array($meta['features'])) {
-                $record->meta_features = json_encode($meta['features']);
-            }
-
-            if ($record->meta_doc_links === null && isset($meta['doc_links']) && is_array($meta['doc_links'])) {
-                $record->meta_doc_links = json_encode($meta['doc_links']);
-            }
-        } catch (\Throwable) {
+            // Annotation fetch failed — metadata will remain empty
         }
     }
 
