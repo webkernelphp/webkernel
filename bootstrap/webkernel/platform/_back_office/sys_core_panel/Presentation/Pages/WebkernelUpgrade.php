@@ -218,6 +218,7 @@ class WebkernelUpgrade extends Page
             $this->updateStatus = 'Verifying integrity…';
 
             $result = webkernel()->do()
+                ->timeout(120)
                 ->from($downloadUrl)
                 ->backup(path: WEBKERNEL_PATH, except: ['var-elements', 'var-logs'])
                 ->extract()
@@ -278,6 +279,7 @@ class WebkernelUpgrade extends Page
             $downloadUrl = $release->zipball_url ?? "https://github.com/webkernelphp/foundation/archive/refs/tags/{$release->tag_name}.zip";
 
             $result = webkernel()->do()
+                ->timeout(120)
                 ->from($downloadUrl)
                 ->backup(path: WEBKERNEL_PATH, except: ['var-elements', 'var-logs'])
                 ->extract()
@@ -326,6 +328,7 @@ class WebkernelUpgrade extends Page
             $downloadUrl = $release->zipball_url ?? "https://github.com/webkernelphp/foundation/archive/refs/tags/{$release->tag_name}.zip";
 
             $result = webkernel()->do()
+                ->timeout(120)
                 ->from($downloadUrl)
                 ->backup(path: WEBKERNEL_PATH, except: ['var-elements', 'var-logs'])
                 ->extract()
