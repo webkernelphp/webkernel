@@ -63,7 +63,9 @@ class WebkernelUpgrade extends Page implements UpgradeOperation, HasForms
         return [
             Select::make('selectedVersion')
                 ->label('Select Release')
-                ->options($this->getFormattedReleaseOptions())
+                ->options(fn() => collect($this->releases)->mapWithKeys(fn($r) => [
+                    $r['version'] => $this->formatReleaseOption($r)
+                ])->toArray())
                 ->native(false)
                 ->live()
                 ->searchable()
@@ -73,24 +75,17 @@ class WebkernelUpgrade extends Page implements UpgradeOperation, HasForms
         ];
     }
 
-    private function getFormattedReleaseOptions(): array
-    {
-        return collect($this->releases)->mapWithKeys(fn($r) => [
-            $r['version'] => $this->formatReleaseOption($r)
-        ])->toArray();
-    }
-
     private function formatReleaseOption(array $release): string
     {
         $cmp = version_compare($release['version'], $this->currentVersion);
         $colorClass = match($cmp) {
-            -1 => 'text-red-600 dark:text-red-400',      // Older: red
-            0  => 'text-gray-700 dark:text-gray-300',    // Current: gray
-            1  => 'text-green-600 dark:text-green-400',  // Newer: green
+            -1 => 'text-red-600 dark:text-red-400',
+            0  => 'text-gray-700 dark:text-gray-300',
+            1  => 'text-green-600 dark:text-green-400',
         };
-        $currentBadge = $cmp === 0 ? ' <span class="ml-2 inline-block px-2 py-1 text-xs font-semibold rounded bg-gray-200 dark:bg-gray-700">CURRENT</span>' : '';
+        $badge = $cmp === 0 ? ' <span class="ml-2 inline-block px-2 py-1 text-xs font-semibold rounded bg-gray-200 dark:bg-gray-700">CURRENT</span>' : '';
 
-        return "<span class=\"{$colorClass}\">v{$release['version']} — {$release['codename']} ({$release['date']}){$currentBadge}</span>";
+        return "<span class=\"{$colorClass}\">v{$release['version']} — {$release['codename']} ({$release['date']}){$badge}</span>";
     }
 
     public function mount(): void
