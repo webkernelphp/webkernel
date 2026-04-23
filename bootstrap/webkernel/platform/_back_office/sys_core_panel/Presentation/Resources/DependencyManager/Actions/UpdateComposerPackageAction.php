@@ -83,8 +83,8 @@ class UpdateComposerPackageAction extends Action
             $composerBinary = config('dependency-manager.composer_binary', 'composer');
 
             $command = str_contains($composerBinary, ' ')
-                ? array_merge(explode(' ', $composerBinary), ['require', "{$record->name}:{$record->latest}", '--no-interaction', '--no-dev'])
-                : [$composerBinary, 'require', "{$record->name}:{$record->latest}", '--no-interaction', '--no-dev'];
+                ? array_merge(explode(' ', $composerBinary), ['require', "{$record->name}:{$record->latest}", '--no-interaction', '--with-all-dependencies'])
+                : [$composerBinary, 'require', "{$record->name}:{$record->latest}", '--no-interaction', '--with-all-dependencies'];
 
             $process = new Process(
                 $command,

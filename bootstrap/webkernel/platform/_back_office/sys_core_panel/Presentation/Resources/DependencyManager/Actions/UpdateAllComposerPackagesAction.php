@@ -78,8 +78,8 @@ class UpdateAllComposerPackagesAction extends Action
 
         try {
             $command = str_contains($composerBinary, ' ')
-                ? array_merge(explode(' ', $composerBinary), ['update', '--no-interaction', '--no-dev'])
-                : [$composerBinary, 'update', '--no-interaction', '--no-dev'];
+                ? array_merge(explode(' ', $composerBinary), ['update', '--no-interaction'])
+                : [$composerBinary, 'update', '--no-interaction'];
 
             $process = new Process(
                 $command,
