@@ -126,7 +126,50 @@ class ListBackgroundTasks extends ListRecords
                     ->action(fn (WebkernelBackgroundTask $record) => $record->delete()),
             ])
             ->defaultSort('created_at', 'desc')
-            ->poll('5s');
+            ->poll('2s')
+            ->bulkActions([
+                Tables\Actions\BulkAction::make('cancel')
+                    ->label('Cancel Selected')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalDescription('This will cancel all selected running or pending tasks.')
+                    ->action(function ($records) {
+                        foreach ($records as $record) {
+                            if ($record->status === 'pending' || $record->status === 'running') {
+                                $record->markCancelled();
+                            }
+                        }
+                    }),
+
+                Tables\Actions\BulkAction::make('delete')
+                    ->label('Delete Selected')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalDescription('This will permanently delete all selected tasks.')
+                    ->action(function ($records) {
+                        foreach ($records as $record) {
+                            if ($record->status !== 'running' && $record->status !== 'pending') {
+                                $record->delete();
+                            }
+                        }
+                    }),
+
+                Tables\Actions\BulkAction::make('retry')
+                    ->label('Retry Failed')
+                    ->icon('heroicon-o-arrow-clockwise')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalDescription('This will re-queue all selected failed or cancelled tasks.')
+                    ->action(function ($records) {
+                        foreach ($records as $record) {
+                            if ($record->status === 'failed' || $record->status === 'cancelled') {
+                                $this->retryTask($record);
+                            }
+                        }
+                    }),
+            ]);
     }
 
     protected function retryTask(WebkernelBackgroundTask $record): void
