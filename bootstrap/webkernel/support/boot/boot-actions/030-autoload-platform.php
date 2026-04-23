@@ -59,9 +59,9 @@ spl_autoload_register(static function (string $class): void {
                 'Webkernel\\Routes\\'        => WEBKERNEL_PATH . '/platform/routing',
 
                 /* System Panel Specific Assets */
-                'Webkernel\\BackOffice\\System\\'       => WEBKERNEL_PATH . '/platform/_back_office/sys_core_panel',
-                'Webkernel\\BackOffice\\Businesses\\'   => WEBKERNEL_PATH . '/platform/_back_office/sys_biz_panel',
-                'Webkernel\\BackOffice\\Installer\\'    => WEBKERNEL_PATH . '/platform/_back_office/installer_panel',
+                'Webkernel\\BackOffice\\System\\'               => WEBKERNEL_PATH . '/platform/_back_office/sys_core_panel',
+                'Webkernel\\BackOffice\\Businesses\\'           => WEBKERNEL_PATH . '/platform/_back_office/sys_biz_panel',
+                'Webkernel\\BackOffice\\Installer\\'            => WEBKERNEL_PATH . '/platform/_back_office/installer_panel',
 
 
                 /* Support Layer */
