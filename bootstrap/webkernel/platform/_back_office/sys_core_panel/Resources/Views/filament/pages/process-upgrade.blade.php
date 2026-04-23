@@ -1,12 +1,12 @@
 @php
-    $steps = [
-        'backup' => 'Creating backup',
-        'download' => 'Downloading release',
-        'extract' => 'Extracting files',
-        'verify' => 'Verifying integrity',
-        'swap' => 'Swapping kernel',
-        'cleanup' => 'Cleaning up',
-    ];
+    $steps = session('upgrade.steps', [
+        'backup' => ['label' => 'Creating backup', 'progressPercent' => 15],
+        'download' => ['label' => 'Downloading release', 'progressPercent' => 35],
+        'extract' => ['label' => 'Extracting files', 'progressPercent' => 50],
+        'verify' => ['label' => 'Verifying integrity', 'progressPercent' => 65],
+        'swap' => ['label' => 'Swapping kernel', 'progressPercent' => 80],
+        'cleanup' => ['label' => 'Cleaning up', 'progressPercent' => 90],
+    ]);
 @endphp
 
 <x-filament-panels::page>
@@ -181,18 +181,19 @@
 
 <div class="process-upgrade-container" wire:poll.500ms="updateProgress">
     <div class="process-upgrade-content">
-        <!-- Logos -->
+        <!-- Logos: Webkernel (fixed) + Optional Module Logo -->
         <div class="process-upgrade-logos">
             <div class="process-upgrade-logo">
-                @if($primaryLogo)
-                    <img src="{{ $primaryLogo }}" alt="Primary Logo" />
+                @php $favicon = webkernelBrandingUrl('webkernel-favicon'); @endphp
+                @if($favicon)
+                    <img src="{{ $favicon }}" alt="Webkernel" />
                 @else
                     <span style="font-size: 2rem;">⚙️</span>
                 @endif
             </div>
-            @if($secondaryLogo)
+            @if(!empty($secondaryLogo))
                 <div class="process-upgrade-logo secondary">
-                    <img src="{{ $secondaryLogo }}" alt="Secondary Logo" />
+                    <img src="{{ $secondaryLogo }}" alt="Operation Logo" />
                 </div>
             @endif
         </div>
@@ -210,20 +211,11 @@
 
         <!-- Steps -->
         <div class="process-upgrade-steps">
-            @php
-                $stepProgress = [
-                    'backup' => 15,
-                    'download' => 35,
-                    'extract' => 50,
-                    'verify' => 65,
-                    'swap' => 80,
-                    'cleanup' => 90,
-                ];
-            @endphp
-
-            @foreach($steps as $key => $label)
+            @foreach($steps as $key => $step)
                 @php
-                    $stepPercent = $stepProgress[$key] ?? 0;
+                    $label = is_array($step) ? $step['label'] : $step;
+                    $stepPercent = is_array($step) ? $step['progressPercent'] : 0;
+
                     if ($progressPercent >= $stepPercent + 15) {
                         $stepClass = 'completed';
                         $icon = '✓';
