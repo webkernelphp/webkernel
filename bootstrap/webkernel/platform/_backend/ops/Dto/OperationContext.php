@@ -12,6 +12,7 @@ final class OperationContext
 {
     private ?string $backupPath = null;
     private ?string $targetPath = null;
+    private array $rateLimit = [];
 
     public function __construct(
         public readonly bool   $success,
@@ -50,6 +51,27 @@ final class OperationContext
     {
         $this->backupPath = $backupPath;
         $this->targetPath = $targetPath;
+        return $this;
+    }
+
+    /**
+     * Get rate limit info from API response.
+     *
+     * @return array{remaining: ?int, reset: ?int}
+     */
+    public function rateLimit(): array
+    {
+        return $this->rateLimit ?: ['remaining' => null, 'reset' => null];
+    }
+
+    /**
+     * Set rate limit info from API response headers.
+     *
+     * @internal
+     */
+    public function setRateLimit(array $limit): self
+    {
+        $this->rateLimit = $limit;
         return $this;
     }
 

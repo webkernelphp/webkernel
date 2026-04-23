@@ -1061,6 +1061,7 @@ final class OperationBuilder
             if ($this->backupPath && $this->targetPath) {
                 $context->setBackupPaths($this->backupPath, $this->targetPath);
             }
+            $context->setRateLimit($this->rateLimit());
             return $context;
         } catch (\Throwable $e) {
             return OperationContext::failure($e->getMessage());
