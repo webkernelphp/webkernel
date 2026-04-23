@@ -4,6 +4,7 @@ namespace Webkernel\BackOffice\System\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class WebkernelSetting extends Model
@@ -24,12 +25,18 @@ class WebkernelSetting extends Model
         'default_value',
         'options_json',
         'is_sensitive',
+        'introduced_in_version',
         'last_modified_by',
     ];
 
     protected $casts = [
         'is_sensitive' => 'boolean',
     ];
+
+    public function history(): HasMany
+    {
+        return $this->hasMany(WebkernelSettingHistory::class, 'setting_id');
+    }
 
     public function scopeForCategory(Builder $query, string $category): Builder
     {
@@ -55,9 +62,26 @@ class WebkernelSetting extends Model
         $resolved = static::forCategory($category)->where('key', $key)->first();
 
         if ($resolved) {
+            $oldValue = $resolved->value;
+            $newValue = is_array($value) || is_object($value) ? json_encode($value) : (string) $value;
+
+            if ($resolved->is_sensitive && $newValue) {
+                $newValue = encrypt($newValue);
+            }
+
             $resolved->update([
-                'value'             => is_array($value) || is_object($value) ? json_encode($value) : (string) $value,
-                'last_modified_by'  => $modifier ?? filament()->auth()?->user()?->email ?? 'system',
+                'value' => $newValue,
+                'last_modified_by' => $modifier ?? filament()->auth()?->user()?->email ?? 'system',
+            ]);
+
+            WebkernelSettingHistory::create([
+                'id' => Str::ulid()->toBase32(),
+                'setting_id' => $resolved->id,
+                'category' => $category,
+                'key' => $key,
+                'old_value' => $oldValue,
+                'new_value' => $newValue,
+                'changed_by' => $modifier ?? filament()->auth()?->user()?->email ?? 'system',
             ]);
         }
     }
@@ -65,6 +89,14 @@ class WebkernelSetting extends Model
     public function resolvedValue(): mixed
     {
         $val = $this->value ?? $this->default_value;
+
+        if ($this->is_sensitive && $val && str_starts_with($val, 'eyJ')) {
+            try {
+                $val = decrypt($val);
+            } catch (\Throwable) {
+                // Already decrypted or invalid
+            }
+        }
 
         return match($this->type) {
             'boolean' => (bool) $val,
@@ -83,14 +115,23 @@ class WebkernelSetting extends Model
         return $parts;
     }
 
-    public static function seed(array $defaults): void
+    public static function seedDefaults(): void
     {
-        foreach ($defaults as $data) {
-            $data['id'] ??= Str::ulid()->toBase32();
-            static::updateOrCreate(
-                ['category' => $data['category'], 'key' => $data['key']],
-                $data
-            );
+        $defaults = include __DIR__ . '/../Presentation/Pages/Data/InstanceSettingsDefaults.php';
+        $version = WEBKERNEL_VERSION;
+
+        foreach ($defaults as $category => $items) {
+            foreach ($items as $data) {
+                $data['id'] ??= Str::ulid()->toBase32();
+                $data['category'] = $category;
+                $data['introduced_in_version'] = $version;
+                $data['is_sensitive'] = (bool) ($data['is_sensitive'] ?? false);
+
+                static::updateOrCreate(
+                    ['category' => $category, 'key' => $data['key']],
+                    $data
+                );
+            }
         }
     }
 }

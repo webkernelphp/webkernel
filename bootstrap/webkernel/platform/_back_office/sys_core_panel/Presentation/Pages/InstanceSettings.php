@@ -4,7 +4,7 @@ namespace Webkernel\BackOffice\System\Presentation\Pages;
 
 use BackedEnum;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Section;
+use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
@@ -94,7 +94,7 @@ class InstanceSettings extends Page implements HasForms
                 };
 
                 if ($setting->is_sensitive) {
-                    $field->dehydrateStateUsing(fn($state) => mask_output($state));
+                    $field->dehydrateStateUsing(fn($state) => $state ? '••••••••' : '');
                 }
 
                 $fields[] = $field;
@@ -113,7 +113,7 @@ class InstanceSettings extends Page implements HasForms
         $data = $this->form->getState();
 
         foreach ($data as $dotKey => $value) {
-            WebkernelSetting::set($dotKey, $value, auth()?->user()?->email ?? 'system');
+            WebkernelSetting::set($dotKey, $value, filament()->auth()?->user()?->email ?? 'system');
         }
 
         Notification::make()
@@ -126,12 +126,36 @@ class InstanceSettings extends Page implements HasForms
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('defaults')
+                ->label('Set Defaults')
+                ->icon('heroicon-o-arrow-path')
+                ->color('gray')
+                ->outlined()
+                ->requiresConfirmation()
+                ->modalHeading('Reset to Default Settings?')
+                ->modalDescription('This will reload all default settings from the system. Any custom values will be preserved if they have defaults defined.')
+                ->modalSubmitActionLabel('Reset')
+                ->action(fn() => $this->setDefaults()),
+
             Action::make('save')
                 ->label('Save Settings')
                 ->icon('heroicon-o-check')
                 ->color('primary')
                 ->action(fn() => $this->saveSettings()),
         ];
+    }
+
+    public function setDefaults(): void
+    {
+        WebkernelSetting::seedDefaults();
+
+        $this->mount();
+        $this->form->fill($this->data);
+
+        Notification::make()
+            ->title('Default settings loaded')
+            ->success()
+            ->send();
     }
 
     public static function getNavigationIcon(): string|BackedEnum|Htmlable|null
