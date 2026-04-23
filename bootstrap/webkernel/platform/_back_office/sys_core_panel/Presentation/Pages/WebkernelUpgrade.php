@@ -63,28 +63,34 @@ class WebkernelUpgrade extends Page implements UpgradeOperation, HasForms
         return [
             Select::make('selectedVersion')
                 ->label('Select Release')
-                ->options(collect($this->releases)->mapWithKeys(fn($r) => [
-                    $r['version'] => [
-                        'label' => "v{$r['version']} — {$r['codename']} ({$r['date']})",
-                        'color' => $this->getReleaseColor($r['version']),
-                    ]
-                ])->toArray())
+                ->options($this->getFormattedReleaseOptions())
                 ->native(false)
                 ->live()
                 ->searchable()
+                ->allowHtml()
                 ->default($this->currentVersion)
                 ->afterStateUpdated(fn($state) => $state ? $this->selectReleaseVersion($state) : $this->selectReleaseVersion($this->currentVersion)),
         ];
     }
 
-    private function getReleaseColor(string $version): string
+    private function getFormattedReleaseOptions(): array
     {
-        $cmp = version_compare($version, $this->currentVersion);
-        return match($cmp) {
-            -1 => 'danger',    // Older versions: red
-            0  => 'gray',      // Current version: neutral
-            1  => 'success',   // Newer versions: green
+        return collect($this->releases)->mapWithKeys(fn($r) => [
+            $r['version'] => $this->formatReleaseOption($r)
+        ])->toArray();
+    }
+
+    private function formatReleaseOption(array $release): string
+    {
+        $cmp = version_compare($release['version'], $this->currentVersion);
+        $colorClass = match($cmp) {
+            -1 => 'text-red-600 dark:text-red-400',      // Older: red
+            0  => 'text-gray-700 dark:text-gray-300',    // Current: gray
+            1  => 'text-green-600 dark:text-green-400',  // Newer: green
         };
+        $currentBadge = $cmp === 0 ? ' <span class="ml-2 inline-block px-2 py-1 text-xs font-semibold rounded bg-gray-200 dark:bg-gray-700">CURRENT</span>' : '';
+
+        return "<span class=\"{$colorClass}\">v{$release['version']} — {$release['codename']} ({$release['date']}){$currentBadge}</span>";
     }
 
     public function mount(): void
