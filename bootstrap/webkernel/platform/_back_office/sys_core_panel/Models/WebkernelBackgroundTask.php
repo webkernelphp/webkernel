@@ -103,7 +103,7 @@ class WebkernelBackgroundTask extends Model
         }
 
         $end = $this->completed_at ?? now();
-        return $this->started_at->diffInSeconds($end);
+        return (int) $this->started_at->diffInSeconds($end);
     }
 
     public function getDurationFormatted(): string
