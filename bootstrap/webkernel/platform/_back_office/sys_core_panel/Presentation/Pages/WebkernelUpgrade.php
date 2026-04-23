@@ -59,7 +59,30 @@ class WebkernelUpgrade extends Page implements UpgradeOperation
         $this->laravelVersion  = app()->version();
         $this->filamentVersion = \Composer\InstalledVersions::getPrettyVersion('filament/filament');
 
+        // Load metadata from release-meta.php for current version before any fetch
+        $this->loadCurrentVersionMetadata();
+
         $this->loadFromLocalRegistry();
+    }
+
+    private function loadCurrentVersionMetadata(): void
+    {
+        try {
+            $metaPath = dirname(__DIR__, 5) . '/release-meta.php';
+            if (is_file($metaPath)) {
+                $meta = include $metaPath;
+                if (is_array($meta)) {
+                    $this->features = $meta['features'] ?? [];
+                    $this->docLinks = $meta['doc_links'] ?? [];
+                    $videoUrl = $meta['video'] ?? '';
+                    if ($videoUrl && preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?]+)/', $videoUrl, $m)) {
+                        $this->videoId = $m[1];
+                    }
+                }
+            }
+        } catch (\Throwable) {
+            // No local metadata file or parsing failed
+        }
     }
 
     public function getProgressPercentage(): int
