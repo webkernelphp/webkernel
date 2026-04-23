@@ -39,6 +39,13 @@ class ListBackgroundTasks extends ListRecords
                     ->formatStateUsing(fn (string $state): string => ucwords(str_replace('_', ' ', $state))),
 
                 Tables\Columns\BadgeColumn::make('status')
+                    ->icons([
+                        'heroicon-o-clock' => 'pending',
+                        'heroicon-o-arrow-path' => 'running',
+                        'heroicon-o-check-circle' => 'completed',
+                        'heroicon-o-x-circle' => 'failed',
+                        'heroicon-o-minus-circle' => 'cancelled',
+                    ])
                     ->colors([
                         'warning' => 'pending',
                         'info' => 'running',
@@ -81,68 +88,15 @@ class ListBackgroundTasks extends ListRecords
                     ]),
             ])
             ->actions([
-                Action::make('details')
-                    ->label('Details')
+                Action::make('watch')
+                    ->label('Watch')
                     ->icon('heroicon-o-terminal')
                     ->color('info')
-                    ->visible(fn (WebkernelBackgroundTask $record): bool => !empty($record->output) || !empty($record->error) || $record->status === 'running')
-                    ->modalHeading(fn (WebkernelBackgroundTask $record): string => "Task Details: {$record->label}")
                     ->slideOver()
                     ->modalWidth('7xl')
-                    ->fillForm(fn (WebkernelBackgroundTask $record) => [
-                        'status' => $record->status,
-                        'type' => $record->type,
-                        'duration' => $record->getDurationFormatted(),
-                        'started_at' => $record->started_at?->format('M d, Y H:i:s'),
-                        'completed_at' => $record->completed_at?->format('M d, Y H:i:s'),
-                        'payload' => $record->payload ? json_encode($record->payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : null,
-                        'output' => $record->output,
-                        'error' => $record->error,
-                    ])
-                    ->schema([
-                        TextEntry::make('status')
-                            ->label('Status')
-                            ->badge()
-                            ->color(fn (string $state): string => match ($state) {
-                                'pending' => 'warning',
-                                'running' => 'info',
-                                'completed' => 'success',
-                                'failed' => 'danger',
-                                'cancelled' => 'gray',
-                                default => 'gray',
-                            }),
-                        TextEntry::make('type')
-                            ->label('Task Type')
-                            ->formatStateUsing(fn (string $state) => str($state)->replace('_', ' ')->title()),
-                        TextEntry::make('duration')
-                            ->label('Duration'),
-                        TextEntry::make('started_at')
-                            ->label('Started'),
-                        TextEntry::make('completed_at')
-                            ->label('Completed'),
-                        Fieldset::make('Payload')
-                            ->visible(fn (WebkernelBackgroundTask $record) => $record->payload !== null)
-                            ->schema([
-                                TextEntry::make('payload')
-                                    ->copyable()
-                                    ->copyableState(fn (string $state): string => $state),
-                            ]),
-                        Fieldset::make('Output')
-                            ->visible(fn (WebkernelBackgroundTask $record) => !empty($record->output))
-                            ->schema([
-                                TextEntry::make('output')
-                                    ->copyable()
-                                    ->formatStateUsing(fn (string $state): string => $state),
-                            ]),
-                        Section::make('Error')
-                            ->visible(fn (WebkernelBackgroundTask $record) => !empty($record->error))
-                            ->schema([
-                                TextEntry::make('error')
-                                    ->copyable()
-                                    ->color('danger')
-                                    ->formatStateUsing(fn (string $state): string => $state),
-                            ]),
-                    ]),
+                    ->modalHeading(fn (WebkernelBackgroundTask $record): string => "Task: {$record->label}")
+                    ->view('webkernel-system::actions.watch-task', ['task' => null])
+                    ->disableForm(),
 
                 Action::make('cancel')
                     ->label('Cancel')
