@@ -74,7 +74,7 @@ final class SystemPanelProvider extends PanelProvider
                 in: __DIR__ . '/../Presentation/Pages',
                 for: 'Webkernel\BackOffice\System\Presentation\Pages',
             )
-            ->pages([Dashboard::class, DependencyManager::class])
+            ->pages([Dashboard::class])
             ->discoverWidgets(
                 in: __DIR__ . '/../Presentation/Widgets',
                 for: 'Webkernel\BackOffice\System\Presentation\Widgets',
