@@ -18,6 +18,7 @@ use UnitEnum;
 use Webkernel\BackOffice\System\Contracts\UpgradeOperation;
 use Webkernel\BackOffice\System\Models\WebkernelRelease;
 use Webkernel\BackOffice\System\Models\WebkernelUpdateCheck;
+use Illuminate\Support\HtmlString;
 
 class WebkernelUpgrade extends Page implements UpgradeOperation, HasForms
 {
@@ -70,6 +71,9 @@ class WebkernelUpgrade extends Page implements UpgradeOperation, HasForms
                 ->live()
                 ->searchable()
                 ->allowHtml()
+                ->wrapOptionLabels(false)
+                ->hint('● Current • Gradient from older (red) to newest (green)')
+                ->hintColor('gray')
                 ->default($this->currentVersion)
                 ->afterStateUpdated(fn($state) => $state ? $this->selectReleaseVersion($state) : $this->selectReleaseVersion($this->currentVersion)),
         ];
@@ -78,14 +82,32 @@ class WebkernelUpgrade extends Page implements UpgradeOperation, HasForms
     private function formatReleaseOption(array $release): string
     {
         $cmp = version_compare($release['version'], $this->currentVersion);
-        $colorClass = match($cmp) {
-            -1 => 'text-red-600 dark:text-red-400',
-            0  => 'text-gray-700 dark:text-gray-300',
-            1  => 'text-green-600 dark:text-green-400',
-        };
-        $badge = $cmp === 0 ? ' <span class="ml-2 inline-block px-2 py-1 text-xs font-semibold rounded bg-gray-200 dark:bg-gray-700">CURRENT</span>' : '';
 
-        return "<span class=\"{$colorClass}\">v{$release['version']} — {$release['codename']} ({$release['date']}){$badge}</span>";
+        if ($cmp === 0) {
+            $colorVar = '--primary-600';
+            $marker = ' ●';
+            $fontWeight = 'bold';
+        } elseif ($cmp < 0) {
+            $tone = $this->getColorTone($release, 'danger');
+            $colorVar = "--danger-{$tone}";
+            $marker = '';
+            $fontWeight = 'normal';
+        } else {
+            $tone = $this->getColorTone($release, 'success');
+            $colorVar = "--success-{$tone}";
+            $marker = '';
+            $fontWeight = 'normal';
+        }
+
+        return "<span style=\"color: var({$colorVar}); font-weight: {$fontWeight}\">v{$release['version']} — {$release['codename']}{$marker}</span>";
+    }
+
+    private function getColorTone(array $release, string $colorBase): int
+    {
+        $tones = [300, 400, 500, 600, 700, 800, 900];
+        $index = $release['index'] ?? 0;
+        $idx = min($index, count($tones) - 1);
+        return $tones[$idx];
     }
 
     public function mount(): void
@@ -192,13 +214,18 @@ class WebkernelUpgrade extends Page implements UpgradeOperation, HasForms
                 $this->loadReleaseMetadata($this->selectedVersion);
             }
 
-            $this->releases = $sorted->take(20)->map(fn($r) => [
-                'version'  => $r->version,
-                'codename' => $r->codename ?? '',
-                'date'     => $r->published_at?->toDateString() ?? $r->created_at->toDateString(),
-                'notes'    => $r->release_notes ?? '',
-                'current'  => version_compare($r->version, $this->currentVersion, '='),
-            ])->all();
+            $this->releases = $sorted->take(20)->mapWithKeys(function($r, $idx) {
+                return [
+                    $r->version => [
+                        'version'  => $r->version,
+                        'codename' => $r->codename ?? '',
+                        'date'     => $r->published_at?->toDateString() ?? $r->created_at->toDateString(),
+                        'notes'    => $r->release_notes ?? '',
+                        'current'  => version_compare($r->version, $this->currentVersion, '='),
+                        'index'    => $idx,
+                    ]
+                ];
+            })->all();
 
         } catch (\Throwable) {
             // DB not yet migrated
