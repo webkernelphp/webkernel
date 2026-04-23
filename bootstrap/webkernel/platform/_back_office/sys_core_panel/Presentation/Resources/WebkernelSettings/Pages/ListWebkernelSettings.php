@@ -9,6 +9,7 @@ use Filament\Resources\Pages\ListRecords;
 use Filament\Support\Tabs\Tab;
 use Webkernel\BackOffice\System\Models\WebkernelSetting;
 use Webkernel\BackOffice\System\Presentation\Resources\WebkernelSettings\WebkernelSettingResource;
+use Webkernel\BackOffice\System\Presentation\Resources\WebkernelSettings\Widgets\SettingsStatsWidget;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -17,6 +18,13 @@ class ListWebkernelSettings extends ListRecords
     protected static string $resource = WebkernelSettingResource::class;
 
     public ?string $activeTab = 'all';
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            SettingsStatsWidget::class,
+        ];
+    }
 
     public function getTabs(): array
     {
@@ -32,17 +40,17 @@ class ListWebkernelSettings extends ListRecords
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('is_custom', true))
                 ->badge(WebkernelSetting::where('is_custom', true)->count()),
 
-            'recently_modified' => Tab::make('Recently Modified')
-                ->modifyQueryUsing(fn (Builder $query) => $query->orderByDesc('updated_at')->limit(50))
-                ->badge(WebkernelSetting::where('updated_at', '>=', now()->subDays(7))->count()),
-
             'modules' => Tab::make('Modules')
                 ->modifyQueryUsing(fn (Builder $query) => $query->whereNotNull('module'))
                 ->badge(WebkernelSetting::whereNotNull('module')->count()),
 
+            'modified' => Tab::make('Recently Modified')
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('updated_at', '>=', now()->subDays(7))->orderByDesc('updated_at'))
+                ->badge(WebkernelSetting::where('updated_at', '>=', now()->subDays(7))->count()),
+
             'untouched' => Tab::make('Untouched')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('value', '=', DB::raw('default_value'))->orWhereNull('value'))
-                ->badge(WebkernelSetting::whereRaw('value = default_value OR value IS NULL')->count()),
+                ->modifyQueryUsing(fn (Builder $query) => $query->whereRaw('value = default_value OR value IS NULL'))
+                ->badge(DB::table('inst_webkernel_settings')->whereRaw('value = default_value OR value IS NULL')->count()),
         ];
     }
 
@@ -52,13 +60,13 @@ class ListWebkernelSettings extends ListRecords
             CreateAction::make(),
 
             Action::make('defaults')
-                ->label('Set Defaults')
+                ->label('Reset to Defaults')
                 ->icon('heroicon-o-arrow-path')
-                ->color('gray')
+                ->color('warning')
                 ->outlined()
                 ->requiresConfirmation()
-                ->modalHeading('Reset to Default Settings?')
-                ->modalDescription('This will reload all default settings from the system.')
+                ->modalHeading('Reset All Settings?')
+                ->modalDescription('This will reload all default settings. Custom settings will be preserved.')
                 ->modalSubmitActionLabel('Reset')
                 ->action(fn() => $this->setDefaults()),
         ];
@@ -69,7 +77,7 @@ class ListWebkernelSettings extends ListRecords
         WebkernelSetting::seedDefaults();
 
         Notification::make()
-            ->title('Default settings loaded')
+            ->title('Defaults loaded')
             ->success()
             ->send();
 

@@ -2,73 +2,72 @@
 
 namespace Webkernel\BackOffice\System\Presentation\Resources\WebkernelSettings\Schemas;
 
-use Filament\Schemas\Components\Grid;
 use Filament\Forms\Components\Select;
-use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Webkernel\BackOffice\System\Models\WebkernelSetting;
-use Webkernel\BackOffice\System\Models\WebkernelSettingCategory;
 
 class WebkernelSettingForm
 {
     public static function configure(Schema $schema): Schema
     {
-        $categories = WebkernelSettingCategory::query()
-            ->orderBy('sort_order')
-            ->get();
-
         return $schema->components([
-            Tabs::make('Settings')
-                ->tabs(
-                    $categories->map(fn ($category) =>
-                        Tabs\Tab::make($category->label)
-                            ->icon($category->icon)
-                            ->schema([
-                                Grid::make(4)->schema(
-                                    self::getFieldsForCategory($category->key)
-                                )
-                            ])
-                    )->toArray()
-                )
+            self::buildValueField(),
         ]);
     }
 
-    private static function getFieldsForCategory(string $category): array
+    private static function buildValueField(): mixed
     {
-        return WebkernelSetting::forCategory($category)->get()
-            ->map(fn ($setting) => self::buildField($setting))
-            ->toArray();
-    }
+        // Get the record being edited
+        $record = request()->route('record');
 
-    private static function buildField(WebkernelSetting $setting)
-    {
-        $name = "settings.{$setting->key}";
-
-        $field = match ($setting->type) {
-            'password' => TextInput::make($name)->password()->revealable(),
-            'boolean'  => Toggle::make($name),
-            'integer'  => TextInput::make($name)->numeric(),
-            'select'   => Select::make($name)->options(self::options($setting)),
-            'textarea' => Textarea::make($name)->rows(2)->columnSpanFull(),
-            default    => TextInput::make($name),
-        };
-
-        // CONDITIONAL DISPLAY (depends_on)
-        if ($setting->meta_json['depends_on'] ?? false) {
-            $dep = $setting->meta_json['depends_on'];
-
-            $field->visible(fn ($get) =>
-                $get("settings.{$dep['key']}") == $dep['value']
-            );
+        if (!$record) {
+            return TextInput::make('value')->label('Value');
         }
 
-        return $field
-            ->label($setting->label)
-            ->helperText($setting->description)
-            ->hint("v{$setting->introduced_in_version}");
+        return match ($record->type) {
+            'password' => TextInput::make('value')
+                ->label($record->label)
+                ->password()
+                ->revealable()
+                ->hint($record->description)
+                ->helperText("Key: {$record->key} • v{$record->introduced_in_version}")
+                ->required(),
+
+            'boolean' => Toggle::make('value')
+                ->label($record->label)
+                ->hint($record->description)
+                ->helperText("Key: {$record->key} • v{$record->introduced_in_version}"),
+
+            'integer' => TextInput::make('value')
+                ->label($record->label)
+                ->numeric()
+                ->hint($record->description)
+                ->helperText("Key: {$record->key} • v{$record->introduced_in_version}")
+                ->required(),
+
+            'select' => Select::make('value')
+                ->label($record->label)
+                ->options(self::options($record))
+                ->hint($record->description)
+                ->helperText("Key: {$record->key} • v{$record->introduced_in_version}")
+                ->required(),
+
+            'textarea' => Textarea::make('value')
+                ->label($record->label)
+                ->rows(4)
+                ->hint($record->description)
+                ->helperText("Key: {$record->key} • v{$record->introduced_in_version}")
+                ->columnSpanFull(),
+
+            default => TextInput::make('value')
+                ->label($record->label)
+                ->hint($record->description)
+                ->helperText("Key: {$record->key} • v{$record->introduced_in_version}")
+                ->required(),
+        };
     }
 
     private static function options(WebkernelSetting $setting): array

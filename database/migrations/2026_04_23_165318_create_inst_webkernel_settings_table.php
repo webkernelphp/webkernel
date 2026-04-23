@@ -30,6 +30,9 @@ return new class extends Migration
             $table->char('id', 26)->primary();
 
             $table->string('category');
+            $table->string('registry')->default('webkernel');
+            $table->string('vendor')->nullable();
+            $table->string('module')->nullable();
             $table->string('key');
 
             $table->string('type')->default('text');
@@ -43,16 +46,21 @@ return new class extends Migration
             $table->json('options_json')->nullable();
 
             $table->boolean('is_sensitive')->default(false);
+            $table->boolean('is_custom')->default(false);
 
             $table->json('meta_json')->nullable();
             $table->string('enum_class')->nullable();
 
             $table->string('introduced_in_version');
             $table->string('last_modified_by')->nullable();
+            $table->dateTime('last_touched_at')->nullable();
 
             $table->timestamps();
 
             $table->unique(['category', 'key']);
+            $table->index(['registry', 'vendor', 'module']);
+            $table->index('is_custom');
+            $table->index('last_touched_at');
 
             $table->foreign('category')
                 ->references('key')
