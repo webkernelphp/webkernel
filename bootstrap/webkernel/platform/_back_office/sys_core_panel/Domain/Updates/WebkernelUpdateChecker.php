@@ -222,7 +222,7 @@ final class WebkernelUpdateChecker
                     $existing->applyGitHubRelease($releasesByTag[$tagName]);
                     $updated = true;
                 }
-                if ($existing->tag_annotation === null) {
+                if ($existing->meta_features === null && $existing->meta_doc_links === null) {
                     $this->applyAnnotatedTagData($existing, $tag);
                     $updated = true;
                 }
