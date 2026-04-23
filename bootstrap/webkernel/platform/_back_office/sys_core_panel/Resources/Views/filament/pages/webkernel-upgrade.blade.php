@@ -1263,6 +1263,11 @@
             Every update is cryptographically signed, atomically applied and fully reversible.
             Zero data loss. Full control.
         </p>
+        @if(count($releases) > 0)
+        <div style="margin: 1.5rem 0 2rem 0; max-width: 320px;">
+            {{ $this->getReleaseSelector() }}
+        </div>
+        @endif
         <div class="webkernel-upgrade-page-hero-cta">
             @if(!$isUpToDate && $latestVersion !== '')
                 <x-filament::button
@@ -1408,19 +1413,6 @@
         A sovereign, performance-optimized foundation built on Laravel, Filament and Livewire.
         Yours to own, deploy and extend.
     </p>
-    @if(count($releases) > 0)
-    <div style="margin: 2rem 0; max-width: 300px;">
-        <x-filament::input.wrapper>
-            <x-filament::input.select wire:change="selectReleaseVersion($event.target.value)">
-                @foreach($releases as $release)
-                    <option value="{{ $release['version'] }}" @if($release['version'] === $selectedVersion) selected @endif>
-                        v{{ $release['version'] }} — {{ $release['codename'] }} ({{ $release['date'] }})
-                    </option>
-                @endforeach
-            </x-filament::input.select>
-        </x-filament::input.wrapper>
-    </div>
-    @endif
     @if($hasTagData)
     <div class="webkernel-upgrade-page-features-grid">
         @foreach($features as $feat)
