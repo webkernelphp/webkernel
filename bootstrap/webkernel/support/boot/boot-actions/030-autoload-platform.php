@@ -45,13 +45,17 @@ spl_autoload_register(static function (string $class): void {
                 'Webkernel\\Businesses\\'    => WEBKERNEL_PATH . '/aptitudes/instance/businesses',
                 'Webkernel\\Users\\'         => WEBKERNEL_PATH . '/aptitudes/instance/users',
 
-                /* Backend Layer: System Infrastructure */
-                'Webkernel\\System\\'        => WEBKERNEL_PATH . '/platform/_backend',
+                /* Backend Layer: System Infrastructure — subdivided by concern */
+                'Webkernel\\System\\Host\\'   => WEBKERNEL_PATH . '/platform/_backend/host',
+                'Webkernel\\System\\Access\\' => WEBKERNEL_PATH . '/platform/_backend/access',
+                'Webkernel\\System\\Ops\\'    => WEBKERNEL_PATH . '/platform/_backend/ops',
+                'Webkernel\\System\\'         => WEBKERNEL_PATH . '/platform/_backend', // Fallback: WebkernelAPI, WebAppInterface
 
                 /* Platform Layer */
                 'Webkernel\\Arcanes\\'       => WEBKERNEL_PATH . '/platform/arcanes',
                 'Webkernel\\QuickTouch\\'    => WEBKERNEL_PATH . '/support/quick_touch',
                 'Webkernel\\Routes\\'        => WEBKERNEL_PATH . '/platform/routing',
+                'Webkernel\\System\\Security\\'        => WEBKERNEL_PATH . '/platform/_backend/security',
 
                 /* System Panel Specific Assets */
                 'Webkernel\\BackOffice\\System\\'       => WEBKERNEL_PATH . '/platform/_back_office/sys_core_panel',
