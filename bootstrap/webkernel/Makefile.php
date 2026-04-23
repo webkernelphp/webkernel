@@ -15,6 +15,7 @@
  *   https://github.com/webkernelphp/foundation
  */
 use function Laravel\Prompts\{error, info, warning, note, confirm, text, select, intro, outro, spin};
+use Webkernel\Integration\Git\Local\GitRunner;
 use Webkernel\Process;
 require __DIR__ . '/../../vendor/autoload.php';
 require __DIR__ . '/fast-boot.php';
@@ -27,29 +28,17 @@ const KEY_CACHE       = __DIR__ . '/../../storage/webkernel/cache/.build-token';
 const KEY_TTL         = 1800;
 const REQUIRED_REMOTE = 'https://github.com/webkernelphp/foundation';
 const BOOTSTRAP_DIR   = __DIR__ . '/..';
-// ── Git — all calls use BOOTSTRAP_DIR as cwd ──────────────────────────────────
-function git(array $args, string $fallback = 'unknown'): string
+// ── Git — all calls route through GitRunner ───────────────────────────────────
+function gitRunner(): GitRunner
 {
-    $p = Process::fromArray(['git', ...$args], cwd: BOOTSTRAP_DIR);
-    $p->run();
-    return $p->isSuccessful() ? trim($p->getOutput()) : $fallback;
+    static $runner = null;
+    return $runner ??= new GitRunner(BOOTSTRAP_DIR);
 }
-function gitCommitShort(): string { return git(['rev-parse', '--short', 'HEAD']); }
-function gitCommitFull(): string  { return git(['rev-parse', 'HEAD']); }
-function gitBranch(): string
-{
-    $b = git(['symbolic-ref', '--short', 'HEAD'], '');
-    return $b !== '' ? $b : git(['describe', '--all', '--exact-match', 'HEAD'], 'detached');
-}
-function gitTag(): string { return git(['describe', '--exact-match', '--tags', 'HEAD'], ''); }
-function gitSigningFormat(): string { return git(['config', '--get', 'gpg.format'], 'openpgp'); }
-function gitSigningKey(): string { return git(['config', '--get', 'user.signingkey'], ''); }
-function hasSigningConfig(): bool
-{
-    $format = gitSigningFormat();
-    $key = gitSigningKey();
-    return ($format === 'ssh' || $format === 'openpgp') && $key !== '';
-}
+function gitCommitShort(): string { return gitRunner()->revParseShort()->value(); }
+function gitCommitFull(): string  { return gitRunner()->revParseFull()->value(); }
+function gitBranch(): string      { return gitRunner()->currentBranch(); }
+function gitTag(): string         { return gitRunner()->currentTag(); }
+function hasSigningConfig(): bool { return gitRunner()->hasSigning(); }
 // ── Argument parsing ──────────────────────────────────────────────────────────
 function parseArgs(array $argv): array
 {
@@ -64,9 +53,8 @@ function parseArgs(array $argv): array
 // ── Guards ────────────────────────────────────────────────────────────────────
 function assertFoundationRepo(): void
 {
-    $p = Process::fromArray(['git', 'rev-parse', '--git-dir'], cwd: BOOTSTRAP_DIR);
-    $p->run();
-    if (!$p->isSuccessful()) {
+    $runner = gitRunner();
+    if (!$runner->isRepo()) {
         error('bootstrap/ is not a git repository.');
         note(implode("\n", [
             'This tool requires bootstrap/ to track the official foundation:',
@@ -78,10 +66,8 @@ function assertFoundationRepo(): void
         ]));
         exit(1);
     }
-    $r = Process::fromArray(['git', 'remote', 'get-url', 'origin'], cwd: BOOTSTRAP_DIR);
-    $r->run();
     $normalize = static fn(string $u): string => rtrim(preg_replace('/\.git$/', '', $u), '/');
-    $remote    = trim($r->getOutput());
+    $remote    = $runner->remoteGetUrl('origin')->value('');
     if ($normalize($remote) !== $normalize(REQUIRED_REMOTE)) {
         error('bootstrap/ remote does not point to the Webkernel Foundation repository.');
         note(implode("\n", [
@@ -390,17 +376,13 @@ function gitCommitAndTag(string $semver, string $codename): void
     );
     $committed = false;
     spin(function () use ($commitMsg, $semver, &$committed): void {
-        Process::fromArray(['git', 'add', '.'], cwd: BOOTSTRAP_DIR)->run();
-
-        $commitCmd = hasSigningConfig() ? ['git', 'commit', '-S', '-m', $commitMsg] : ['git', 'commit', '-m', $commitMsg];
-        $commit = Process::fromArray($commitCmd, cwd: BOOTSTRAP_DIR);
-        $commit->run();
-        if (!$commit->isSuccessful()) { return; }
-
+        $runner = gitRunner();
+        $runner->add('.');
+        $signed = $runner->hasSigning();
+        $commit = $signed ? $runner->commitSigned($commitMsg) : $runner->commit($commitMsg);
+        if (!$commit->ok) { return; }
         $committed = true;
-
-        $tagCmd = hasSigningConfig() ? ['git', 'tag', '-s', $semver] : ['git', 'tag', $semver];
-        Process::fromArray($tagCmd, cwd: BOOTSTRAP_DIR)->run();
+        $signed ? $runner->tagSigned($semver) : $runner->tag($semver);
     }, "Committing bootstrap/ → {$semver}…");
     if (!$committed) {
         warning('Git commit failed — nothing to commit or an error occurred.');
@@ -417,8 +399,9 @@ function gitCommitAndTag(string $semver, string $codename): void
         return;
     }
     spin(function () use ($semver): void {
-        Process::fromArray(['git', 'push', 'origin', 'HEAD'], cwd: BOOTSTRAP_DIR)->run();
-        Process::fromArray(['git', 'push', 'origin', $semver], cwd: BOOTSTRAP_DIR)->run();
+        $runner = gitRunner();
+        $runner->push('origin', 'HEAD');
+        $runner->push('origin', $semver);
     }, 'Pushing to origin…');
     info('Pushed.');
 }
@@ -447,7 +430,7 @@ function runStamp(string $version, int $build): void
             'See: https://docs.github.com/en/authentication/managing-commit-signature-verification',
         ]));
     } else {
-        info('✓ Commits and tags will be signed');
+        info('Signing enabled — commits and tags will be signed');
     }
     $codename = text(
         label: 'Codename',

@@ -73,10 +73,14 @@ final class GitRunner
     public function describeExactTag(string $ref = 'HEAD'): GitResult  { return $this->run(['describe', '--exact-match', '--tags', $ref]); }
     public function remoteGetUrl(string $remote = 'origin'): GitResult { return $this->run(['remote', 'get-url', $remote]); }
     public function revParseGitDir(): GitResult                        { return $this->run(['rev-parse', '--git-dir']); }
-    public function add(string $pathspec = '.'): GitResult             { return $this->run(['add', $pathspec]); }
-    public function commit(string $message): GitResult                 { return $this->run(['commit', '-m', $message]); }
-    public function tag(string $name): GitResult                       { return $this->run(['tag', $name]); }
-    public function push(string $remote, string $ref): GitResult       { return $this->run(['push', $remote, $ref]); }
+    public function add(string $pathspec = '.'): GitResult               { return $this->run(['add', $pathspec]); }
+    public function commit(string $message): GitResult                   { return $this->run(['commit', '-m', $message]); }
+    public function commitSigned(string $message): GitResult             { return $this->run(['commit', '-S', '-m', $message]); }
+    public function tag(string $name): GitResult                         { return $this->run(['tag', $name]); }
+    public function tagSigned(string $name): GitResult                   { return $this->run(['tag', '-s', $name]); }
+    public function push(string $remote, string $ref): GitResult         { return $this->run(['push', $remote, $ref]); }
+    public function signingFormat(): GitResult                           { return $this->run(['config', '--get', 'gpg.format']); }
+    public function signingKey(): GitResult                              { return $this->run(['config', '--get', 'user.signingkey']); }
 
     // ── Introspection ─────────────────────────────────────────────────────────
 
@@ -99,6 +103,14 @@ final class GitRunner
     {
         $r = $this->describeExactTag('HEAD');
         return $r->ok ? $r->stdout : '';
+    }
+
+    public function hasSigning(): bool
+    {
+        $fmt = $this->signingFormat();
+        $key = $this->signingKey();
+        $format = $fmt->ok ? $fmt->stdout : '';
+        return ($format === 'ssh' || $format === 'openpgp') && $key->ok && $key->stdout !== '';
     }
 
     // ── Private ───────────────────────────────────────────────────────────────
