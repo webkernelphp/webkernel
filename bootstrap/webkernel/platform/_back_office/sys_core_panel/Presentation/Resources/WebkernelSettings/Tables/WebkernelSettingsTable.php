@@ -55,19 +55,52 @@ class WebkernelSettingsTable
             ])
             ->filters([
                 SelectFilter::make('category')
-                    ->options(
-                        WebkernelSettingCategory::pluck('label', 'key')->toArray()
-                    ),
+                    ->label('Category')
+                    ->options(WebkernelSettingCategory::pluck('label', 'key')->toArray()),
 
                 SelectFilter::make('type')
+                    ->label('Type')
                     ->options([
-                        'string' => 'String',
+                        'text' => 'Text',
                         'password' => 'Password',
                         'boolean' => 'Boolean',
                         'integer' => 'Integer',
                         'select' => 'Select',
                         'textarea' => 'Textarea',
+                        'json' => 'JSON',
                     ]),
+
+                SelectFilter::make('registry')
+                    ->label('Registry')
+                    ->options([
+                        'webkernel' => 'Webkernel',
+                        'custom' => 'Custom',
+                    ])
+                    ->searchable(),
+
+                SelectFilter::make('vendor')
+                    ->label('Vendor')
+                    ->searchable(),
+
+                SelectFilter::make('module')
+                    ->label('Module')
+                    ->searchable(),
+
+                SelectFilter::make('is_sensitive')
+                    ->label('Sensitive Only')
+                    ->options([
+                        1 => 'Yes',
+                        0 => 'No',
+                    ])
+                    ->attribute('is_sensitive'),
+
+                SelectFilter::make('is_custom')
+                    ->label('Custom Only')
+                    ->options([
+                        1 => 'Yes',
+                        0 => 'No',
+                    ])
+                    ->attribute('is_custom'),
             ])
             ->recordActions([
                 EditAction::make()
