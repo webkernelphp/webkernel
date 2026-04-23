@@ -9,9 +9,12 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
 
 use Webkernel\BackOffice\System\Models\WebkernelSettingCategory;
+use Webkernel\BackOffice\System\Models\Traits\ManagesSettings;
 
 class WebkernelSetting extends Model
 {
+    use ManagesSettings;
+
     protected $table      = 'inst_webkernel_settings';
     protected $connection = 'webkernel_sqlite';
     protected $keyType    = 'string';
