@@ -9,8 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::connection('webkernel_sqlite')->create('inst_webkernel_background_tasks', function (Blueprint $t) {
-            const ULID = 26;
-            $t->char('id', ULID)->primary();
+            $t->char('id', 26)->primary();
             $t->string('type');
             $t->string('label');
             $t->json('payload')->nullable();
