@@ -16,7 +16,7 @@ use Webkernel\System\Contracts\Managers\SecurityManagerInterface;
 use Webkernel\System\Contracts\Managers\UsersManagerInterface;
 use Webkernel\System\Contracts\Managers\VersionManagerInterface;
 use Webkernel\System\Managers\VersionManager;
-use Webkernel\System\WebernelAPI;
+use Webkernel\System\WebkernelAPI;
 use Webkernel\System\Managers\AppManager;
 use Webkernel\System\Managers\AuthManager;
 use Webkernel\System\Managers\ContextManager;
@@ -42,8 +42,8 @@ final class SystemManagerServiceProvider extends ServiceProvider
     public function register(): void
     {
         // Root API singleton
-        $this->app->singleton(WebAppInterface::class, WebernelAPI::class);
-        $this->app->singleton(WebernelAPI::class);
+        $this->app->singleton(WebAppInterface::class, WebkernelAPI::class);
+        $this->app->singleton(WebkernelAPI::class);
 
         // ── Stable singletons ─────────────────────────────────────────────────
         $this->app->singleton(InstanceManagerInterface::class, InstanceManager::class);

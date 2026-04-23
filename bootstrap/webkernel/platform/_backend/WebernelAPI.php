@@ -6,9 +6,10 @@ use Webkernel\System\Contracts\WebAppInterface;
 use Webkernel\System\Contracts\Managers\{
     AppManagerInterface, AuthManagerInterface, ContextManagerInterface,
     HostManagerInterface, InstanceManagerInterface, OsManagerInterface,
-    RuntimeManagerInterface, SecurityManagerInterface, UsersManagerInterface,
-    VersionManagerInterface};
+    RuntimeManagerInterface, SecurityManagerInterface,
+    UsersManagerInterface, VersionManagerInterface};
 use Webkernel\System\Http\{GithubClient, HttpManager};
+use Webkernel\System\Operations\OperationBuilder;
 
 /**
  * Webkernel public API entry point.
@@ -69,6 +70,20 @@ final class WebernelAPI implements WebAppInterface
     public function versions(): VersionManagerInterface
     {
         return $this->versionManager ??= app(VersionManagerInterface::class);
+    }
+
+    /**
+     * Create a new operations builder for source operations.
+     *
+     * Usage:
+     *   webkernel()->do()
+     *       ->from(GitHubProvider::forWebkernel())
+     *       ->stepBefore('Validate', fn($ctx) => ...)
+     *       ->run()
+     */
+    public function do(): OperationBuilder
+    {
+        return OperationBuilder::create();
     }
 
     public function http(): HttpManager
