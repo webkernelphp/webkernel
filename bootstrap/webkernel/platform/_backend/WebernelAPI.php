@@ -8,6 +8,7 @@ use Webkernel\System\Contracts\Managers\{
     HostManagerInterface, InstanceManagerInterface, OsManagerInterface,
     RuntimeManagerInterface, SecurityManagerInterface, UsersManagerInterface,
     VersionManagerInterface};
+use Webkernel\System\Http\{GithubClient, HttpManager};
 
 /**
  * Webkernel public API entry point.
@@ -46,6 +47,7 @@ final class WebernelAPI implements WebAppInterface
     private ?HostManagerInterface     $hostManager     = null;
     private ?OsManagerInterface       $osManager       = null;
     private ?VersionManagerInterface  $versionManager  = null;
+    private ?GithubClient             $githubClient    = null;
 
     // ── Stable managers (memoised) ────────────────────────────────────────────
 
@@ -67,6 +69,11 @@ final class WebernelAPI implements WebAppInterface
     public function versions(): VersionManagerInterface
     {
         return $this->versionManager ??= app(VersionManagerInterface::class);
+    }
+
+    public function http(): HttpManager
+    {
+        return new HttpManager();
     }
 
     /**
