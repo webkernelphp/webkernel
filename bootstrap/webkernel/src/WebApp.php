@@ -73,6 +73,7 @@ final class WebApp extends Application
             ->withEvents()
             ->withProviders([
                 \Webkernel\ServiceProvider::class,
+                \Webkernel\Providers\CommandServiceProvider::class,
                 \Webkernel\Arcanes\Modules::class,
                 \Webkernel\Arcanes\Commands\DeclareCommands::class,
                 \Webkernel\BackOffice\Installer\Providers\InstallerPanelProvider::class,

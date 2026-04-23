@@ -2,6 +2,7 @@
 
 namespace Webkernel\Traits;
 
+use Symfony\Component\Process\Process;
 use Webkernel\BackOffice\System\Jobs\UpdateAllComposerPackagesJob;
 use Webkernel\BackOffice\System\Jobs\UpdateAllNpmPackagesJob;
 use Webkernel\BackOffice\System\Jobs\UpdateComposerPackageJob;
@@ -22,21 +23,31 @@ trait HasBackgroundTasks
 
     protected function dispatchComposerPackageUpdate(string $taskId, string $packageName, string $version): void
     {
-        dispatch(new UpdateComposerPackageJob($taskId, $packageName, $version));
+        $this->runJobInBackground(UpdateComposerPackageJob::class, [$taskId, $packageName, $version]);
     }
 
     protected function dispatchAllComposerPackagesUpdate(string $taskId): void
     {
-        dispatch(new UpdateAllComposerPackagesJob($taskId));
+        $this->runJobInBackground(UpdateAllComposerPackagesJob::class, [$taskId]);
     }
 
     protected function dispatchNpmPackageUpdate(string $taskId, string $packageName, string $version): void
     {
-        dispatch(new UpdateNpmPackageJob($taskId, $packageName, $version));
+        $this->runJobInBackground(UpdateNpmPackageJob::class, [$taskId, $packageName, $version]);
     }
 
     protected function dispatchAllNpmPackagesUpdate(string $taskId): void
     {
-        dispatch(new UpdateAllNpmPackagesJob($taskId));
+        $this->runJobInBackground(UpdateAllNpmPackagesJob::class, [$taskId]);
+    }
+
+    private function runJobInBackground(string $jobClass, array $args): void
+    {
+        $jobJson = escapeshellarg(json_encode(['class' => $jobClass, 'args' => $args]));
+        $command = [PHP_BINARY, base_path('artisan'), 'webkernel:run-job', $jobJson];
+
+        $process = new Process($command, base_path());
+        $process->setTimeout(null);
+        $process->start();
     }
 }

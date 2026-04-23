@@ -2,15 +2,12 @@
 
 namespace Webkernel\BackOffice\System\Jobs;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
 use Symfony\Component\Process\Process;
 use Webkernel\BackOffice\System\Models\WebkernelBackgroundTask;
 use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Services\ComposerService;
 
-class UpdateComposerPackageJob implements ShouldQueue
+class UpdateComposerPackageJob
 {
-    use Queueable;
 
     public function __construct(
         private string $taskId,
