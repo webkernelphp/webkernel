@@ -6,6 +6,7 @@ use Filament\Resources\Pages\ListRecords;
 use Filament\Tables;
 use Filament\Actions\Action;
 use Filament\Tables\Table;
+use Illuminate\Contracts\View\View;
 use Webkernel\BackOffice\System\Models\WebkernelBackgroundTask;
 use Webkernel\BackOffice\System\Presentation\Resources\BackgroundTasks\BackgroundTasksResource;
 
@@ -80,13 +81,13 @@ class ListBackgroundTasks extends ListRecords
                     ->color('info')
                     ->visible(fn (WebkernelBackgroundTask $record): bool => !empty($record->output) || !empty($record->error) || $record->status === 'running')
                     ->modalHeading(fn (WebkernelBackgroundTask $record): string => "Task Details: {$record->label}")
-                    ->modal()
+                    ->slideOver()
                     ->modalWidth('7xl')
-                    ->modalContent(fn (WebkernelBackgroundTask $record): string => view('webkernel-system::modals.task-details', [
+                    ->modalContent(fn (WebkernelBackgroundTask $record): View => view('webkernel-system::modals.task-details', [
                         'record' => $record,
                         'output' => $record->output,
                         'error' => $record->error,
-                    ])->render()),
+                    ])),
 
                 Action::make('cancel')
                     ->label('Cancel')
