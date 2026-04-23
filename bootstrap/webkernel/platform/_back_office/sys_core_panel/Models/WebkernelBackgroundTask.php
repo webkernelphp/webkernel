@@ -161,7 +161,7 @@ class WebkernelBackgroundTask extends Model
             return;
         }
 
-        $user = \App\Models\User::find($this->user_id);
+        $user = \Webkernel\Users\Models\User::find($this->user_id);
         if (!$user) {
             return;
         }
