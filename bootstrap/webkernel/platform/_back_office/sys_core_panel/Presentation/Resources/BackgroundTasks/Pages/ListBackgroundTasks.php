@@ -6,7 +6,10 @@ use Filament\Resources\Pages\ListRecords;
 use Filament\Tables;
 use Filament\Actions\Action;
 use Filament\Tables\Table;
-use Illuminate\Contracts\View\View;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\TextEntry;
 use Webkernel\BackOffice\System\Models\WebkernelBackgroundTask;
 use Webkernel\BackOffice\System\Presentation\Resources\BackgroundTasks\BackgroundTasksResource;
 
@@ -83,11 +86,60 @@ class ListBackgroundTasks extends ListRecords
                     ->modalHeading(fn (WebkernelBackgroundTask $record): string => "Task Details: {$record->label}")
                     ->slideOver()
                     ->modalWidth('7xl')
-                    ->modalContent(fn (WebkernelBackgroundTask $record): View => view('webkernel-system::modals.task-details', [
-                        'record' => $record,
+                    ->fillForm(fn (WebkernelBackgroundTask $record) => [
+                        'status' => $record->status,
+                        'type' => $record->type,
+                        'duration' => $record->getDurationFormatted(),
+                        'started_at' => $record->started_at?->format('M d, Y H:i:s'),
+                        'completed_at' => $record->completed_at?->format('M d, Y H:i:s'),
+                        'payload' => $record->payload ? json_encode($record->payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : null,
                         'output' => $record->output,
                         'error' => $record->error,
-                    ])),
+                    ])
+                    ->schema([
+                        TextEntry::make('status')
+                            ->label('Status')
+                            ->badge()
+                            ->color(fn (string $state): string => match ($state) {
+                                'pending' => 'warning',
+                                'running' => 'info',
+                                'completed' => 'success',
+                                'failed' => 'danger',
+                                'cancelled' => 'gray',
+                                default => 'gray',
+                            }),
+                        TextEntry::make('type')
+                            ->label('Task Type')
+                            ->formatStateUsing(fn (string $state) => str($state)->replace('_', ' ')->title()),
+                        TextEntry::make('duration')
+                            ->label('Duration'),
+                        TextEntry::make('started_at')
+                            ->label('Started'),
+                        TextEntry::make('completed_at')
+                            ->label('Completed'),
+                        Fieldset::make('Payload')
+                            ->visible(fn (WebkernelBackgroundTask $record) => $record->payload !== null)
+                            ->schema([
+                                TextEntry::make('payload')
+                                    ->copyable()
+                                    ->copyableState(fn (string $state): string => $state),
+                            ]),
+                        Fieldset::make('Output')
+                            ->visible(fn (WebkernelBackgroundTask $record) => !empty($record->output))
+                            ->schema([
+                                TextEntry::make('output')
+                                    ->copyable()
+                                    ->formatStateUsing(fn (string $state): string => $state),
+                            ]),
+                        Section::make('Error')
+                            ->visible(fn (WebkernelBackgroundTask $record) => !empty($record->error))
+                            ->schema([
+                                TextEntry::make('error')
+                                    ->copyable()
+                                    ->color('danger')
+                                    ->formatStateUsing(fn (string $state): string => $state),
+                            ]),
+                    ]),
 
                 Action::make('cancel')
                     ->label('Cancel')
