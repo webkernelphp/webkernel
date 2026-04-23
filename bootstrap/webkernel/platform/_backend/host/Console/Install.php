@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Webkernel\System\Console;
+namespace Webkernel\System\Host\Console;
 
 use Illuminate\Console\Command;
 

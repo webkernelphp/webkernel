@@ -2,7 +2,7 @@
 
 namespace Webkernel\System\Access\Contracts\Managers;
 
-use Webkernel\System\Enums\RuntimeSapi;
+use Webkernel\System\Host\Enums\RuntimeSapi;
 
 /**
  * PHP runtime context (SAPI, server adapter).

@@ -3,7 +3,7 @@
 namespace Webkernel\System\Host\Dto;
 
 use Webkernel\System\Host\Contracts\Info\OpcacheInfoInterface;
-use Webkernel\System\Support\ByteFormatter;
+use Webkernel\System\Host\Support\ByteFormatter;
 
 /**
  * Immutable OPcache snapshot.

@@ -2,7 +2,7 @@
 
 namespace Webkernel\System\Host\Dto;
 
-use Webkernel\System\Enums\OsFamily;
+use Webkernel\System\Host\Enums\OsFamily;
 
 /**
  * Immutable OS identity snapshot.

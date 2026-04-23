@@ -2,9 +2,9 @@
 
 namespace Webkernel\System\Host\Services;
 
-use Webkernel\System\Dto\OsInfo;
-use Webkernel\System\Enums\OsFamily;
-use Webkernel\System\Support\StaticDataCache;
+use Webkernel\System\Host\Dto\OsInfo;
+use Webkernel\System\Host\Enums\OsFamily;
+use Webkernel\System\Host\Support\StaticDataCache;
 
 /**
  * Detects and caches the host OS identity for the worker lifetime.

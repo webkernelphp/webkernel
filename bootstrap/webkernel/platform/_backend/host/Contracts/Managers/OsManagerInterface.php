@@ -2,7 +2,7 @@
 
 namespace Webkernel\System\Host\Contracts\Managers;
 
-use Webkernel\System\Enums\OsFamily;
+use Webkernel\System\Host\Enums\OsFamily;
 
 /**
  * Operating system identity.

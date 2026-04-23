@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Webkernel\System\Console;
+namespace Webkernel\System\Host\Console;
 
 use Illuminate\Console\Command;
-use Webkernel\System\Services\PhpReleasesService;
+use Webkernel\System\Host\Services\PhpReleasesService;
 
 /**
  * Artisan command: manually refresh the php.net releases cache.

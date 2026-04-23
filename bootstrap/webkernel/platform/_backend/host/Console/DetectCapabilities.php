@@ -1,11 +1,11 @@
 <?php declare(strict_types=1);
 
-namespace Webkernel\System\Console;
+namespace Webkernel\System\Host\Console;
 
 use Illuminate\Console\Command;
 use Webkernel\Query\Traits\Exportable;
 use Webkernel\Query\Traits\FileSystemHelpers;
-use Webkernel\System\Support\CapabilityMap;
+use Webkernel\System\Host\Support\CapabilityMap;
 
 /**
  * Artisan command: detect host capabilities and write deployment.php.

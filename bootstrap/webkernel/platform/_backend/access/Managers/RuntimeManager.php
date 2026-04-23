@@ -3,7 +3,7 @@
 namespace Webkernel\System\Access\Managers;
 
 use Illuminate\Http\Request;
-use Webkernel\System\Enums\RuntimeSapi;
+use Webkernel\System\Host\Enums\RuntimeSapi;
 use Webkernel\System\Access\Contracts\Managers\RuntimeManagerInterface;
 
 /**

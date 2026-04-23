@@ -4,7 +4,7 @@ namespace Webkernel\System\Host\Managers;
 
 use Webkernel\System\Host\Contracts\Managers\VersionManagerInterface;
 use Webkernel\System\Host\Dto\VersionInfo;
-use Webkernel\System\WebApp;
+use Webkernel\WebApp;
 
 /**
  * Webkernel version and release manager.

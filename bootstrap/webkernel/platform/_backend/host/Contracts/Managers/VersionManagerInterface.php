@@ -2,7 +2,7 @@
 
 namespace Webkernel\System\Host\Contracts\Managers;
 
-use Webkernel\System\Dto\VersionInfo;
+use Webkernel\System\Host\Dto\VersionInfo;
 
 /**
  * Webkernel version and release information.
