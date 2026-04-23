@@ -4,6 +4,7 @@ namespace Webkernel\System\Operations;
 
 use Webkernel\System\Operations\Dto\OperationContext;
 use Webkernel\System\Operations\Dto\StepResult;
+use Webkernel\System\Operations\SourceProviderWithMetadata;
 
 /**
  * Fluent builder for source operations — releases, artifacts, metadata.
