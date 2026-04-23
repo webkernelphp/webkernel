@@ -217,8 +217,17 @@ final class WebkernelUpdateChecker
                 ->first();
 
             if ($existing !== null) {
+                $updated = false;
                 if (isset($releasesByTag[$tagName])) {
-                    $existing->applyGitHubRelease($releasesByTag[$tagName])->save();
+                    $existing->applyGitHubRelease($releasesByTag[$tagName]);
+                    $updated = true;
+                }
+                if ($existing->tag_annotation === null) {
+                    $this->applyAnnotatedTagData($existing, $tag);
+                    $updated = true;
+                }
+                if ($updated) {
+                    $existing->save();
                 }
                 continue;
             }
