@@ -57,12 +57,18 @@ trait HasBackgroundTasks
             ]
         );
 
-        Process::fromArray([
-            PHP_BINARY,
-            base_path('artisan'),
-            'webkernel:run-job',
-            $jobJson,
-        ], base_path(), $env, null, null)
-            ->start();
+        $logFile = storage_path('logs/background-jobs.log');
+
+        // Use nohup to truly detach from parent process
+        $command = sprintf(
+            'nohup %s %s webkernel:run-job %s >> %s 2>&1 &',
+            escapeshellarg(PHP_BINARY),
+            escapeshellarg(base_path('artisan')),
+            escapeshellarg($jobJson),
+            escapeshellarg($logFile)
+        );
+
+        Process::fromShell($command, base_path(), $env)
+            ->run();
     }
 }
