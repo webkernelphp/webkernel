@@ -32,6 +32,21 @@ class DependencyManagerPage extends Page implements HasTable
         return 'Composer Dependencies';
     }
 
+    public function getHeaderActions(): array
+    {
+        return [
+            Action::make('about')
+                ->label('')
+                ->icon('heroicon-o-information-circle')
+                ->color('gray')
+                ->tooltip('About Composer')
+                ->modalHeading('About Composer')
+                ->modal()
+                ->modalWidth('2xl')
+                ->modalContent(fn (): string => view('webkernel-system::modals.about-composer')->render()),
+        ];
+    }
+
     public static function getNavigationLabel(): string
     {
         return 'Composer';

@@ -79,14 +79,14 @@ class ListBackgroundTasks extends ListRecords
                     ->icon('heroicon-o-terminal')
                     ->color('info')
                     ->visible(fn (WebkernelBackgroundTask $record): bool => !empty($record->output) || !empty($record->error) || $record->status === 'running')
-                    ->slideOver()
                     ->modalHeading(fn (WebkernelBackgroundTask $record): string => "Task Details: {$record->label}")
+                    ->modal()
+                    ->modalWidth('7xl')
                     ->modalContent(fn (WebkernelBackgroundTask $record): string => view('webkernel-system::modals.task-details', [
                         'record' => $record,
                         'output' => $record->output,
                         'error' => $record->error,
-                    ])->render())
-                    ->closeModalByClickingAway(false),
+                    ])->render()),
 
                 Action::make('cancel')
                     ->label('Cancel')

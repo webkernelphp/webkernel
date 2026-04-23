@@ -31,6 +31,21 @@ class NpmDependencyManagerPage extends Page implements HasTable
         return 'NPM Dependencies';
     }
 
+    public function getHeaderActions(): array
+    {
+        return [
+            Action::make('about')
+                ->label('')
+                ->icon('heroicon-o-information-circle')
+                ->color('gray')
+                ->tooltip('About NPM')
+                ->modalHeading('About NPM')
+                ->modal()
+                ->modalWidth('2xl')
+                ->modalContent(fn (): string => view('webkernel-system::modals.about-npm')->render()),
+        ];
+    }
+
     public static function getNavigationLabel(): string
     {
         return 'NPM';
