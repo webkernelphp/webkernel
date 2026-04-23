@@ -5,6 +5,7 @@ namespace Webkernel\BackOffice\System\Domain\Updates\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 /**
  * Local mirror of a single release / git tag fetched from any registry.
@@ -160,6 +161,58 @@ class WebkernelRelease extends Model
     }
 
     /**
+     * Sync releases from a provider into the database.
+     * Handles both creation and update of existing records.
+     * Metadata from the provider is applied if present.
+     *
+     * @param array<int, array<string, mixed>> $releases Provider release payloads
+     */
+    public static function syncFromProvider(array $releases, string $targetType, string $targetSlug): void
+    {
+        foreach ($releases as $release) {
+            $tagName = $release['tag_name'] ?? '';
+            if ($tagName === '') {
+                continue;
+            }
+
+            $existing = static::forTarget($targetType, $targetSlug)
+                ->where('tag_name', $tagName)
+                ->first();
+
+            if ($existing !== null) {
+                $existing->applyGitHubRelease($release);
+                if (isset($release['metadata'])) {
+                    static::applyMetadata($existing, $release['metadata']);
+                }
+                $existing->save();
+                continue;
+            }
+
+            $record = new static([
+                'id'           => Str::ulid()->toBase32(),
+                'target_type'  => $targetType,
+                'target_slug'  => $targetSlug,
+                'registry'     => 'github',
+                'tag_name'     => $tagName,
+                'commit_sha'   => $release['commit']['sha'] ?? $release['target_commitish'] ?? null,
+                'zipball_url'  => $release['zipball_url'] ?? null,
+                'tarball_url'  => $release['tarball_url'] ?? null,
+            ]);
+
+            [$version, $build] = static::parseTag($tagName);
+            $record->version = $version;
+            $record->build = $build;
+
+            $record->applyGitHubRelease($release);
+            if (isset($release['metadata'])) {
+                static::applyMetadata($record, $release['metadata']);
+            }
+
+            $record->save();
+        }
+    }
+
+    /**
      * Build an unsaved WebkernelRelease from a raw GitHub tag payload.
      */
     public static function fromGitHubTag(array $tag, string $targetType, string $targetSlug): self
@@ -195,6 +248,28 @@ class WebkernelRelease extends Model
             : null;
 
         return $this;
+    }
+
+    /**
+     * Apply metadata from provider (codename, features, doc_links, etc).
+     */
+    private static function applyMetadata(self $record, array $metadata): void
+    {
+        if (isset($metadata['codename'])) {
+            $record->codename = $metadata['codename'];
+        }
+        if (isset($metadata['notes'])) {
+            $record->meta_notes = $metadata['notes'];
+        }
+        if (isset($metadata['video'])) {
+            $record->meta_video_url = $metadata['video'];
+        }
+        if (isset($metadata['features']) && is_array($metadata['features'])) {
+            $record->meta_features = json_encode($metadata['features']);
+        }
+        if (isset($metadata['doc_links']) && is_array($metadata['doc_links'])) {
+            $record->meta_doc_links = json_encode($metadata['doc_links']);
+        }
     }
 
     // ── Internal ─────────────────────────────────────────────────────────────

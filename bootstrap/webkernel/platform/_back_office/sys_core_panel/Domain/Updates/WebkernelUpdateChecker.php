@@ -4,15 +4,9 @@ namespace Webkernel\BackOffice\System\Domain\Updates;
 
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
-use Webkernel\Integration\Git\AdapterResolver;
-use Webkernel\Integration\Git\Contracts\GitHostAdapter;
-use Webkernel\Integration\Git\Exceptions\NetworkException;
-use Webkernel\Integration\Git\Hosting\GitHubAdapter;
 use Webkernel\BackOffice\System\Domain\Updates\Models\WebkernelRelease;
 use Webkernel\BackOffice\System\Domain\Updates\Models\WebkernelUpdateCheck;
-use Webkernel\Registry\Providers;
-use Webkernel\Registry\Source;
-use Webkernel\Registry\Token;
+use Webkernel\System\Operations\Providers\GitHubProvider;
 
 /**
  * Checks for available updates for any target (webkernel core or a module).
@@ -43,13 +37,12 @@ final class WebkernelUpdateChecker
 
     private const MIN_CHECK_INTERVAL_SECONDS = 300; // 5 min
 
-    private AdapterResolver $resolver;
-    private string          $targetType;
-    private string          $targetSlug;
-    private string          $owner;
-    private string          $registry;
-    private ?string         $explicitToken = null;
-    private bool            $forceCheck    = false;
+    private string  $targetType;
+    private string  $targetSlug;
+    private string  $owner;
+    private string  $registry;
+    private ?string $explicitToken = null;
+    private bool    $forceCheck    = false;
 
     private function __construct(
         string $targetType,
@@ -61,7 +54,6 @@ final class WebkernelUpdateChecker
         $this->targetSlug = $targetSlug;
         $this->owner      = $owner;
         $this->registry   = $registry;
-        $this->resolver   = new AdapterResolver(new Token());
     }
 
     // ── Factories ─────────────────────────────────────────────────────────────
@@ -122,40 +114,29 @@ final class WebkernelUpdateChecker
             return $this->logSkip(WebkernelUpdateCheck::STATUS_SKIPPED, 'Checked too recently — respecting minimum interval.');
         }
 
-        $rateRemaining = null;
-        $rateResetAt   = null;
-
         try {
-            $source  = $this->buildSource();
-            $adapter = $this->resolver->resolve($source);
+            $provider = new GitHubProvider($this->owner, $this->targetSlug, $this->explicitToken);
+            $targetType = $this->targetType;
+            $targetSlug = $this->targetSlug;
 
-            if ($this->explicitToken !== null) {
-                $adapter = $adapter->withToken($this->explicitToken);
+            $context = webkernel()->do()
+                ->from($provider)
+                ->stepAfter('Persist releases', function ($ctx) use ($targetType, $targetSlug) {
+                    WebkernelRelease::syncFromProvider($ctx->releases, $targetType, $targetSlug);
+                    return true;
+                })
+                ->run();
+
+            if (!$context->success) {
+                return $this->logError($context->error ?? 'Unknown error');
             }
 
-            [$tags, $releases] = $this->fetchFromRegistry($adapter, $source);
-
-            $synced    = $this->syncToDatabase($tags, $releases);
             $latestTag = WebkernelRelease::latestStable($this->targetType, $this->targetSlug)?->tag_name;
+            $synced = count($context->releases);
 
-            if ($adapter instanceof GitHubAdapter) {
-                try {
-                    $rl            = $adapter->rateLimit($source);
-                    $rateRemaining = $rl['remaining'];
-                    $rateResetAt   = Carbon::instance($rl['reset_at']);
-                } catch (\Throwable) {
-                    // Non-fatal — rate limit info is best-effort
-                }
-            }
-
-            webkernel()->http()->github()->notifyIfError();
-            return $this->logSuccess($latestTag, $synced, $rateRemaining, $rateResetAt);
-        } catch (NetworkException $e) {
-            return $this->logError($e->getMessage());
+            return $this->logSuccess($latestTag, $synced, null, null);
         } catch (\Throwable $e) {
             return $this->logError($e->getMessage());
-        } finally {
-            webkernel()->http()->github()->notifyIfRateLimited();
         }
     }
 
@@ -189,155 +170,6 @@ final class WebkernelUpdateChecker
     }
 
     // ── Internals ─────────────────────────────────────────────────────────────
-
-    private function fetchFromRegistry(GitHostAdapter $adapter, Source $source): array
-    {
-        if ($adapter instanceof GitHubAdapter) {
-            return [$adapter->tags($source), $adapter->releases($source)];
-        }
-
-        return [[], $adapter->releases($source)];
-    }
-
-    private function syncToDatabase(array $tags, array $releases): int
-    {
-        $releasesByTag = [];
-        foreach ($releases as $release) {
-            $releasesByTag[$release['tag_name'] ?? ''] = $release;
-        }
-
-        $synced = 0;
-
-        foreach ($tags as $tag) {
-            $tagName = $tag['name'] ?? '';
-            if ($tagName === '') {
-                continue;
-            }
-
-            $existing = WebkernelRelease::where('target_type', $this->targetType)
-                ->where('target_slug', $this->targetSlug)
-                ->where('tag_name', $tagName)
-                ->first();
-
-            if ($existing !== null) {
-                $updated = false;
-                if (isset($releasesByTag[$tagName])) {
-                    $existing->applyGitHubRelease($releasesByTag[$tagName]);
-                    $updated = true;
-                }
-                if ($existing->meta_features === null && $existing->meta_doc_links === null) {
-                    $this->applyAnnotatedTagData($existing, $tag);
-                    $updated = true;
-                }
-                if ($updated) {
-                    $existing->save();
-                }
-                continue;
-            }
-
-            $record     = WebkernelRelease::fromGitHubTag($tag, $this->targetType, $this->targetSlug);
-            $record->id = Str::ulid()->toBase32();
-
-            if (isset($releasesByTag[$tagName])) {
-                $record->applyGitHubRelease($releasesByTag[$tagName]);
-            } elseif ($tag['zipball_url'] ?? false) {
-                $record->published_at = now();
-            }
-
-            $this->applyAnnotatedTagData($record, $tag);
-            $record->save();
-            $synced++;
-        }
-
-        foreach ($releases as $release) {
-            $tagName = $release['tag_name'] ?? '';
-            if ($tagName === '') {
-                continue;
-            }
-
-            $exists = WebkernelRelease::where('target_type', $this->targetType)
-                ->where('target_slug', $this->targetSlug)
-                ->where('tag_name', $tagName)
-                ->exists();
-
-            if (!$exists) {
-                $record = new WebkernelRelease([
-                    'target_type' => $this->targetType,
-                    'target_slug' => $this->targetSlug,
-                    'registry'    => $this->registry,
-                    'tag_name'    => $tagName,
-                    'version'     => explode('+', $tagName)[0],
-                    'build'       => str_contains($tagName, '+') ? explode('+', $tagName, 2)[1] : null,
-                ]);
-                $record->id = Str::ulid()->toBase32();
-                $record->applyGitHubRelease($release)->save();
-                $synced++;
-            }
-        }
-
-        return $synced;
-    }
-
-    private function applyAnnotatedTagData(WebkernelRelease $record, array $tag): void
-    {
-        $tagName = $tag['name'] ?? null;
-        if ($tagName === null) {
-            return;
-        }
-
-        $github = webkernel()->http()->github();
-        $tagObj = $github->annotatedTag(self::WEBKERNEL_OWNER, self::WEBKERNEL_SLUG, $tagName);
-
-        if ($tagObj === null || ($tagObj['message'] ?? '') === '') {
-            return;
-        }
-
-        $message = $tagObj['message'];
-        $lines = explode("\n", $message);
-
-        if (count($lines) < 3) {
-            return;
-        }
-
-        $metaJson = trim($lines[2]);
-        if ($metaJson === '' || !str_starts_with($metaJson, '{')) {
-            return;
-        }
-
-        $metaEnd = strpos($metaJson, '}');
-        if ($metaEnd === false) {
-            return;
-        }
-
-        $metaJson = substr($metaJson, 0, $metaEnd + 1);
-        $meta = json_decode($metaJson, true);
-        if (!is_array($meta)) {
-            return;
-        }
-
-        $record->tag_annotation = $message;
-        $record->tagger_name = $tagObj['tagger']['name'] ?? null;
-        $record->tagger_email = $tagObj['tagger']['email'] ?? null;
-        if (isset($tagObj['tagger']['date'])) {
-            $record->tagged_at = \Illuminate\Support\Carbon::parse($tagObj['tagger']['date']);
-        }
-
-        if (isset($meta['codename'])) {
-            $record->codename = $meta['codename'];
-        }
-        if (isset($meta['notes'])) {
-            $record->meta_notes = $meta['notes'];
-        }
-        if (isset($meta['video'])) {
-            $record->meta_video_url = $meta['video'];
-        }
-        if (isset($meta['features']) && is_array($meta['features'])) {
-            $record->meta_features = json_encode($meta['features']);
-        }
-        if (isset($meta['doc_links']) && is_array($meta['doc_links'])) {
-            $record->meta_doc_links = json_encode($meta['doc_links']);
-        }
-    }
 
     private function checkedTooRecently(): bool
     {
@@ -391,17 +223,6 @@ final class WebkernelUpdateChecker
         $row->save();
 
         return $row;
-    }
-
-    private function buildSource(): Source
-    {
-        return Source::from(
-            provider: Providers::GitHub,
-            vendor:   $this->owner,
-            slug:     $this->targetSlug,
-            party:    'first',
-            version:  null,
-        );
     }
 
     private function normalizeVersion(string $version): string
