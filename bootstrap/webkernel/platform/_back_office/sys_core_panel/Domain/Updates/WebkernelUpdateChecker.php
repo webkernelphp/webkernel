@@ -344,8 +344,38 @@ final class WebkernelUpdateChecker
             if (isset($meta['doc_links']) && is_array($meta['doc_links'])) {
                 $record->meta_doc_links = json_encode($meta['doc_links']);
             }
+
+            $this->applyReleaseMetaFallback($record);
         } catch (\Throwable $e) {
             error_log('applyAnnotatedTagData failed: ' . $e->getMessage());
+        }
+    }
+
+    private function applyReleaseMetaFallback(WebkernelRelease $record): void
+    {
+        if (!defined('WEBKERNEL_PATH')) {
+            return;
+        }
+
+        $releaseMetaPath = WEBKERNEL_PATH . '/release-meta.php';
+        if (!is_file($releaseMetaPath)) {
+            return;
+        }
+
+        try {
+            $meta = include $releaseMetaPath;
+            if (!is_array($meta)) {
+                return;
+            }
+
+            if ($record->meta_features === null && isset($meta['features']) && is_array($meta['features'])) {
+                $record->meta_features = json_encode($meta['features']);
+            }
+
+            if ($record->meta_doc_links === null && isset($meta['doc_links']) && is_array($meta['doc_links'])) {
+                $record->meta_doc_links = json_encode($meta['doc_links']);
+            }
+        } catch (\Throwable) {
         }
     }
 
