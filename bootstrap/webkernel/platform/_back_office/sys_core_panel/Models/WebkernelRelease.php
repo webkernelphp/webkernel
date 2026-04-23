@@ -5,6 +5,7 @@ namespace Webkernel\BackOffice\System\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 /**
@@ -162,24 +163,111 @@ class WebkernelRelease extends Model
 
             [$version, $build] = static::parseTag($tagName);
 
+            // Fetch tag annotation to extract metadata
+            $tagMeta = self::fetchGitHubTagAnnotation($tagName);
+
             static::create([
-                'id'           => Str::ulid()->toBase32(),
-                'target_type'  => $targetType,
-                'target_slug'  => $targetSlug,
-                'registry'     => 'github',
-                'tag_name'     => $tagName,
-                'version'      => $version,
-                'build'        => $build,
-                'commit_sha'   => $tag['commit']['sha'] ?? null,
-                'node_id'      => $tag['node_id'] ?? null,
-                'zipball_url'  => $tag['zipball_url'] ?? null,
-                'tarball_url'  => $tag['tarball_url'] ?? null,
+                'id'                => Str::ulid()->toBase32(),
+                'target_type'       => $targetType,
+                'target_slug'       => $targetSlug,
+                'registry'          => 'github',
+                'tag_name'          => $tagName,
+                'version'           => $version,
+                'build'             => $build,
+                'commit_sha'        => $tag['commit']['sha'] ?? null,
+                'node_id'           => $tag['node_id'] ?? null,
+                'zipball_url'       => $tag['zipball_url'] ?? null,
+                'tarball_url'       => $tag['tarball_url'] ?? null,
+                'tag_annotation'    => $tagMeta['message'] ?? null,
+                'tagger_name'       => $tagMeta['tagger_name'] ?? null,
+                'tagger_email'      => $tagMeta['tagger_email'] ?? null,
+                'tagged_at'         => $tagMeta['tagged_at'] ?? null,
+                'published_at'      => $tagMeta['tagged_at'] ?? null,
+                'codename'          => $tagMeta['codename'] ?? null,
+                'meta_notes'        => $tagMeta['notes'] ?? null,
+                'release_notes'     => $tagMeta['notes'] ?? null,
+                'meta_features'     => $tagMeta['features'] ?? null,
+                'meta_doc_links'    => $tagMeta['doc_links'] ?? null,
+                'meta_video_url'    => $tagMeta['video'] ?? null,
+                'is_prerelease'     => $tagMeta['is_prerelease'] ?? false,
+                'is_draft'          => $tagMeta['is_draft'] ?? false,
             ]);
 
             $synced++;
         }
 
         return $synced;
+    }
+
+    private static function fetchGitHubTagAnnotation(?string $tagName): array
+    {
+        if (!$tagName) {
+            return [];
+        }
+
+        try {
+            // Fetch tag reference to get tag object SHA (if annotated) or commit SHA (if lightweight)
+            $refResponse = Http::timeout(10)
+                ->get("https://api.github.com/repos/webkernelphp/foundation/git/refs/tags/{$tagName}");
+
+            if (!$refResponse->successful()) {
+                return [];
+            }
+
+            $ref = $refResponse->json() ?? [];
+            $objectData = $ref['object'] ?? [];
+            $objectType = $objectData['type'] ?? '';
+            $objectSha = $objectData['sha'] ?? '';
+
+            if (!$objectSha) {
+                return [];
+            }
+
+            // If this is an annotated tag (type === 'tag'), fetch the tag object to get metadata
+            if ($objectType === 'tag') {
+                $tagResponse = Http::timeout(10)
+                    ->get("https://api.github.com/repos/webkernelphp/foundation/git/tags/{$objectSha}");
+
+                if (!$tagResponse->successful()) {
+                    return [];
+                }
+
+                $tagObject = $tagResponse->json() ?? [];
+                $message = $tagObject['message'] ?? '';
+
+                // Parse tag message format: "version\n\n{JSON metadata}[signature]"
+                if (!empty($message)) {
+                    $parts = explode("\n\n", $message, 2);
+                    if (count($parts) >= 2) {
+                        $content = $parts[1];
+
+                        // Extract JSON object (handles case where signature follows)
+                        if (preg_match('/^\{.*\}(?=\s*-----BEGIN|$)/s', $content, $matches)) {
+                            $jsonStr = $matches[0];
+                            $metadata = json_decode($jsonStr, true) ?: [];
+
+                            return [
+                                'message'       => $message,
+                                'tagger_name'   => $tagObject['tagger']['name'] ?? null,
+                                'tagger_email'  => $tagObject['tagger']['email'] ?? null,
+                                'tagged_at'     => $tagObject['tagger']['date'] ?? null,
+                                'codename'      => $metadata['codename'] ?? null,
+                                'notes'         => $metadata['notes'] ?? null,
+                                'features'      => !empty($metadata['features']) ? json_encode($metadata['features']) : null,
+                                'doc_links'     => !empty($metadata['doc_links']) ? json_encode($metadata['doc_links']) : null,
+                                'video'         => $metadata['video'] ?? null,
+                                'is_prerelease' => ($metadata['channel'] ?? 'stable') !== 'stable',
+                                'is_draft'      => false,
+                            ];
+                        }
+                    }
+                }
+            }
+
+            return [];
+        } catch (\Throwable) {
+            return [];
+        }
     }
 
     private static function parseTag(string $tagName): array

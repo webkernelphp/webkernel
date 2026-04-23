@@ -5,14 +5,14 @@ defined('BASE_PATH')      || define('BASE_PATH',      dirname(__DIR__, 2));
 defined('WEBKERNEL_PATH') || define('WEBKERNEL_PATH', __DIR__);
 
 // -- Release data -- stamped by Makefile release|patch|minor|major|info -------
-defined('WEBKERNEL_VERSION')     || define('WEBKERNEL_VERSION','0.11.1');
-defined('WEBKERNEL_BUILD')       || define('WEBKERNEL_BUILD',129);
-defined('WEBKERNEL_SEMVER')      || define('WEBKERNEL_SEMVER','0.11.1+129');
+defined('WEBKERNEL_VERSION')     || define('WEBKERNEL_VERSION','0.11.2');
+defined('WEBKERNEL_BUILD')       || define('WEBKERNEL_BUILD',130);
+defined('WEBKERNEL_SEMVER')      || define('WEBKERNEL_SEMVER','0.11.2+130');
 defined('WEBKERNEL_CODENAME')    || define('WEBKERNEL_CODENAME','waterfall');
 defined('WEBKERNEL_CHANNEL')     || define('WEBKERNEL_CHANNEL','stable');
 defined('WEBKERNEL_RELEASED_AT') || define('WEBKERNEL_RELEASED_AT','2026-04-23');
 defined('WEBKERNEL_BRANCH')      || define('WEBKERNEL_BRANCH','main');
-defined('WEBKERNEL_TAG')         || define('WEBKERNEL_TAG','v0.11.1');
+defined('WEBKERNEL_TAG')         || define('WEBKERNEL_TAG','v0.11.2');
 
 defined('WEBKERNEL_REQUIRES') || define('WEBKERNEL_REQUIRES', [
     'php'       => '8.4.19',
