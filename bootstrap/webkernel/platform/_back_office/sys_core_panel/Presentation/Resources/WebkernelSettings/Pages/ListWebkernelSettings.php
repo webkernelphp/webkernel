@@ -6,8 +6,7 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
-use Filament\Resources\Pages\Concerns\InteractsWithTable;
-use Filament\Tables\Concerns\HasTabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Webkernel\BackOffice\System\Models\WebkernelSetting;
 use Webkernel\BackOffice\System\Presentation\Resources\WebkernelSettings\WebkernelSettingResource;
 use Webkernel\BackOffice\System\Presentation\Resources\WebkernelSettings\Widgets\SettingsStatsWidget;
@@ -30,35 +29,28 @@ class ListWebkernelSettings extends ListRecords
     public function getTabs(): array
     {
         return [
-            'all' => [
-                'label' => 'All Settings',
-                'badge' => WebkernelSetting::count(),
-            ],
-            'system' => [
-                'label' => 'System',
-                'badge' => WebkernelSetting::where('registry', 'webkernel')->whereNull('module')->count(),
-                'icon' => 'heroicon-o-shield-check',
-            ],
-            'custom' => [
-                'label' => 'Custom',
-                'badge' => WebkernelSetting::where('is_custom', true)->count(),
-                'icon' => 'heroicon-o-pencil-square',
-            ],
-            'modules' => [
-                'label' => 'Modules',
-                'badge' => WebkernelSetting::whereNotNull('module')->count(),
-                'icon' => 'heroicon-o-puzzle-piece',
-            ],
-            'modified' => [
-                'label' => 'Recently Modified',
-                'badge' => WebkernelSetting::where('updated_at', '>=', now()->subDays(7))->count(),
-                'icon' => 'heroicon-o-clock',
-            ],
-            'untouched' => [
-                'label' => 'Untouched',
-                'badge' => DB::table('inst_webkernel_settings')->whereRaw('value = default_value OR value IS NULL')->count(),
-                'icon' => 'heroicon-o-check-circle',
-            ],
+            'all' => Tab::make('All Settings')
+                ->badge(WebkernelSetting::count()),
+
+            'system' => Tab::make('System')
+                ->icon('heroicon-o-shield-check')
+                ->badge(WebkernelSetting::where('registry', 'webkernel')->whereNull('module')->count()),
+
+            'custom' => Tab::make('Custom')
+                ->icon('heroicon-o-pencil-square')
+                ->badge(WebkernelSetting::where('is_custom', true)->count()),
+
+            'modules' => Tab::make('Modules')
+                ->icon('heroicon-o-puzzle-piece')
+                ->badge(WebkernelSetting::whereNotNull('module')->count()),
+
+            'modified' => Tab::make('Recently Modified')
+                ->icon('heroicon-o-clock')
+                ->badge(WebkernelSetting::where('updated_at', '>=', now()->subDays(7))->count()),
+
+            'untouched' => Tab::make('Untouched')
+                ->icon('heroicon-o-check-circle')
+                ->badge(DB::table('inst_webkernel_settings')->whereRaw('value = default_value OR value IS NULL')->count()),
         ];
     }
 
