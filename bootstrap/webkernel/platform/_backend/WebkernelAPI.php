@@ -2,14 +2,13 @@
 
 namespace Webkernel\System;
 
-use Webkernel\System\Contracts\WebAppInterface;
+use Webkernel\System\WebAppInterface;
 use Webkernel\System\Host\Contracts\Managers\{
     HostManagerInterface, InstanceManagerInterface, OsManagerInterface,
     VersionManagerInterface};
 use Webkernel\System\Access\Contracts\Managers\{
     AppManagerInterface, AuthManagerInterface, ContextManagerInterface,
     RuntimeManagerInterface, SecurityManagerInterface, UsersManagerInterface};
-use Webkernel\System\Ops\Http\{GithubClient, HttpManager};
 use Webkernel\System\Ops\OperationBuilder;
 
 /**
@@ -49,7 +48,6 @@ final class WebkernelAPI implements WebAppInterface
     private ?HostManagerInterface     $hostManager     = null;
     private ?OsManagerInterface       $osManager       = null;
     private ?VersionManagerInterface  $versionManager  = null;
-    private ?GithubClient             $githubClient    = null;
 
     // ── Stable managers (memoised) ────────────────────────────────────────────
 
@@ -84,12 +82,13 @@ final class WebkernelAPI implements WebAppInterface
      */
     public function do(): OperationBuilder
     {
-        return OperationBuilder::create();
+        return OperationBuilder::make();
     }
 
-    public function http(): HttpManager
+    public function http(): mixed
     {
-        return new HttpManager();
+        // HTTP client integration (placeholder)
+        return null;
     }
 
     /**

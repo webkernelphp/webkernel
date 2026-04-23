@@ -2,7 +2,7 @@
 
 namespace Webkernel\System\Host\Dto;
 
-use Webkernel\System\Contracts\Info\ProcessInfoInterface;
+use Webkernel\System\Host\Contracts\Info\ProcessInfoInterface;
 
 /**
  * Immutable process count snapshot.

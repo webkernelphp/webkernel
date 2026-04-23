@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Webkernel\System\Host\Console;
+namespace Webkernel\System\Console;
 
 use Illuminate\Console\Command;
 use Webkernel\Query\Traits\Exportable;

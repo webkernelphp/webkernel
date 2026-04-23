@@ -2,7 +2,7 @@
 
 namespace Webkernel\System\Host\Dto;
 
-use Webkernel\System\Contracts\Info\PhpInfoInterface;
+use Webkernel\System\Host\Contracts\Info\PhpInfoInterface;
 
 /**
  * Immutable PHP build identity snapshot.

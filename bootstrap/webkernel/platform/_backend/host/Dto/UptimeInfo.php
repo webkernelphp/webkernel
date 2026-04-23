@@ -2,7 +2,7 @@
 
 namespace Webkernel\System\Host\Dto;
 
-use Webkernel\System\Contracts\Info\UptimeInfoInterface;
+use Webkernel\System\Host\Contracts\Info\UptimeInfoInterface;
 
 /**
  * Immutable host uptime snapshot.

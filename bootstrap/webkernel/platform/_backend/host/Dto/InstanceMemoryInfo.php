@@ -2,7 +2,7 @@
 
 namespace Webkernel\System\Host\Dto;
 
-use Webkernel\System\Contracts\Info\InstanceMemoryInfoInterface;
+use Webkernel\System\Host\Contracts\Info\InstanceMemoryInfoInterface;
 use Webkernel\System\Support\ByteFormatter;
 
 /**

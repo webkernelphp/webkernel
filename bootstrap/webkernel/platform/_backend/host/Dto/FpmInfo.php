@@ -2,7 +2,7 @@
 
 namespace Webkernel\System\Host\Dto;
 
-use Webkernel\System\Contracts\Info\FpmInfoInterface;
+use Webkernel\System\Host\Contracts\Info\FpmInfoInterface;
 
 /**
  * Immutable PHP-FPM worker pool snapshot.

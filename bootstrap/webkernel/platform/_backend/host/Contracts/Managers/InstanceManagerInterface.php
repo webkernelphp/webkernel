@@ -2,10 +2,10 @@
 
 namespace Webkernel\System\Host\Contracts\Managers;
 
-use Webkernel\System\Contracts\Info\InstanceMemoryInfoInterface;
-use Webkernel\System\Contracts\Info\OpcacheInfoInterface;
-use Webkernel\System\Contracts\Info\PhpInfoInterface;
-use Webkernel\System\Contracts\Info\PhpLimitsInfoInterface;
+use Webkernel\System\Host\Contracts\Info\InstanceMemoryInfoInterface;
+use Webkernel\System\Host\Contracts\Info\OpcacheInfoInterface;
+use Webkernel\System\Host\Contracts\Info\PhpInfoInterface;
+use Webkernel\System\Host\Contracts\Info\PhpLimitsInfoInterface;
 
 /**
  * PHP process-level metrics.

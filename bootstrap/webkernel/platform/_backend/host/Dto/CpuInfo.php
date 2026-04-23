@@ -2,7 +2,7 @@
 
 namespace Webkernel\System\Host\Dto;
 
-use Webkernel\System\Contracts\Info\CpuInfoInterface;
+use Webkernel\System\Host\Contracts\Info\CpuInfoInterface;
 
 /**
  * Immutable CPU metrics snapshot.

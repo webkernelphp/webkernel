@@ -2,12 +2,12 @@
 
 namespace Webkernel\System\Host\Contracts\Managers;
 
-use Webkernel\System\Contracts\Info\CpuInfoInterface;
-use Webkernel\System\Contracts\Info\DiskInfoInterface;
-use Webkernel\System\Contracts\Info\FpmInfoInterface;
-use Webkernel\System\Contracts\Info\HostMemoryInfoInterface;
-use Webkernel\System\Contracts\Info\ProcessInfoInterface;
-use Webkernel\System\Contracts\Info\UptimeInfoInterface;
+use Webkernel\System\Host\Contracts\Info\CpuInfoInterface;
+use Webkernel\System\Host\Contracts\Info\DiskInfoInterface;
+use Webkernel\System\Host\Contracts\Info\FpmInfoInterface;
+use Webkernel\System\Host\Contracts\Info\HostMemoryInfoInterface;
+use Webkernel\System\Host\Contracts\Info\ProcessInfoInterface;
+use Webkernel\System\Host\Contracts\Info\UptimeInfoInterface;
 
 /**
  * Machine-level context metrics.

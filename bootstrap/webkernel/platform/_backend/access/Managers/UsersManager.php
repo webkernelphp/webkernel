@@ -5,7 +5,7 @@ namespace Webkernel\System\Access\Managers;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Support\Facades\Hash;
-use Webkernel\System\Contracts\Managers\UsersManagerInterface;
+use Webkernel\System\Access\Contracts\Managers\UsersManagerInterface;
 use Webkernel\Users\Enum\UserOrigin;
 use Webkernel\Users\Enum\UserPrivilegeLevel;
 use Webkernel\Users\Models\User;

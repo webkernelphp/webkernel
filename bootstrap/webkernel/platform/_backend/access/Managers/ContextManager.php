@@ -3,7 +3,7 @@
 namespace Webkernel\System\Access\Managers;
 
 use Filament\Facades\Filament;
-use Webkernel\System\Contracts\Managers\ContextManagerInterface;
+use Webkernel\System\Access\Contracts\Managers\ContextManagerInterface;
 
 /**
  * Request context classification.

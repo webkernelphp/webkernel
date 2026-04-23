@@ -4,28 +4,19 @@ namespace Webkernel\BackOffice\System\Providers;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
-use Webkernel\System\Contracts\WebAppInterface;
-use Webkernel\System\Contracts\Managers\AppManagerInterface;
-use Webkernel\System\Contracts\Managers\AuthManagerInterface;
-use Webkernel\System\Contracts\Managers\ContextManagerInterface;
-use Webkernel\System\Contracts\Managers\HostManagerInterface;
-use Webkernel\System\Contracts\Managers\InstanceManagerInterface;
-use Webkernel\System\Contracts\Managers\OsManagerInterface;
-use Webkernel\System\Contracts\Managers\RuntimeManagerInterface;
-use Webkernel\System\Contracts\Managers\SecurityManagerInterface;
-use Webkernel\System\Contracts\Managers\UsersManagerInterface;
-use Webkernel\System\Contracts\Managers\VersionManagerInterface;
-use Webkernel\System\Managers\VersionManager;
+use Webkernel\System\WebAppInterface;
+use Webkernel\System\Host\Contracts\Managers\{
+    HostManagerInterface, InstanceManagerInterface, OsManagerInterface,
+    VersionManagerInterface};
+use Webkernel\System\Access\Contracts\Managers\{
+    AppManagerInterface, AuthManagerInterface, ContextManagerInterface,
+    RuntimeManagerInterface, SecurityManagerInterface, UsersManagerInterface};
 use Webkernel\System\WebkernelAPI;
-use Webkernel\System\Managers\AppManager;
-use Webkernel\System\Managers\AuthManager;
-use Webkernel\System\Managers\ContextManager;
-use Webkernel\System\Managers\HostManager;
-use Webkernel\System\Managers\InstanceManager;
-use Webkernel\System\Managers\OsManager;
-use Webkernel\System\Managers\RuntimeManager;
-use Webkernel\System\Managers\SecurityManager;
-use Webkernel\System\Managers\UsersManager;
+use Webkernel\System\Host\Managers\{
+    VersionManager, HostManager, InstanceManager, OsManager};
+use Webkernel\System\Access\Managers\{
+    AppManager, AuthManager, ContextManager, RuntimeManager,
+    SecurityManager, UsersManager};
 /**
  * Binds all Webkernel manager interfaces to their concrete implementations.
  *

@@ -2,7 +2,7 @@
 
 namespace Webkernel\System\Host\Dto;
 
-use Webkernel\System\Contracts\Info\PhpLimitsInfoInterface;
+use Webkernel\System\Host\Contracts\Info\PhpLimitsInfoInterface;
 use Webkernel\System\Support\ByteFormatter;
 
 /**

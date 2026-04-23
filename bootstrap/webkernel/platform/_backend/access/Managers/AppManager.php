@@ -2,7 +2,7 @@
 
 namespace Webkernel\System\Access\Managers;
 
-use Webkernel\System\Contracts\Managers\AppManagerInterface;
+use Webkernel\System\Access\Contracts\Managers\AppManagerInterface;
 
 /**
  * Laravel application configuration surface.

@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Webkernel\System\Contracts;
+namespace Webkernel\System;
 
 use Webkernel\System\Host\Contracts\Managers\{
     HostManagerInterface, InstanceManagerInterface, OsManagerInterface,

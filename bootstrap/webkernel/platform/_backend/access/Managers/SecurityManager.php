@@ -2,7 +2,7 @@
 
 namespace Webkernel\System\Access\Managers;
 
-use Webkernel\System\Contracts\Managers\SecurityManagerInterface;
+use Webkernel\System\Access\Contracts\Managers\SecurityManagerInterface;
 
 /**
  * Metric access control and value masking.

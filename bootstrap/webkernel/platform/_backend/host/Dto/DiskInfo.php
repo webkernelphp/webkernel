@@ -2,7 +2,7 @@
 
 namespace Webkernel\System\Host\Dto;
 
-use Webkernel\System\Contracts\Info\DiskInfoInterface;
+use Webkernel\System\Host\Contracts\Info\DiskInfoInterface;
 use Webkernel\System\Support\ByteFormatter;
 
 /**

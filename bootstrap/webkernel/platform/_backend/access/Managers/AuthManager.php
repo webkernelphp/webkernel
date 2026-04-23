@@ -6,7 +6,7 @@ use Illuminate\Contracts\Auth\Access\Gate;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Guard;
 use Webkernel\Auth\UserInfo;
-use Webkernel\System\Contracts\Managers\AuthManagerInterface;
+use Webkernel\System\Access\Contracts\Managers\AuthManagerInterface;
 
 /**
  * Webkernel authentication and user identity manager.

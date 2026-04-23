@@ -2,7 +2,7 @@
 
 namespace Webkernel\System\Host\Dto;
 
-use Webkernel\System\Contracts\Info\OpcacheInfoInterface;
+use Webkernel\System\Host\Contracts\Info\OpcacheInfoInterface;
 use Webkernel\System\Support\ByteFormatter;
 
 /**
