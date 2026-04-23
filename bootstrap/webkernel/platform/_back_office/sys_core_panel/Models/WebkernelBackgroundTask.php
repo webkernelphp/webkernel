@@ -14,7 +14,7 @@ class WebkernelBackgroundTask extends Model
     public $incrementing = false;
 
     protected $fillable = [
-        'id', 'type', 'label', 'payload', 'status', 'output', 'error', 'started_at', 'completed_at',
+        'id', 'type', 'label', 'payload', 'status', 'output', 'error', 'started_at', 'completed_at', 'user_id', 'suggested_action',
     ];
 
     protected $casts = [
@@ -79,13 +79,21 @@ class WebkernelBackgroundTask extends Model
         ]);
     }
 
-    public function markFailed(string $error): void
+    public function markFailed(string $error, ?string $suggestedAction = null): void
     {
+        // Detect common issues and provide actionable suggestions
+        if (!$suggestedAction) {
+            $suggestedAction = $this->detectSuggestedAction($error);
+        }
+
         $this->update([
             'status' => 'failed',
             'error' => $error,
+            'suggested_action' => $suggestedAction,
             'completed_at' => now(),
         ]);
+
+        $this->notifyCompletion();
     }
 
     public function markCancelled(): void
@@ -128,5 +136,43 @@ class WebkernelBackgroundTask extends Model
         $mins = $minutes % 60;
 
         return "{$hours}h {$mins}m";
+    }
+
+    private function detectSuggestedAction(string $error): string
+    {
+        if (str_contains($error, 'could not be resolved')) {
+            return 'Dependency conflict detected. Try: Update all packages together, or resolve conflicts manually in composer.json and retry.';
+        }
+
+        if (str_contains($error, 'does not exist')) {
+            return 'Package not found. Verify the package name and version exist on Packagist.';
+        }
+
+        if (str_contains($error, 'No matching package')) {
+            return 'Version constraint not satisfied. Try updating all packages or using a different version.';
+        }
+
+        return 'Check the error details above and try again, or contact support if the issue persists.';
+    }
+
+    private function notifyCompletion(): void
+    {
+        if (!$this->user_id) {
+            return;
+        }
+
+        $user = \App\Models\User::find($this->user_id);
+        if (!$user) {
+            return;
+        }
+
+        $title = $this->status === 'failed' ? "Task Failed: {$this->label}" : "Task Completed: {$this->label}";
+        $body = $this->suggested_action ?? $this->output;
+
+        \Filament\Notifications\Notification::make()
+            ->title($title)
+            ->body($body)
+            ->status($this->status === 'failed' ? 'danger' : 'success')
+            ->sendToDatabase($user);
     }
 }

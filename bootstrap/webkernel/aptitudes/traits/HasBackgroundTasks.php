@@ -18,6 +18,7 @@ trait HasBackgroundTasks
             'label' => $label,
             'payload' => $payload,
             'status' => 'pending',
+            'user_id' => auth()->id(),
         ]);
     }
 

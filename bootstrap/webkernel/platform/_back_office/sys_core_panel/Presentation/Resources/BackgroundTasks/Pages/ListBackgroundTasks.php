@@ -5,6 +5,7 @@ namespace Webkernel\BackOffice\System\Presentation\Resources\BackgroundTasks\Pag
 use Filament\Resources\Pages\ListRecords;
 use Filament\Tables;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Tables\Table;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Fieldset;
@@ -128,7 +129,7 @@ class ListBackgroundTasks extends ListRecords
             ->defaultSort('created_at', 'desc')
             ->poll('2s')
             ->bulkActions([
-                Tables\Actions\BulkAction::make('cancel')
+                BulkAction::make('cancel')
                     ->label('Cancel Selected')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
@@ -142,7 +143,7 @@ class ListBackgroundTasks extends ListRecords
                         }
                     }),
 
-                Tables\Actions\BulkAction::make('delete')
+                BulkAction::make('delete')
                     ->label('Delete Selected')
                     ->icon('heroicon-o-trash')
                     ->color('danger')
@@ -156,7 +157,7 @@ class ListBackgroundTasks extends ListRecords
                         }
                     }),
 
-                Tables\Actions\BulkAction::make('retry')
+                BulkAction::make('retry')
                     ->label('Retry Failed')
                     ->icon('heroicon-o-arrow-clockwise')
                     ->color('warning')
