@@ -243,7 +243,7 @@
 
         <!-- Warning -->
         <div class="process-upgrade-warning">
-            ⚠️ <strong>Do not close this window.</strong> The system will resume automatically once the operation completes.
+            <strong>Do not close this window.</strong> The system will resume automatically once the operation completes.
         </div>
     </div>
 </div>
