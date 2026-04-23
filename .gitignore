@@ -85,7 +85,7 @@ software-specs-*
 webkernel-templates.png
 00-dev-docs-stubs/
 license-simulation-*
-dev-tools.php
+.dev-tools.php
 
 # -----------------------------
 # Webkernel Config

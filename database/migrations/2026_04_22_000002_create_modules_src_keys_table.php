@@ -61,13 +61,40 @@ return new class extends Migration
             $table->string('zipball_url')->nullable();
             $table->string('tarball_url')->nullable();
 
+            // ── annotated tag data (from GET /repos/{owner}/{repo}/git/tags/{sha}) ──
+            $table->longText('tag_annotation')->nullable();   // raw annotated tag message
+            $table->string('tagger_name')->nullable();        // git tagger display name
+            $table->string('tagger_email')->nullable();       // git tagger email
+            $table->timestamp('tagged_at')->nullable();       // when the tag was created
+
+            // ── release-meta embedded in the tag annotation (JSON) ───────────────
+            // Structure mirrors bootstrap/webkernel/release-meta.php:
+            //   codename, notes, features[], doc_links[], video
+            $table->string('codename')->nullable();           // e.g. "Sovereign"
+            $table->longText('meta_notes')->nullable();       // release notes (markdown)
+            $table->longText('meta_features')->nullable();    // JSON — features[]
+            $table->longText('meta_doc_links')->nullable();   // JSON — doc_links[]
+            $table->string('meta_video_url')->nullable();     // video URL
+
             // ── release data (only for full GitHub releases, not bare tags) ──────
             $table->bigInteger('github_release_id')->nullable()->unsigned();
-            $table->string('release_name')->nullable();  // "v1.9.3+1"
-            $table->text('release_notes')->nullable();   // body markdown
+            $table->string('release_name')->nullable();       // "v1.9.3+1"
+            $table->text('release_notes')->nullable();        // GitHub release body markdown
             $table->boolean('is_prerelease')->default(false);
             $table->boolean('is_draft')->default(false);
+            $table->timestamp('created_at_github')->nullable(); // GitHub release created_at
             $table->timestamp('published_at')->nullable();
+
+            // ── release author ────────────────────────────────────────────────────
+            $table->string('author_login')->nullable();       // GitHub login
+            $table->string('author_avatar_url')->nullable();  // GitHub avatar URL
+
+            // ── release assets ────────────────────────────────────────────────────
+            $table->longText('assets_json')->nullable();      // JSON array of asset objects
+
+            // ── extra GitHub metadata ─────────────────────────────────────────────
+            $table->string('discussion_url')->nullable();
+            $table->unsignedInteger('reactions_total')->nullable();
 
             $table->timestamps();
 

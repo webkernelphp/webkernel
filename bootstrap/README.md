@@ -60,23 +60,51 @@ Webkernel supports two integrity verification modes:
 bootstrap/
 ├── app.php                           application entry point
 ├── composer.json                     runtime dependencies
-├── providers.php                     service provider registration
+├── composer-root.json                root-level merge hints for the host project
+├── docs/                             specifications and working documents
+│   ├── 00-older-files/               archived legacy docs and style rules
+│   ├── 01-specs-mess/                in-progress specs (webapp-builder, aptitudes …)
+│   └── XX-TheDocs/                   official documentation source
+├── tests/                            PHPUnit suite (Feature + Unit)
 └── webkernel/
     ├── fast-boot.php                 kernel boot — constants, PSR-4, release data
+    ├── installer-guard.php           first-boot installation guard
     ├── Makefile.php                  release tool (authorized personnel only)
-    ├── .build-number                 auto-incremented build counter
-    ├── src/                          Webkernel\  root namespace
+    ├── aptitudes/                    cross-cutting capabilities (Webkernel\* namespaces)
+    │   ├── async/                    Webkernel\Async\      — Pool, Promise
+    │   ├── components/               Webkernel\Components\ — Filament + WebsiteBuilder
+    │   ├── connectors/               Webkernel\Connectors\ — Git, email, SMS, chat …
+    │   │   ├── contracts/
+    │   │   ├── facades/              SourceRegistry and other connector facades
+    │   │   ├── src/                  adapter implementations by domain
+    │   │   └── traits/
+    │   ├── generators/               Webkernel\Generators\ — GradientImage, UniqueId
+    │   ├── instance/                 Webkernel\Businesses\ / Webkernel\Users\
+    │   ├── pages/                    Webkernel\Pages\
+    │   ├── panels/                   Webkernel\Panels\
+    │   ├── plugins/                  Webkernel\Plugins\
+    │   ├── query-builder/            Webkernel\Query\
+    │   └── traits/                   Webkernel\Traits\
     ├── platform/
-    │   ├── assessors/
-    │   │   ├── constants/            paths, registry, runtime, thresholds, security, globals
-    │   │   └── system/               Webkernel\System\  — WebernelAPI + managers
-    │   ├── aptitudes/                Webkernel\Aptitudes\
-    │   ├── arcanes/                  Webkernel\Arcanes\  — CLI, scaffold, module tools
-    │   └── panel/                    Webkernel\Panel\   — Filament 5 System Panel
-    └── runtime/
-        ├── dist/                     compiled static assets — SVG, fonts
-        ├── static/                   AppModels, signed compiled code
-        └── dev/                      dev namespaces — loaded when IS_DEVMODE only
+    │   ├── _backend/                 Webkernel\System\ — WebkernelAPI + managers
+    │   ├── _back_office/             Filament panels (sys_core, sys_biz, installer)
+    │   ├── _config/                  stubs and platform configuration
+    │   ├── arcanes/                  Webkernel\Arcanes\ — CLI, scaffold, module tools
+    │   ├── database/                 migrations and seeders
+    │   ├── providers/                service providers (view paths, render hooks …)
+    │   └── routing/                  Webkernel\Routes\ — RootController + routes
+    ├── src/                          Webkernel\ root namespace (Process, WebApp …)
+    └── support/
+        ├── boot/                     boot sequence — loaded by fast-boot.php
+        │   ├── boot-actions/         010-050 sequential boot steps
+        │   ├── boot-constants/       010-070 constant definitions
+        │   ├── boot-services/        010-090 service bootstrappers
+        │   ├── platform-actions/     platform helper loaders
+        │   ├── app-models/           App\Models\ — SQLite-backed app models
+        │   └── _dist/                compiled static assets (SVG, fonts)
+        ├── commands/                 Webkernel\Commands\ — artisan commands
+        ├── quick_touch/              Webkernel\QuickTouch\ — context-menu system
+        └── views/                   Blade components, pages, panel layouts
 ```
 
 External modules are installed at `modules/{registry}/{vendor}/{name}/` at the project root, with registries including `webkernelphp.com`, `github.com`, `gitlab.com`, `git.numerimondes.com`, and others.

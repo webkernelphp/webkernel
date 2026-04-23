@@ -9,6 +9,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
@@ -98,7 +99,7 @@ class CustomModules extends Page implements HasForms
                                     try {
                                         $response = Http::timeout(5)->head($url);
                                         if ($response->status() >= 400) {
-                                            $this->dispatch('wk-toast', type: 'warning', message: "Registry is private - token will be required");
+                                            Notification::make()->title("Registry is private - token will be required")->warning()->send();
                                         }
                                         return Registries::Custom->value . ':' . $hostname;
                                     } catch (\Throwable $e) {
@@ -241,7 +242,7 @@ class CustomModules extends Page implements HasForms
 
             $this->installPath = $path;
             $this->installStatus = 'Installation complete!';
-            $this->dispatch('wk-toast', type: 'success', message: "Module installed at {$path}");
+            Notification::make()->title("Module installed at {$path}")->success()->send();
 
             $this->form->fill([
                 'registry' => Registries::GitHub->value,
@@ -251,10 +252,10 @@ class CustomModules extends Page implements HasForms
             ]);
         } catch (NetworkException $e) {
             $this->installError = 'Network error: ' . $e->getMessage();
-            $this->dispatch('wk-toast', type: 'error', message: $this->installError);
+            Notification::make()->title($this->installError)->danger()->send();
         } catch (\Throwable $e) {
             $this->installError = 'Installation failed: ' . $e->getMessage();
-            $this->dispatch('wk-toast', type: 'error', message: $this->installError);
+            Notification::make()->title($this->installError)->danger()->send();
         } finally {
             $this->isInstalling = false;
         }

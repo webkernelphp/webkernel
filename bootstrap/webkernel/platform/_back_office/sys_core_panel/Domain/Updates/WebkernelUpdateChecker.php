@@ -232,6 +232,7 @@ final class WebkernelUpdateChecker
                 $record->published_at = now();
             }
 
+            $this->applyAnnotatedTagData($record, $tag);
             $record->save();
             $synced++;
         }
@@ -263,6 +264,73 @@ final class WebkernelUpdateChecker
         }
 
         return $synced;
+    }
+
+    private function applyAnnotatedTagData(WebkernelRelease $record, array $tag): void
+    {
+        $sha = $tag['commit']['sha'] ?? null;
+        if ($sha === null) {
+            return;
+        }
+
+        try {
+            $source = $this->buildSource();
+            $adapter = $this->resolver->resolve($source);
+
+            if ($this->explicitToken !== null) {
+                $adapter = $adapter->withToken($this->explicitToken);
+            }
+
+            if (!($adapter instanceof GitHubAdapter)) {
+                return;
+            }
+
+            $tagObj = $adapter->annotatedTag($source, $sha);
+            if ($tagObj === null || ($tagObj['message'] ?? '') === '') {
+                return;
+            }
+
+            $message = $tagObj['message'];
+            $parts = explode("\n", $message, 2);
+            if (count($parts) < 2) {
+                return;
+            }
+
+            $metaJson = trim($parts[1]);
+            if ($metaJson === '') {
+                return;
+            }
+
+            $meta = json_decode($metaJson, true);
+            if (!is_array($meta)) {
+                return;
+            }
+
+            $record->tag_annotation = $message;
+            $record->tagger_name = $tagObj['tagger']['name'] ?? null;
+            $record->tagger_email = $tagObj['tagger']['email'] ?? null;
+            if (isset($tagObj['tagger']['date'])) {
+                $record->tagged_at = \Illuminate\Support\Carbon::parse($tagObj['tagger']['date']);
+            }
+
+            if (isset($meta['codename'])) {
+                $record->codename = $meta['codename'];
+            }
+            if (isset($meta['notes'])) {
+                $record->meta_notes = $meta['notes'];
+            }
+            if (isset($meta['video'])) {
+                $record->meta_video_url = $meta['video'];
+            }
+            if (isset($meta['features']) && is_array($meta['features'])) {
+                $record->meta_features = json_encode($meta['features']);
+            }
+            if (isset($meta['doc_links']) && is_array($meta['doc_links'])) {
+                $record->meta_doc_links = json_encode($meta['doc_links']);
+            }
+        } catch (\Throwable) {
+            // Annotated tag fetch is best-effort — don't fail the sync
+        }
     }
 
     private function checkedTooRecently(): bool

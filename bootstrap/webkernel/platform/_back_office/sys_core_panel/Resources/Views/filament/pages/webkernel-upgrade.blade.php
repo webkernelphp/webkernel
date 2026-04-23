@@ -27,39 +27,6 @@
         ],
     ];
 
-    $features = [
-        [
-            'icon'  => 'heroicon-o-cube-transparent',
-            'title' => 'Modular Architecture',
-            'body'  => 'Install, enable or disable packages via Composer. Each module is a self-contained unit with its own routes, views and migrations.',
-        ],
-        [
-            'icon'  => 'heroicon-o-lock-closed',
-            'title' => 'Digital Sovereignty',
-            'body'  => 'No forced PaaS. No vendor lock-in. Your data stays on your own infrastructure, in the jurisdiction you choose.',
-        ],
-        [
-            'icon'  => 'heroicon-o-bolt',
-            'title' => 'Octane-Ready Boot',
-            'body'  => 'Constants, config and module manifests are resolved once, cached and never re-parsed on warm requests.',
-        ],
-        [
-            'icon'  => 'heroicon-o-shield-exclamation',
-            'title' => 'Integrity at Boot',
-            'body'  => 'CoreManifest + SealEnforcer verify cryptographic fingerprints on every startup, before any user request hits your application.',
-        ],
-        [
-            'icon'  => 'heroicon-o-users',
-            'title' => 'Multi-Role Panels',
-            'body'  => 'Filament 5 panels per role — Admin, Client, Partner — each with its own data scope and permission model.',
-        ],
-        [
-            'icon'  => 'heroicon-o-arrow-path',
-            'title' => 'Resilient Installer',
-            'body'  => 'Progress is saved to disk. Close the browser mid-install and it resumes exactly where it stopped.',
-        ],
-    ];
-
     $stack = [
         ['label' => 'Language',     'value' => 'PHP 8.4+'],
         ['label' => 'Framework',    'value' => 'Laravel 13+'],
@@ -71,41 +38,6 @@
         ['label' => 'License',      'value' => 'EPL 2.0 / Commercial'],
     ];
 
-    $releases = [
-        [
-            'version'  => '1.0.1',
-            'codename' => 'Sovereign',
-            'date'     => '2025-03-27',
-            'notes'    => 'Performance optimizations, SealEnforcer v2, Arcanes loader refactor.',
-            'current'  => true,
-        ],
-        [
-            'version'  => '1.0.0',
-            'codename' => 'Sovereign',
-            'date'     => '2025-01-15',
-            'notes'    => 'First stable release. CoreManifest, multi-panel support, Octane boot.',
-            'current'  => false,
-        ],
-        [
-            'version'  => '0.9.8',
-            'codename' => 'Waterfall',
-            'date'     => '2024-11-02',
-            'notes'    => 'Beta. Module system finalized. Installer resilience improvements.',
-            'current'  => false,
-        ],
-    ];
-
-    $docLinks = [
-        ['icon' => 'heroicon-o-book-open',          'label' => 'Documentation',    'url' => 'https://webkernelphp.com/docs'],
-        ['icon' => 'heroicon-o-globe-alt',           'label' => 'webkernelphp.com', 'url' => 'https://webkernelphp.com/'],
-        ['icon' => 'heroicon-o-squares-plus',        'label' => 'Marketplace',      'url' => 'https://webkernelphp.com/marketplace'],
-        ['icon' => 'heroicon-o-code-bracket-square', 'label' => 'GitHub',           'url' => 'https://github.com/webkernelphp/webkernel'],
-        ['icon' => 'heroicon-o-archive-box',         'label' => 'Packagist',        'url' => 'https://packagist.org/packages/webkernel/webkernel'],
-        ['icon' => 'heroicon-o-building-office-2',   'label' => 'Numerimondes',     'url' => 'https://webkernelphp.com/about'],
-    ];
-
-    $videoId = 'ANy5LtTPLb0';
-
     $usedBy = [
         ['emoji' => '🏛️', 'label' => 'Government'],
         ['emoji' => '🏦', 'label' => 'Finance'],
@@ -116,6 +48,9 @@
         ['emoji' => '🎓', 'label' => 'Education'],
         ['emoji' => '🏢', 'label' => 'Enterprise'],
     ];
+
+    // Fallbacks for fresh instances that haven't fetched tags yet
+    $hasTagData = count($features) > 0;
 @endphp
 
 {{-- ══════════════════════════════════════════════════════════════════════
@@ -1286,6 +1221,7 @@
     x-data="{
         rollbackOpen: false,
         selectedRelease: null,
+        currentVersion: '{{ $currentVersion }}',
         videoPlaying: false,
         openRollback()  { this.rollbackOpen = true; },
         closeRollback() { this.rollbackOpen = false; this.selectedRelease = null; },
@@ -1414,7 +1350,7 @@
             class="webkernel-upgrade-page-stat-val"
             style="color: {{ $isUpToDate ? 'var(--wk-success)' : 'var(--wk-warning)' }};"
         >{{ $isUpToDate ? 'OK' : 'PENDING' }}</div>
-        <div class="webkernel-upgrade-page-stat-label">Webkernel Status</div>
+        <div class="webkernel-upgrade-page-stat-label">Upgrade Status</div>
     </div>
 </div>
 
@@ -1449,7 +1385,7 @@
 @endif
 
 {{-- ────────────────────────────────────────────────────────────────────
-     FEATURES
+     FEATURES (from latest tag annotation stored in DB)
 ────────────────────────────────────────────────────────────────────── --}}
 <div class="webkernel-upgrade-page-features-section">
     <div class="webkernel-upgrade-page-section-eyebrow">Core Capabilities</div>
@@ -1460,6 +1396,7 @@
         A sovereign, performance-optimized foundation built on Laravel, Filament and Livewire.
         Yours to own, deploy and extend.
     </p>
+    @if($hasTagData)
     <div class="webkernel-upgrade-page-features-grid">
         @foreach($features as $feat)
             <div class="webkernel-upgrade-page-feature">
@@ -1471,6 +1408,11 @@
             </div>
         @endforeach
     </div>
+    @else
+    <p class="webkernel-upgrade-page-section-sub" style="margin-top:2rem;opacity:0.5;">
+        Feature details will appear after the first update check fetches release data from the registry.
+    </p>
+    @endif
 </div>
 
 {{-- ────────────────────────────────────────────────────────────────────
@@ -1525,8 +1467,9 @@
 </div>
 
 {{-- ────────────────────────────────────────────────────────────────────
-     VIDEO WALKTHROUGH
+     VIDEO WALKTHROUGH (from latest tag annotation stored in DB)
 ────────────────────────────────────────────────────────────────────── --}}
+@if($videoId !== '')
 <div class="webkernel-upgrade-page-video-section">
     <div class="webkernel-upgrade-page-section-eyebrow">Platform Walkthrough</div>
     <h2 class="webkernel-upgrade-page-section-title">See Webkernel in action.</h2>
@@ -1558,6 +1501,7 @@
         </div>
     </div>
 </div>
+@endif
 
 {{-- ────────────────────────────────────────────────────────────────────
      TECH STACK + PHILOSOPHY
@@ -1620,8 +1564,9 @@
 </div>
 
 {{-- ────────────────────────────────────────────────────────────────────
-     DOCUMENTATION LINKS
+     DOCUMENTATION LINKS (from latest tag annotation stored in DB)
 ────────────────────────────────────────────────────────────────────── --}}
+@if(count($docLinks) > 0)
 <div class="webkernel-upgrade-page-docs-section">
     <div class="webkernel-upgrade-page-section-eyebrow">Resources</div>
     <h2 class="webkernel-upgrade-page-section-title">Documentation & Resources</h2>
@@ -1645,6 +1590,7 @@
         @endforeach
     </div>
 </div>
+@endif
 
 {{-- ────────────────────────────────────────────────────────────────────
      ADVANCED / DANGER ZONE
@@ -1702,6 +1648,11 @@
                 <div class="webkernel-upgrade-page-rollback-warning">
                     ⚠️ Rolling back replaces core files. Backups are kept. Confirm the desired version.
                 </div>
+                @if(count($releases) === 0)
+                    <p style="color:var(--wk-text-muted);font-size:0.875rem;text-align:center;padding:2rem 0;">
+                        No releases found. Run a check for updates first.
+                    </p>
+                @endif
                 @foreach($releases as $release)
                     <div
                         class="webkernel-upgrade-page-release {{ $release['current'] ? 'is-current' : '' }}"
@@ -1728,8 +1679,7 @@
                 <x-filament::button color="gray" outlined x-on:click="closeRollback()">Cancel</x-filament::button>
                 <x-filament::button
                     color="primary"
-                    :disabled="!$release['current']" {{-- just a dummy; you'll need proper logic --}}
-                    x-bind:disabled="!selectedRelease"
+                    x-bind:disabled="!selectedRelease || selectedRelease === currentVersion"
                     wire:click="rollbackToVersion(selectedRelease)"
                 >
                     Rollback

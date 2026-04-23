@@ -4,6 +4,7 @@ namespace Webkernel\BackOffice\System\Presentation\Pages;
 
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
 use UnitEnum;
@@ -49,6 +50,14 @@ class WebkernelUpgrade extends Page
 
     public string $latestVersion    = ''; // To retrieve from github
 
+    /** @var array<int, array{icon: string, title: string, body: string}> */
+    public array $features  = [];
+    /** @var array<int, array{icon: string, label: string, url: string}> */
+    public array $docLinks  = [];
+    public string $videoId  = '';
+    /** @var array<int, array{version: string, codename: string, date: string, notes: string, current: bool}> */
+    public array $releases  = [];
+
     public function mount(): void
     {
         $this->phpVersion      = PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION . '.' . PHP_RELEASE_VERSION;
@@ -72,10 +81,35 @@ class WebkernelUpgrade extends Page
                 $this->latestVersion = $latest->tag_name;
                 $this->isUpToDate    = $checker->isUpToDate($this->currentVersion);
                 $this->lastChecked   = $lastLog?->checked_at->toIso8601String() ?? '';
-                return;
+
+                // Meta comes from the tag annotation, stored in DB
+                $this->features = $latest->metaFeatures();
+                $this->docLinks = $latest->metaDocLinks();
+                $this->videoId  = $latest->metaVideoId();
             }
+
+            // All stable releases for rollback modal
+            $rows = \Webkernel\BackOffice\System\Domain\Updates\Models\WebkernelRelease
+                ::forTarget(
+                    WebkernelUpdateChecker::WEBKERNEL_TARGET_TYPE,
+                    WebkernelUpdateChecker::WEBKERNEL_SLUG,
+                )
+                ->stable()
+                ->orderByDesc('published_at')
+                ->orderByDesc('created_at')
+                ->limit(20)
+                ->get();
+
+            $this->releases = $rows->map(fn ($r) => [
+                'version'  => $r->version,
+                'codename' => $r->codename ?? '',
+                'date'     => $r->published_at?->toDateString() ?? $r->created_at->toDateString(),
+                'notes'    => $r->meta_notes ?? $r->release_notes ?? '',
+                'current'  => version_compare($r->version, $this->currentVersion, '='),
+            ])->all();
+
         } catch (\Throwable) {
-            // DB not yet migrated — will show "never checked" state
+            // DB not yet migrated — fallbacks (empty arrays) already set as property defaults
         }
     }
 
@@ -92,19 +126,19 @@ class WebkernelUpgrade extends Page
                 $this->lastChecked   = $log->checked_at->toIso8601String();
 
                 if ($this->isUpToDate) {
-                    $this->dispatch('webkernel-toast', type: 'success', message: 'Webkernel is up to date (v' . $this->currentVersion . ').');
+                    Notification::make()->title('Webkernel is up to date (v' . $this->currentVersion . ').')->success()->send();
                 } else {
-                    $this->dispatch('webkernel-toast', type: 'warning', message: "Update available: v{$this->latestVersion}");
+                    Notification::make()->title("Update available: v{$this->latestVersion}")->warning()->send();
                 }
             } elseif ($log->status === WebkernelUpdateCheck::STATUS_RATE_LIMITED) {
-                $this->dispatch('webkernel-toast', type: 'warning', message: 'GitHub rate limit reached. Try again later.');
+                Notification::make()->title('GitHub rate limit reached. Try again later.')->warning()->send();
             } elseif ($log->status === WebkernelUpdateCheck::STATUS_SKIPPED) {
-                $this->dispatch('webkernel-toast', type: 'info', message: 'Already checked recently. Showing cached result.');
+                Notification::make()->title('Already checked recently. Showing cached result.')->info()->send();
             } else {
-                $this->dispatch('webkernel-toast', type: 'danger', message: 'Check failed: ' . ($log->error_message ?? 'unknown error'));
+                Notification::make()->title('Check failed: ' . ($log->error_message ?? 'unknown error'))->danger()->send();
             }
         } catch (\Throwable $e) {
-            $this->dispatch('webkernel-toast', type: 'danger', message: 'Could not check for updates: ' . $e->getMessage());
+            Notification::make()->title('Could not check for updates: ' . $e->getMessage())->danger()->send();
         }
     }
 
@@ -128,13 +162,13 @@ class WebkernelUpgrade extends Page
             $this->updateStatus = 'Kernel updated successfully!';
             $this->isUpToDate   = true;
 
-            $this->dispatch('wk-toast', type: 'success', message: 'Kernel update complete. Please refresh the page.');
+            Notification::make()->title('Kernel update complete. Please refresh the page.')->success()->send();
         } catch (NetworkException $e) {
             $this->updateError = 'Network error: ' . $e->getMessage();
-            $this->dispatch('wk-toast', type: 'error', message: $this->updateError);
+            Notification::make()->title($this->updateError)->danger()->send();
         } catch (\Throwable $e) {
             $this->updateError = 'Update failed: ' . $e->getMessage();
-            $this->dispatch('wk-toast', type: 'error', message: $this->updateError);
+            Notification::make()->title($this->updateError)->danger()->send();
         } finally {
             $this->isUpdating = false;
         }
@@ -149,14 +183,17 @@ class WebkernelUpgrade extends Page
         $this->updateStatus = "Rolling back to v{$version}…";
 
         try {
-            // TODO: wire to WebkernelUpdater::webkernel()->rollbackTo($version)
-            // WebkernelUpdater::webkernel()->rollbackTo($version);
+            $updater = WebkernelUpdater::webkernel()
+                ->toVersion($version)
+                ->withBackup($this->createBackup);
+
+            $updater->execute();
 
             $this->updateStatus = "Rollback to v{$version} complete. Please refresh.";
-            $this->dispatch('wk-toast', type: 'success', message: "Rolled back to v{$version}.");
+            Notification::make()->title("Rolled back to v{$version}.")->success()->send();
         } catch (\Throwable $e) {
             $this->updateError = 'Rollback failed: ' . $e->getMessage();
-            $this->dispatch('wk-toast', type: 'error', message: $this->updateError);
+            Notification::make()->title($this->updateError)->danger()->send();
         } finally {
             $this->isUpdating = false;
         }
@@ -171,12 +208,17 @@ class WebkernelUpgrade extends Page
         $this->updateStatus = 'Force-resetting kernel…';
 
         try {
-            // TODO: wire to WebkernelUpdater::webkernel()->forceReset()
+            $updater = WebkernelUpdater::webkernel()
+                ->toVersion($this->currentVersion)
+                ->withBackup($this->createBackup);
+
+            $updater->execute();
+
             $this->updateStatus = 'Kernel has been force-reset. Please refresh.';
-            $this->dispatch('wk-toast', type: 'success', message: 'Kernel force-reset complete.');
+            Notification::make()->title('Kernel force-reset complete.')->success()->send();
         } catch (\Throwable $e) {
             $this->updateError = 'Force reset failed: ' . $e->getMessage();
-            $this->dispatch('wk-toast', type: 'error', message: $this->updateError);
+            Notification::make()->title($this->updateError)->danger()->send();
         } finally {
             $this->isUpdating = false;
         }

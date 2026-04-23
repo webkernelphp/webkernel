@@ -76,8 +76,8 @@ final class GitRunner
     public function add(string $pathspec = '.'): GitResult               { return $this->run(['add', $pathspec]); }
     public function commit(string $message): GitResult                   { return $this->run(['commit', '-m', $message]); }
     public function commitSigned(string $message): GitResult             { return $this->run(['commit', '-S', '-m', $message]); }
-    public function tag(string $name): GitResult                         { return $this->run(['tag', $name]); }
-    public function tagSigned(string $name): GitResult                   { return $this->run(['tag', '-s', $name]); }
+    public function tag(string $name, string $message = ''): GitResult   { return $this->run($message !== '' ? ['tag', '-a', '-m', $message, $name] : ['tag', $name]); }
+    public function tagSigned(string $name, string $message = ''): GitResult { return $this->run(['tag', '-s', '-m', $message ?: $name, $name]); }
     public function push(string $remote, string $ref): GitResult         { return $this->run(['push', $remote, $ref]); }
     public function signingFormat(): GitResult                           { return $this->run(['config', '--get', 'gpg.format']); }
     public function signingKey(): GitResult                              { return $this->run(['config', '--get', 'user.signingkey']); }
@@ -104,6 +104,10 @@ final class GitRunner
         $r = $this->describeExactTag('HEAD');
         return $r->ok ? $r->stdout : '';
     }
+
+    public function configGlobal(string $key, string $value): GitResult  { return $this->run(['config', '--global', $key, $value]); }
+    public function amendNoEdit(): GitResult                             { return $this->run(['commit', '--amend', '--no-edit']); }
+    public function amendNoEditSigned(): GitResult                      { return $this->run(['commit', '--amend', '-S', '--no-edit']); }
 
     public function hasSigning(): bool
     {

@@ -116,6 +116,35 @@ final class GitHubAdapter implements GitHostAdapter
     }
 
     /**
+     * Fetch the annotated tag object (with message) for a given tag SHA.
+     * Returns the tag object including the annotation message, or null if not found.
+     *
+     * @return array<string, mixed>|null
+     * @throws NetworkException
+     */
+    public function annotatedTag(Source $source, string $sha): ?array
+    {
+        $client  = $this->client($source);
+        $apiBase = $source->apiBase();
+        $url     = "{$apiBase}/repos/{$source->vendor}/{$source->slug}/git/tags/{$sha}";
+        $result  = $client->getWithStatus($url);
+
+        if ($result['status'] === 404) {
+            return null;
+        }
+
+        if ($result['status'] !== 200) {
+            throw new NetworkException(
+                "GitHub git/tags endpoint returned HTTP {$result['status']} for [{$source}] sha={$sha}."
+            );
+        }
+
+        $data = json_decode($result['body'], true);
+
+        return is_array($data) ? $data : null;
+    }
+
+    /**
      * Query the GitHub rate-limit API (free — does not consume quota).
      * Returns remaining request count and the reset timestamp.
      *
