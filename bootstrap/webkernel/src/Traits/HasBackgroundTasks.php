@@ -47,7 +47,7 @@ trait HasBackgroundTasks
 
         Process::fromArray([
             PHP_BINARY,
-            base_path('artisan'),
+            BASE_PATH . '/artisan',
             'webkernel:run-job',
             $jobJson,
         ], base_path(), null, null, null)
