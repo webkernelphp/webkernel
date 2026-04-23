@@ -2,8 +2,8 @@
 
 namespace Webkernel\BackOffice\System\Presentation\Resources\WebkernelSettings\Schemas;
 
-use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Section;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Checkbox;
 use Filament\Schemas\Schema;
@@ -32,12 +32,12 @@ class WebkernelSettingForm
     private static function createForm(Schema $schema): Schema
     {
         return $schema->components([
-            Grid::make(2)->schema([
                 Section::make('Basic Info')->schema([
                     Select::make('category')
                         ->label('Category')
                         ->options(WebkernelSettingCategory::pluck('label', 'key')->toArray())
                         ->required()
+                        ->native(false)
                         ->searchable(),
 
                     TextInput::make('key')
@@ -70,6 +70,7 @@ class WebkernelSettingForm
                             'textarea' => 'Textarea',
                             'json' => 'JSON',
                         ])
+                        ->native(false)
                         ->required()
                         ->reactive(),
 
@@ -109,7 +110,6 @@ class WebkernelSettingForm
                     Toggle::make('is_custom')
                         ->label('User-created'),
                 ])->columnSpan(2)->columns(2),
-            ]),
         ]);
     }
 
@@ -163,7 +163,69 @@ class WebkernelSettingForm
                 ->required(),
         };
 
-        return $baseField;
+        $dependents = WebkernelSetting::where('depends_on_key', $record->key)
+            ->where('category', $record->category)
+            ->orderBy('sort_order')
+            ->get();
+
+        if ($dependents->isEmpty()) {
+            return $baseField;
+        }
+
+        $dependentFields = [];
+        foreach ($dependents as $dep) {
+            $dependentFields[] = self::buildDependentField($dep, $record);
+        }
+
+        return Section::make('Group: ' . $record->label)
+            ->description('Related settings')
+            ->schema(array_merge([$baseField], $dependentFields))
+            ->collapsible();
+    }
+
+    private static function buildDependentField(WebkernelSetting $dependent, WebkernelSetting $parent): mixed
+    {
+        $field = match ($dependent->type) {
+            'password' => TextInput::make("_dependent_{$dependent->key}")
+                ->label($dependent->label)
+                ->password()
+                ->revealable()
+                ->hint($dependent->description)
+                ->default($dependent->resolvedValue()),
+
+            'boolean' => Toggle::make("_dependent_{$dependent->key}")
+                ->label($dependent->label)
+                ->hint($dependent->description)
+                ->default($dependent->resolvedValue()),
+
+            'integer' => TextInput::make("_dependent_{$dependent->key}")
+                ->label($dependent->label)
+                ->numeric()
+                ->hint($dependent->description)
+                ->default($dependent->resolvedValue()),
+
+            'select' => Select::make("_dependent_{$dependent->key}")
+                ->label($dependent->label)
+                ->options(self::options($dependent))
+                ->hint($dependent->description)
+                ->default($dependent->resolvedValue()),
+
+            'textarea' => Textarea::make("_dependent_{$dependent->key}")
+                ->label($dependent->label)
+                ->rows(3)
+                ->hint($dependent->description)
+                ->default($dependent->resolvedValue()),
+
+            default => TextInput::make("_dependent_{$dependent->key}")
+                ->label($dependent->label)
+                ->hint($dependent->description)
+                ->default($dependent->resolvedValue()),
+        };
+
+        return $field
+            ->disabled()
+            ->dehydrated(false)
+            ->visible(fn($get) => $get('value') == $parent->depends_on_value || ($parent->type === 'boolean' && $get('value')));
     }
 
     private static function options(WebkernelSetting $setting): array
