@@ -20,7 +20,7 @@ use Illuminate\Support\Str;
 use Webkernel\Businesses\Models\Business;
 use Webkernel\Connectors\Mailer;
 use Webkernel\BackOffice\Installer\Presentation\Installer\InstallationState;
-use Webkernel\System\Support\CapabilityMap;
+use Webkernel\System\Host\Support\CapabilityMap;
 use Webkernel\Users\Enum\UserPrivilegeLevel;
 use Webkernel\Users\Models\User;
 
