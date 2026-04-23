@@ -95,7 +95,7 @@ class ListBackgroundTasks extends ListRecords
                     ->slideOver()
                     ->modalWidth('7xl')
                     ->modalHeading(fn (WebkernelBackgroundTask $record): string => "Task: {$record->label}")
-                    ->modalContent(fn (WebkernelBackgroundTask $record) => view('webkernel-system::actions.watch-task'))
+                    ->modalContent(fn (WebkernelBackgroundTask $record) => view('webkernel-system::actions.watch-task', ['task' => $record]))
                     ->disableForm(),
 
                 Action::make('cancel')
