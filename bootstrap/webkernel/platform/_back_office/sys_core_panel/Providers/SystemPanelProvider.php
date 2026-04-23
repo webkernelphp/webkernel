@@ -25,7 +25,7 @@ use Webkernel\BackOffice\System\Presentation\Resources\BackgroundTasks\Backgroun
 use Filament\Support\Enums\Width;
 use Filament\Support\Colors\Color;
 use Filament\Navigation\NavigationGroup;
-use Filament\Navigation\UserMenuItem;
+use Filament\Navigation\MenuItem;
 
 final class SystemPanelProvider extends PanelProvider
 {
@@ -95,7 +95,7 @@ final class SystemPanelProvider extends PanelProvider
             )
             ->widgets([AccountWidget::class, FilamentInfoWidget::class])
             ->userMenuItems([
-                UserMenuItem::make()
+                MenuItem::make()
                     ->label(fn () => WebkernelBackgroundTask::active()->count() . ' background task(s) running')
                     ->icon('heroicon-o-clock')
                     ->url(fn () => BackgroundTasksResource::getUrl())

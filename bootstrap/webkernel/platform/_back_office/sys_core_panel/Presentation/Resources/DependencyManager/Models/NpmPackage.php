@@ -21,9 +21,13 @@ class NpmPackage extends Model
         'has_update' => 'boolean',
     ];
 
-    protected $casts = [
-        'required_by' => 'json',
-    ];
+    public function getRequiredByAttribute(): array
+    {
+        if (empty($this->attributes['required_by'])) {
+            return [];
+        }
+        return array_filter(explode(',', $this->attributes['required_by']));
+    }
 
     public function getRows(): array
     {

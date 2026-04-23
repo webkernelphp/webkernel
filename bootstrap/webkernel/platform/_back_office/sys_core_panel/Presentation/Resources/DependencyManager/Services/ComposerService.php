@@ -183,6 +183,7 @@ class ComposerService
                     $outdatedInfo = $outdatedMap[$name] ?? null;
                     $hasUpdate = $outdatedInfo !== null;
 
+                    $deps = $reverseDeps[$name] ?? [];
                     return [
                         'name' => $name,
                         'version' => $version,
@@ -190,7 +191,7 @@ class ComposerService
                         'latest' => $outdatedInfo['latest'] ?? $version,
                         'latest-status' => $outdatedInfo['latest-status'] ?? 'up-to-date',
                         'type' => 'dependency',
-                        'required_by' => json_encode($reverseDeps[$name] ?? []),
+                        'required_by' => implode(',', $deps),
                         'has_update' => $hasUpdate,
                     ];
                 })

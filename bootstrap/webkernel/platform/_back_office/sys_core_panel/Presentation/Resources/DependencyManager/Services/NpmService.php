@@ -159,6 +159,7 @@ class NpmService
                 $outdatedInfo = $outdatedMap[$name] ?? null;
                 $hasUpdate = $outdatedInfo !== null;
 
+                $deps = $reverseDeps[$name] ?? [];
                 $packages[] = [
                     'name' => $name,
                     'version' => $version,
@@ -166,7 +167,7 @@ class NpmService
                     'latest' => $outdatedInfo['latest'] ?? $version,
                     'latest-status' => $outdatedInfo['latest-status'] ?? 'up-to-date',
                     'type' => $packageInfo['dev'] ? 'devDependencies' : 'dependencies',
-                    'required_by' => json_encode($reverseDeps[$name] ?? []),
+                    'required_by' => implode(',', $deps),
                     'has_update' => $hasUpdate,
                 ];
             }
