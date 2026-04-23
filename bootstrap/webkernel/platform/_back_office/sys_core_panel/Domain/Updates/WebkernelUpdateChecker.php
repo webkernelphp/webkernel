@@ -300,16 +300,23 @@ final class WebkernelUpdateChecker
             }
 
             $message = $tagObj['message'];
-            $parts = explode("\n", $message, 2);
-            if (count($parts) < 2) {
+            $lines = explode("\n", $message);
+
+            if (count($lines) < 3) {
                 return;
             }
 
-            $metaJson = trim($parts[1]);
-            if ($metaJson === '') {
+            $metaJson = trim($lines[2]);
+            if ($metaJson === '' || !str_starts_with($metaJson, '{')) {
                 return;
             }
 
+            $metaEnd = strpos($metaJson, '}');
+            if ($metaEnd === false) {
+                return;
+            }
+
+            $metaJson = substr($metaJson, 0, $metaEnd + 1);
             $meta = json_decode($metaJson, true);
             if (!is_array($meta)) {
                 return;
