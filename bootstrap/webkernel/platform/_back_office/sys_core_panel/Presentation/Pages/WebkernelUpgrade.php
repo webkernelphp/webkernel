@@ -63,15 +63,28 @@ class WebkernelUpgrade extends Page implements UpgradeOperation, HasForms
         return [
             Select::make('selectedVersion')
                 ->label('Select Release')
-                ->options(collect($this->releases)->pluck('version')->mapWithKeys(fn($v) => [
-                    $v => collect($this->releases)->firstWhere('version', $v)
-                        ? "v{$v} — " . collect($this->releases)->firstWhere('version', $v)['codename'] . " (" . collect($this->releases)->firstWhere('version', $v)['date'] . ")"
-                        : $v
+                ->options(collect($this->releases)->mapWithKeys(fn($r) => [
+                    $r['version'] => [
+                        'label' => "v{$r['version']} — {$r['codename']} ({$r['date']})",
+                        'color' => $this->getReleaseColor($r['version']),
+                    ]
                 ])->toArray())
                 ->native(false)
                 ->live()
-                ->afterStateUpdated(fn($state) => $this->selectReleaseVersion($state)),
+                ->searchable()
+                ->default($this->currentVersion)
+                ->afterStateUpdated(fn($state) => $state ? $this->selectReleaseVersion($state) : $this->selectReleaseVersion($this->currentVersion)),
         ];
+    }
+
+    private function getReleaseColor(string $version): string
+    {
+        $cmp = version_compare($version, $this->currentVersion);
+        return match($cmp) {
+            -1 => 'danger',    // Older versions: red
+            0  => 'gray',      // Current version: neutral
+            1  => 'success',   // Newer versions: green
+        };
     }
 
     public function mount(): void
