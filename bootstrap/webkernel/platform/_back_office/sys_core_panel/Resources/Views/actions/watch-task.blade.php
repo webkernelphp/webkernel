@@ -1,1 +1,1 @@
-@livewire('webkernel-backend-system-task-stream', ['task' => $getRecord()])
+@livewire('task-stream', ['task' => $getRecord()])

@@ -67,7 +67,8 @@ final class SystemManagerServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-
+        // ── Register Livewire components ──────────────────────────────────────
+        \Livewire\Livewire::component('task-stream', \Webkernel\BackOffice\System\Livewire\TaskStreamComponent::class);
 
         // ── Auto-migrate on fresh install ─────────────────────────────────────
         // Idempotent: Schema::hasTable() is a near-instant no-op once done.
