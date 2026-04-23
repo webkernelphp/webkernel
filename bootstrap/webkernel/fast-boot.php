@@ -5,7 +5,7 @@ defined('BASE_PATH')      || define('BASE_PATH',      dirname(__DIR__, 2));
 defined('WEBKERNEL_PATH') || define('WEBKERNEL_PATH', __DIR__);
 
 // -- Release data -- stamped by Makefile release|patch|minor|major|info -------
-defined('WEBKERNEL_VERSION')     || define('WEBKERNEL_VERSION','0.11.9');
+defined('WEBKERNEL_VERSION')     || define('WEBKERNEL_VERSION','0.11.0');
 defined('WEBKERNEL_BUILD')       || define('WEBKERNEL_BUILD',127);
 defined('WEBKERNEL_SEMVER')      || define('WEBKERNEL_SEMVER','0.11.9+127');
 defined('WEBKERNEL_CODENAME')    || define('WEBKERNEL_CODENAME','waterfall');

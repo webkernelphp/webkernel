@@ -1,9 +1,6 @@
 <x-filament-panels::page>
 
-@if($this->isProcessing)
-    @include('webkernel-system::filament.pages.processing-upgrade')
-    @php return; @endphp
-@endif
+@if(!$this->isProcessing)
 
 @php
     $steps = [
@@ -1276,6 +1273,15 @@
                 >
                     Upgrade to v{{ $latestVersion }}
                 </x-filament::button>
+                <x-filament::button
+                    color="gray"
+                    icon="heroicon-m-arrow-path"
+                    size="xs"
+                    outlined
+                    wire:click="mountAction('check')"
+                >
+                    Check for Upgrades
+                </x-filament::button>
             @elseif($isUpToDate)
                 <x-filament::badge color="success" icon="heroicon-m-sparkles" size="lg">
                     This Instance is Up to Date
@@ -1695,4 +1701,78 @@
     </div>
 </template>
 </div>
+
+@else
+    {{-- Show progress page when upgrading --}}
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%); color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 2rem;">
+        <div style="width: 100%; max-width: 500px; text-align: center;">
+            <!-- Logo -->
+            <div style="margin-bottom: 3rem;">
+                <div style="width: 80px; height: 80px; margin: 0 auto 1.5rem; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.05); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    @php $favicon = webkernelBrandingUrl('webkernel-favicon'); @endphp
+                    @if($favicon)
+                        <img src="{{ $favicon }}" alt="Webkernel" style="width: 100%; height: 100%; object-fit: contain; padding: 8px;" />
+                    @else
+                        <span style="font-size: 2rem;">⚙️</span>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <h1 style="font-size: 1.75rem; font-weight: 600; margin-bottom: 0.5rem; letter-spacing: -0.02em;">Webkernel Update</h1>
+            <p style="font-size: 0.875rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 2rem;">{{ $updateStatus ?: 'Initializing…' }}</p>
+
+            <div style="width: 100%; height: 3px; background: rgba(255, 255, 255, 0.1); border-radius: 2px; overflow: hidden; margin-bottom: 1rem;">
+                <div style="height: 100%; background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%); border-radius: 2px; transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1); width: {{ $this->getProgressPercentage() }}%;"></div>
+            </div>
+
+            <!-- Steps -->
+            <div style="text-align: left; margin: 2rem 0;">
+                @php
+                    $steps = [
+                        ['label' => 'Creating backup', 'percent' => 15],
+                        ['label' => 'Downloading release', 'percent' => 35],
+                        ['label' => 'Extracting files', 'percent' => 50],
+                        ['label' => 'Verifying integrity', 'percent' => 65],
+                        ['label' => 'Swapping kernel', 'percent' => 80],
+                        ['label' => 'Cleaning up', 'percent' => 90],
+                    ];
+                @endphp
+
+                @foreach($steps as $step)
+                    @php
+                        $progress = $this->getProgressPercentage();
+                        if ($progress >= $step['percent'] + 15) {
+                            $icon = '✓';
+                            $color = 'rgba(255, 255, 255, 0.7)';
+                        } elseif ($progress >= $step['percent']) {
+                            $icon = '⟳';
+                            $color = '#3b82f6';
+                        } else {
+                            $icon = '◯';
+                            $color = 'rgba(255, 255, 255, 0.5)';
+                        }
+                    @endphp
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; color: {{ $color }}; font-size: 0.875rem;">
+                        <span style="font-weight: 600;">{{ $icon }}</span>
+                        <span>{{ $step['label'] }}</span>
+                    </div>
+                @endforeach
+            </div>
+
+            @if($updateError)
+                <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px; padding: 0.875rem; font-size: 0.875rem; color: rgba(239, 68, 68, 0.8); margin-bottom: 1.5rem; font-family: 'Courier New', monospace; line-height: 1.5;">
+                    <strong>Error:</strong><br>{{ $updateError }}
+                </div>
+            @endif
+
+            <!-- Warning -->
+            <div style="background: rgba(217, 119, 6, 0.1); border: 1px solid rgba(217, 119, 6, 0.3); border-radius: 6px; padding: 0.875rem; font-size: 0.8125rem; color: rgba(255, 255, 255, 0.8); line-height: 1.6;">
+                ⚠️ <strong>Do not close this window.</strong> The system will resume automatically once the operation completes.
+            </div>
+        </div>
+    </div>
+
+@endif
 </x-filament-panels::page>
+
