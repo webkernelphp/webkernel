@@ -116,18 +116,19 @@ final class GitHubAdapter implements GitHostAdapter
     }
 
     /**
-     * Fetch the annotated tag object (with message) for a given tag SHA.
+     * Fetch the annotated tag object (with message) for a given tag name.
      * Returns the tag object including the annotation message, or null if not found.
      *
      * @return array<string, mixed>|null
      * @throws NetworkException
      */
-    public function annotatedTag(Source $source, string $sha): ?array
+    public function annotatedTag(Source $source, string $tagName): ?array
     {
         $client  = $this->client($source);
         $apiBase = $source->apiBase();
-        $url     = "{$apiBase}/repos/{$source->vendor}/{$source->slug}/git/tags/{$sha}";
-        $result  = $client->getWithStatus($url);
+
+        $url = "{$apiBase}/repos/{$source->vendor}/{$source->slug}/git/refs/tags/{$tagName}";
+        $result = $client->getWithStatus($url);
 
         if ($result['status'] === 404) {
             return null;
@@ -135,11 +136,28 @@ final class GitHubAdapter implements GitHostAdapter
 
         if ($result['status'] !== 200) {
             throw new NetworkException(
-                "GitHub git/tags endpoint returned HTTP {$result['status']} for [{$source}] sha={$sha}."
+                "GitHub git/refs/tags endpoint returned HTTP {$result['status']} for [{$source}] tag={$tagName}."
             );
         }
 
-        $data = json_decode($result['body'], true);
+        $ref = json_decode($result['body'], true);
+        if (!is_array($ref) || ($ref['object']['type'] ?? '') !== 'tag') {
+            return null;
+        }
+
+        $tagSha = $ref['object']['sha'] ?? null;
+        if (!$tagSha) {
+            return null;
+        }
+
+        $tagUrl = "{$apiBase}/repos/{$source->vendor}/{$source->slug}/git/tags/{$tagSha}";
+        $tagResult = $client->getWithStatus($tagUrl);
+
+        if ($tagResult['status'] !== 200) {
+            return null;
+        }
+
+        $data = json_decode($tagResult['body'], true);
 
         return is_array($data) ? $data : null;
     }

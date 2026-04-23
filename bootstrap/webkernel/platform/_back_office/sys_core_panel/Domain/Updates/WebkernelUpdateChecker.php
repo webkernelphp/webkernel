@@ -277,8 +277,8 @@ final class WebkernelUpdateChecker
 
     private function applyAnnotatedTagData(WebkernelRelease $record, array $tag): void
     {
-        $sha = $tag['commit']['sha'] ?? null;
-        if ($sha === null) {
+        $tagName = $tag['name'] ?? null;
+        if ($tagName === null) {
             return;
         }
 
@@ -294,7 +294,7 @@ final class WebkernelUpdateChecker
                 return;
             }
 
-            $tagObj = $adapter->annotatedTag($source, $sha);
+            $tagObj = $adapter->annotatedTag($source, $tagName);
             if ($tagObj === null || ($tagObj['message'] ?? '') === '') {
                 return;
             }
@@ -337,8 +337,8 @@ final class WebkernelUpdateChecker
             if (isset($meta['doc_links']) && is_array($meta['doc_links'])) {
                 $record->meta_doc_links = json_encode($meta['doc_links']);
             }
-        } catch (\Throwable) {
-            // Annotated tag fetch is best-effort — don't fail the sync
+        } catch (\Throwable $e) {
+            error_log('applyAnnotatedTagData failed: ' . $e->getMessage());
         }
     }
 
