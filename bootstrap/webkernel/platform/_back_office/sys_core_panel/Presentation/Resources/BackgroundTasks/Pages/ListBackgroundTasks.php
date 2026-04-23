@@ -2,9 +2,9 @@
 
 namespace Webkernel\BackOffice\System\Presentation\Resources\BackgroundTasks\Pages;
 
-use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Tables;
+use Filament\Actions\Action;
 use Filament\Tables\Table;
 use Webkernel\BackOffice\System\Models\WebkernelBackgroundTask;
 use Webkernel\BackOffice\System\Presentation\Resources\BackgroundTasks\BackgroundTasksResource;
@@ -74,7 +74,7 @@ class ListBackgroundTasks extends ListRecords
                     ]),
             ])
             ->actions([
-                Tables\Actions\Action::make('view-output')
+                Action::make('view-output')
                     ->label('Output')
                     ->icon('heroicon-o-document-text')
                     ->visible(fn (WebkernelBackgroundTask $record): bool => !empty($record->output) || !empty($record->error))
@@ -85,7 +85,7 @@ class ListBackgroundTasks extends ListRecords
                     ])->render())
                     ->closeModalByClickingAway(false),
 
-                Tables\Actions\Action::make('cancel')
+                Action::make('cancel')
                     ->label('Cancel')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
@@ -93,7 +93,7 @@ class ListBackgroundTasks extends ListRecords
                     ->requiresConfirmation()
                     ->action(fn (WebkernelBackgroundTask $record) => $record->markCancelled()),
 
-                Tables\Actions\Action::make('retry')
+                Action::make('retry')
                     ->label('Retry')
                     ->icon('heroicon-o-arrow-clockwise')
                     ->color('warning')
