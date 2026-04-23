@@ -85,7 +85,7 @@ class WebkernelUpgrade extends Page implements UpgradeOperation, HasForms
 
         if ($cmp === 0) {
             $colorVar = '--primary-600';
-            $marker = '● ';
+            $marker = '* ';
             $fontWeight = 'bold';
         } elseif ($cmp < 0) {
             $tone = $this->getColorTone($release, 'danger');
