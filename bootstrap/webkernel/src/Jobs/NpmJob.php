@@ -12,7 +12,7 @@ class NpmJob extends Job
     public const STRATEGY_UPDATE_ALL = 'update-all';
     public const STRATEGY_INSTALL = 'install';
 
-    protected int $timeout = 600;
+    protected ?int $timeout = 600; // Property Webkernel\Jobs\NpmJob::$timeout must have type null|int
 
     public function __construct(
         private string $taskId,

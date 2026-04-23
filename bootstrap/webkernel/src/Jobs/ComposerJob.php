@@ -12,7 +12,7 @@ class ComposerJob extends Job
     public const STRATEGY_UPDATE_ALL = 'update-all';
     public const STRATEGY_REQUIRE = 'require';
 
-    protected int $timeout = 600;
+    protected ?int $timeout = 600;
 
     public function __construct(
         private string $taskId,
