@@ -12,9 +12,12 @@ use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Webkernel\BackOffice\System\Models\WebkernelBackgroundTask;
 use Webkernel\BackOffice\System\Presentation\Resources\BackgroundTasks\BackgroundTasksResource;
+use Webkernel\Traits\HasBackgroundTasks;
 
 class ListBackgroundTasks extends ListRecords
 {
+    use HasBackgroundTasks;
+
     protected static string $resource = BackgroundTasksResource::class;
 
     public function table(Table $table): Table
@@ -176,26 +179,22 @@ class ListBackgroundTasks extends ListRecords
     {
         $record->update(['status' => 'pending', 'output' => null, 'error' => null]);
 
-        $jobClass = match ($record->type) {
-            'composer_update' => \Webkernel\BackOffice\System\Jobs\UpdateComposerPackageJob::class,
-            'composer_update_all' => \Webkernel\BackOffice\System\Jobs\UpdateAllComposerPackagesJob::class,
-            'npm_update' => \Webkernel\BackOffice\System\Jobs\UpdateNpmPackageJob::class,
-            'npm_update_all' => \Webkernel\BackOffice\System\Jobs\UpdateAllNpmPackagesJob::class,
-            default => null,
-        };
-
-        if (!$jobClass) {
-            return;
-        }
-
         $payload = $record->payload?->toArray() ?? [];
 
-        if ($record->type === 'composer_update' || $record->type === 'npm_update') {
-            $job = new $jobClass($record->id, $payload['package'] ?? '', $payload['version'] ?? '');
-        } else {
-            $job = new $jobClass($record->id);
-        }
-
-        dispatch($job);
+        match ($record->type) {
+            'composer_update' => $this->dispatchComposerPackageUpdate(
+                (string) $record->id,
+                $payload['package'] ?? '',
+                $payload['version'] ?? ''
+            ),
+            'composer_update_all' => $this->dispatchAllComposerPackagesUpdate((string) $record->id),
+            'npm_update' => $this->dispatchNpmPackageUpdate(
+                (string) $record->id,
+                $payload['package'] ?? '',
+                $payload['version'] ?? ''
+            ),
+            'npm_update_all' => $this->dispatchAllNpmPackagesUpdate((string) $record->id),
+            default => null,
+        };
     }
 }
