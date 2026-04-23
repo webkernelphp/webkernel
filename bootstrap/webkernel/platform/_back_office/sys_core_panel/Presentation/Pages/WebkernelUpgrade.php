@@ -51,6 +51,7 @@ class WebkernelUpgrade extends Page implements UpgradeOperation
     public array $docLinks          = [];
 
     public string $videoId          = '';
+    public string $selectedVersion  = '';
 
     public function mount(): void
     {
@@ -81,6 +82,29 @@ class WebkernelUpgrade extends Page implements UpgradeOperation
         // Progress updates automatically via getProgressPercentage()
     }
 
+    public function selectReleaseVersion(string $version): void
+    {
+        $this->selectedVersion = $version;
+        $this->loadReleaseMetadata($version);
+    }
+
+    private function loadReleaseMetadata(string $version): void
+    {
+        try {
+            $release = WebkernelRelease::forTarget('webkernel', 'foundation')
+                ->where('version', $version)
+                ->first();
+
+            if ($release) {
+                $this->features = $release->metaFeatures();
+                $this->docLinks = $release->metaDocLinks();
+                $this->videoId  = $release->metaVideoId();
+            }
+        } catch (\Throwable) {
+            // Failed to load metadata
+        }
+    }
+
     private function loadFromLocalRegistry(): void
     {
         try {
@@ -103,10 +127,11 @@ class WebkernelUpgrade extends Page implements UpgradeOperation
                 $this->isUpToDate    = version_compare($this->currentVersion, $latest->version, '>=');
                 $this->lastChecked   = $latest->updated_at->toIso8601String();
 
-                // Load metadata from latest release
-                $this->features = $latest->metaFeatures();
-                $this->docLinks = $latest->metaDocLinks();
-                $this->videoId  = $latest->metaVideoId();
+                // Set selected version to latest and load its metadata
+                if (!$this->selectedVersion) {
+                    $this->selectedVersion = $latest->version;
+                }
+                $this->loadReleaseMetadata($this->selectedVersion);
             }
 
             $this->releases = $sorted->take(20)->map(fn($r) => [

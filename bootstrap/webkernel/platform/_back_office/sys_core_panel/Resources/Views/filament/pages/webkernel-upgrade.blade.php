@@ -1408,6 +1408,33 @@
         A sovereign, performance-optimized foundation built on Laravel, Filament and Livewire.
         Yours to own, deploy and extend.
     </p>
+    @if(count($releases) > 0)
+    <div style="margin: 2rem 0; display: flex; gap: 1rem; align-items: center;">
+        <label for="release-selector" style="font-size: 0.875rem; font-weight: 500; color: var(--wk-text-muted); min-width: fit-content;">View release:</label>
+        <select
+            id="release-selector"
+            wire:change="selectReleaseVersion($event.target.value)"
+            style="
+                padding: 0.5rem 0.75rem;
+                border: 1px solid var(--wk-border);
+                border-radius: var(--wk-radius);
+                background: var(--wk-surface-card);
+                color: var(--wk-text);
+                font-family: var(--wk-sans);
+                font-size: 0.875rem;
+                cursor: pointer;
+                transition: border-color 0.2s;
+            "
+            x-on:change="$el.style.borderColor = 'var(--wk-accent)'; setTimeout(() => { $el.style.borderColor = 'var(--wk-border)'; }, 200);"
+        >
+            @foreach($releases as $release)
+                <option value="{{ $release['version'] }}" @if($release['version'] === $selectedVersion) selected @endif>
+                    v{{ $release['version'] }} — {{ $release['codename'] }} ({{ $release['date'] }})
+                </option>
+            @endforeach
+        </select>
+    </div>
+    @endif
     @if($hasTagData)
     <div class="webkernel-upgrade-page-features-grid">
         @foreach($features as $feat)
