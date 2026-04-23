@@ -12,6 +12,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Webkernel\BackOffice\System\Models\WebkernelSetting;
 use Webkernel\BackOffice\System\Models\WebkernelSettingCategory;
+use Illuminate\Database\Eloquent\Builder;
 
 class WebkernelSettingForm
 {
@@ -115,14 +116,13 @@ class WebkernelSettingForm
 
     private static function buildValueField(): mixed
     {
-        // Get the record being edited
         $record = request()->route('record');
 
         if (!$record) {
             return TextInput::make('value')->label('Value');
         }
 
-        return match ($record->type) {
+        $baseField = match ($record->type) {
             'password' => TextInput::make('value')
                 ->label($record->label)
                 ->password()
@@ -163,6 +163,8 @@ class WebkernelSettingForm
                 ->helperText("Key: {$record->key} • v{$record->introduced_in_version}")
                 ->required(),
         };
+
+        return $baseField;
     }
 
     private static function options(WebkernelSetting $setting): array

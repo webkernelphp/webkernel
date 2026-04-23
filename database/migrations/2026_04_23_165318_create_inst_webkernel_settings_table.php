@@ -55,12 +55,18 @@ return new class extends Migration
             $table->string('last_modified_by')->nullable();
             $table->dateTime('last_touched_at')->nullable();
 
+            $table->string('depends_on_key')->nullable();
+            $table->string('depends_on_value')->nullable();
+            $table->integer('sort_order')->default(0);
+
             $table->timestamps();
 
             $table->unique(['category', 'key']);
             $table->index(['registry', 'vendor', 'module']);
             $table->index('is_custom');
             $table->index('last_touched_at');
+            $table->index(['depends_on_key', 'depends_on_value']);
+            $table->index('sort_order');
 
             $table->foreign('category')
                 ->references('key')

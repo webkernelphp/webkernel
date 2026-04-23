@@ -18,6 +18,7 @@ return [
                 'label' => 'Application Name',
                 'description' => 'The name of your Webkernel instance',
                 'default_value' => 'Webkernel',
+                'sort_order' => 10,
             ],
 
             [
@@ -30,6 +31,7 @@ return [
                     fn ($tz) => ['value' => $tz, 'label' => $tz],
                     timezone_identifiers_list()
                 ),
+                'sort_order' => 20,
             ],
 
             [
@@ -38,6 +40,7 @@ return [
                 'label' => 'Application URL',
                 'description' => 'The primary URL where this instance is accessed',
                 'default_value' => env('APP_URL', 'http://localhost'),
+                'sort_order' => 30,
             ],
 
             [
@@ -46,6 +49,7 @@ return [
                 'label' => 'Debug Mode',
                 'description' => 'Show detailed error messages (disable in production)',
                 'default_value' => false,
+                'sort_order' => 40,
             ],
 
         ],
@@ -75,9 +79,9 @@ return [
                 'label' => 'SMTP Host',
                 'description' => 'Mail server hostname',
                 'default_value' => env('MAIL_HOST', 'localhost'),
-                'meta_json' => [
-                    'depends_on' => ['key' => 'enabled', 'value' => true],
-                ],
+                'depends_on_key' => 'enabled',
+                'depends_on_value' => '1',
+                'sort_order' => 20,
             ],
 
             [
@@ -86,9 +90,9 @@ return [
                 'label' => 'SMTP Port',
                 'description' => 'Mail server port (25, 465, 587)',
                 'default_value' => (int) env('MAIL_PORT', 587),
-                'meta_json' => [
-                    'depends_on' => ['key' => 'enabled', 'value' => true],
-                ],
+                'depends_on_key' => 'enabled',
+                'depends_on_value' => '1',
+                'sort_order' => 30,
             ],
 
             [
@@ -102,9 +106,9 @@ return [
                     ['value' => 'ssl', 'label' => 'SSL'],
                     ['value' => 'none', 'label' => 'None'],
                 ],
-                'meta_json' => [
-                    'depends_on' => ['key' => 'enabled', 'value' => true],
-                ],
+                'depends_on_key' => 'enabled',
+                'depends_on_value' => '1',
+                'sort_order' => 40,
             ],
 
             [
@@ -113,9 +117,9 @@ return [
                 'label' => 'Username',
                 'description' => 'SMTP authentication username',
                 'default_value' => env('MAIL_USERNAME', ''),
-                'meta_json' => [
-                    'depends_on' => ['key' => 'enabled', 'value' => true],
-                ],
+                'depends_on_key' => 'enabled',
+                'depends_on_value' => '1',
+                'sort_order' => 50,
             ],
 
             [
@@ -125,9 +129,9 @@ return [
                 'description' => 'SMTP authentication password',
                 'default_value' => env('MAIL_PASSWORD', ''),
                 'is_sensitive' => true,
-                'meta_json' => [
-                    'depends_on' => ['key' => 'enabled', 'value' => true],
-                ],
+                'depends_on_key' => 'enabled',
+                'depends_on_value' => '1',
+                'sort_order' => 60,
             ],
 
             [
@@ -136,9 +140,9 @@ return [
                 'label' => 'From Name',
                 'description' => 'Sender name for outgoing emails',
                 'default_value' => env('MAIL_FROM_NAME', 'Webkernel'),
-                'meta_json' => [
-                    'depends_on' => ['key' => 'enabled', 'value' => true],
-                ],
+                'depends_on_key' => 'enabled',
+                'depends_on_value' => '1',
+                'sort_order' => 70,
             ],
 
             [
@@ -147,9 +151,9 @@ return [
                 'label' => 'From Address',
                 'description' => 'Sender email address',
                 'default_value' => env('MAIL_FROM_ADDRESS', 'noreply@webkernel.local'),
-                'meta_json' => [
-                    'depends_on' => ['key' => 'enabled', 'value' => true],
-                ],
+                'depends_on_key' => 'enabled',
+                'depends_on_value' => '1',
+                'sort_order' => 80,
             ],
 
         ],
@@ -171,6 +175,7 @@ return [
                 'label' => 'Session Lifetime (minutes)',
                 'description' => 'How long users stay logged in without activity',
                 'default_value' => 120,
+                'sort_order' => 10,
             ],
 
             [
@@ -179,6 +184,7 @@ return [
                 'label' => 'Force HTTPS',
                 'description' => 'Redirect all HTTP traffic to HTTPS',
                 'default_value' => env('APP_ENV') === 'production',
+                'sort_order' => 20,
             ],
 
             [
@@ -187,6 +193,7 @@ return [
                 'label' => 'Minimum Password Length',
                 'description' => 'Minimum characters required for user passwords',
                 'default_value' => 8,
+                'sort_order' => 30,
             ],
 
         ],
@@ -208,6 +215,7 @@ return [
                 'label' => 'Enable Backups',
                 'description' => 'Automatically backup the database and files',
                 'default_value' => true,
+                'sort_order' => 10,
             ],
 
             [
@@ -222,9 +230,9 @@ return [
                     ['value' => 'weekly', 'label' => 'Weekly'],
                     ['value' => 'monthly', 'label' => 'Monthly'],
                 ],
-                'meta_json' => [
-                    'depends_on' => ['key' => 'enabled', 'value' => true],
-                ],
+                'depends_on_key' => 'enabled',
+                'depends_on_value' => '1',
+                'sort_order' => 20,
             ],
 
             [
@@ -233,9 +241,9 @@ return [
                 'label' => 'Retention (days)',
                 'description' => 'Delete backups older than this many days',
                 'default_value' => 30,
-                'meta_json' => [
-                    'depends_on' => ['key' => 'enabled', 'value' => true],
-                ],
+                'depends_on_key' => 'enabled',
+                'depends_on_value' => '1',
+                'sort_order' => 30,
             ],
 
         ],
