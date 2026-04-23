@@ -72,8 +72,8 @@ class WebkernelUpgrade extends Page implements UpgradeOperation, HasForms
                 ->searchable()
                 ->allowHtml()
                 ->wrapOptionLabels(false)
-                ->hint('● Current • Gradient from older (red) to newest (green)')
-                ->hintColor('gray')
+                ->hint('The current is v' . WEBKERNEL_VERSION)
+                ->hintColor('warning')
                 ->default($this->currentVersion)
                 ->afterStateUpdated(fn($state) => $state ? $this->selectReleaseVersion($state) : $this->selectReleaseVersion($this->currentVersion)),
         ];
@@ -85,7 +85,7 @@ class WebkernelUpgrade extends Page implements UpgradeOperation, HasForms
 
         if ($cmp === 0) {
             $colorVar = '--primary-600';
-            $marker = ' ●';
+            $marker = '● ';
             $fontWeight = 'bold';
         } elseif ($cmp < 0) {
             $tone = $this->getColorTone($release, 'danger');
@@ -99,7 +99,7 @@ class WebkernelUpgrade extends Page implements UpgradeOperation, HasForms
             $fontWeight = 'normal';
         }
 
-        return "<span style=\"color: var({$colorVar}); font-weight: {$fontWeight}\">v{$release['version']} — {$release['codename']}{$marker}</span>";
+        return "<span style=\"color: var({$colorVar}); font-weight: {$fontWeight}\">{$marker}v{$release['version']} — {$release['codename']}</span>";
     }
 
     private function getColorTone(array $release, string $colorBase): int
@@ -476,28 +476,46 @@ class WebkernelUpgrade extends Page implements UpgradeOperation, HasForms
     /** @return array<int, Action> */
     protected function getHeaderActions(): array
     {
-        return [
-            Action::make('update')
-                ->label('Install Update')
-                ->icon('heroicon-o-arrow-path')
-                ->color('primary')
-                ->disabled($this->isUpdating || $this->isUpToDate)
+        $actions = [];
+
+        if ($this->selectedVersion && $this->selectedVersion !== $this->currentVersion) {
+            $actions[] = Action::make('rollback')
+                ->label("Rollback to v{$this->selectedVersion}")
+                ->icon('heroicon-o-arrow-uturn-left')
+                ->color('warning')
+                ->disabled($this->isUpdating)
                 ->requiresConfirmation()
-                ->modalHeading('Install Webkernel Core Update?')
+                ->modalHeading("Rollback to v{$this->selectedVersion}?")
                 ->modalDescription(
-                    'A cryptographic backup will be created before the update is applied. ' .
+                    'A cryptographic backup will be created before rollback. ' .
                     'Running processes will be briefly interrupted.'
                 )
-                ->modalSubmitActionLabel('Install Update')
-                ->action(fn() => $this->updateKernel()),
+                ->modalSubmitActionLabel('Rollback')
+                ->action(fn() => $this->rollbackToVersion($this->selectedVersion));
+        }
 
-            Action::make('check')
-                ->label('Check for Updates')
-                ->icon('heroicon-o-arrow-path')
-                ->color('gray')
-                ->outlined()
-                ->action(fn() => $this->checkForUpdates()),
-        ];
+        $actions[] = Action::make('update')
+            ->label('Install Update')
+            ->icon('heroicon-o-arrow-path')
+            ->color('primary')
+            ->disabled($this->isUpdating || $this->isUpToDate)
+            ->requiresConfirmation()
+            ->modalHeading('Install Webkernel Core Update?')
+            ->modalDescription(
+                'A cryptographic backup will be created before the update is applied. ' .
+                'Running processes will be briefly interrupted.'
+            )
+            ->modalSubmitActionLabel('Install Update')
+            ->action(fn() => $this->updateKernel());
+
+        $actions[] = Action::make('check')
+            ->label('Check for Updates')
+            ->icon('heroicon-o-arrow-path')
+            ->color('gray')
+            ->outlined()
+            ->action(fn() => $this->checkForUpdates());
+
+        return $actions;
     }
 
     public static function getNavigationIcon(): string|BackedEnum|Htmlable|null
