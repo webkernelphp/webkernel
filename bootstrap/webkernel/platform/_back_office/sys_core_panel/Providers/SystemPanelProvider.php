@@ -20,6 +20,7 @@ use Webkernel\Pages\Dashboard;
 use Webkernel\Pages\DependencyManager;
 use Filament\Support\Enums\Width;
 use Filament\Support\Colors\Color;
+use Filament\Navigation\NavigationGroup;
 
 final class SystemPanelProvider extends PanelProvider
 {
@@ -40,6 +41,26 @@ final class SystemPanelProvider extends PanelProvider
             ->globalSearch()
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth('screen-xxl')
+            ->navigationGroups([
+                NavigationGroup::make()
+                    ->label('System')
+                    ->icon('layout-dashboard'),
+
+                NavigationGroup::make()
+                    ->label('Infrastructure')
+                    ->icon('database')
+                    ->collapsed(),
+
+                NavigationGroup::make()
+                    ->label('Marketplace')
+                    ->icon('shopping-bag')
+                    ->collapsed(),
+
+                NavigationGroup::make()
+                    ->label('Maintenance')
+                    ->icon('wrench')
+                    ->collapsed(),
+            ])
             ->colors([
                 'primary' => Color::Blue,
             ])
