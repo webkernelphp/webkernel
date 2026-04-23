@@ -71,6 +71,7 @@ return [
                 'label' => 'Enable SMTP',
                 'description' => 'Enable SMTP mail sending',
                 'default_value' => true,
+                'sort_order' => 10,
             ],
 
             [
