@@ -102,6 +102,11 @@ class WebkernelUpgrade extends Page implements UpgradeOperation
                 $this->latestVersion = $latest->version;
                 $this->isUpToDate    = version_compare($this->currentVersion, $latest->version, '>=');
                 $this->lastChecked   = $latest->updated_at->toIso8601String();
+
+                // Load metadata from latest release
+                $this->features = $latest->metaFeatures();
+                $this->docLinks = $latest->metaDocLinks();
+                $this->videoId  = $latest->metaVideoId();
             }
 
             $this->releases = $sorted->take(20)->map(fn($r) => [
