@@ -2,7 +2,7 @@
 
 namespace Webkernel\Traits;
 
-use Symfony\Component\Process\Process;
+use Webkernel\Process;
 use Webkernel\BackOffice\System\Jobs\UpdateAllComposerPackagesJob;
 use Webkernel\BackOffice\System\Jobs\UpdateAllNpmPackagesJob;
 use Webkernel\BackOffice\System\Jobs\UpdateComposerPackageJob;
@@ -43,11 +43,14 @@ trait HasBackgroundTasks
 
     private function runJobInBackground(string $jobClass, array $args): void
     {
-        $jobJson = escapeshellarg(json_encode(['class' => $jobClass, 'args' => $args]));
-        $command = [PHP_BINARY, base_path('artisan'), 'webkernel:run-job', $jobJson];
+        $jobJson = json_encode(['class' => $jobClass, 'args' => $args]);
 
-        $process = new Process($command, base_path());
-        $process->setTimeout(null);
-        $process->start();
+        Process::fromArray([
+            PHP_BINARY,
+            base_path('artisan'),
+            'webkernel:run-job',
+            $jobJson,
+        ], base_path(), null, null, null)
+            ->start();
     }
 }
