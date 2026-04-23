@@ -56,7 +56,10 @@ class ListWebkernelSettings extends ListRecords
 
     protected function getTableQuery(): Builder
     {
-        $query = parent::getTableQuery();
+        $query = parent::getTableQuery()
+            ->orderBy('category')
+            ->orderByRaw('CASE WHEN depends_on_key IS NULL THEN 0 ELSE 1 END')
+            ->orderBy('sort_order');
 
         return match ($this->activeTab) {
             'system' => $query->where('registry', 'webkernel')->whereNull('module'),

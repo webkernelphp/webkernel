@@ -20,6 +20,9 @@ class WebkernelSetting extends Model
     protected $fillable = [
         'id',
         'category',
+        'registry',
+        'vendor',
+        'module',
         'key',
         'type',
         'label',
@@ -27,17 +30,24 @@ class WebkernelSetting extends Model
         'value',
         'default_value',
         'options_json',
+        'is_sensitive',
+        'is_custom',
         'meta_json',
         'enum_class',
-        'is_sensitive',
         'introduced_in_version',
         'last_modified_by',
+        'last_touched_at',
+        'depends_on_key',
+        'depends_on_value',
+        'sort_order',
     ];
 
     protected $casts = [
         'is_sensitive' => 'boolean',
+        'is_custom' => 'boolean',
         'options_json' => 'array',
         'meta_json' => 'array',
+        'last_touched_at' => 'datetime',
     ];
 
     public function history(): HasMany

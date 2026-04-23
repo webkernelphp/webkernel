@@ -28,7 +28,7 @@ class WebkernelUpgrade extends Page implements UpgradeOperation, HasForms
 
     protected static ?int                 $navigationSort           = 6;
     protected static bool                 $shouldRegisterNavigation = true;
-    protected static string|UnitEnum|null $navigationGroup          = 'System';
+    protected static string|UnitEnum|null $navigationGroup          = 'Manage Instance';
 
     public bool   $isUpdating       = false;
     public bool   $isProcessing     = false;
@@ -520,12 +520,12 @@ class WebkernelUpgrade extends Page implements UpgradeOperation, HasForms
 
     public static function getNavigationIcon(): string|BackedEnum|Htmlable|null
     {
-        return 'heroicon-o-rocket-launch';
+        return 'webkernel-logo';
     }
 
     public static function getNavigationLabel(): string
     {
-        return 'Update Kernel';
+        return 'Update This Instance';
     }
 
     public function getTitle(): string|Htmlable

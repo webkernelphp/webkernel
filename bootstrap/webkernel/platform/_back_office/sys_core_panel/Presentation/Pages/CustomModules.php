@@ -19,7 +19,7 @@ use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Http;
 use UnitEnum;
 use Webkernel\Integration\ModuleInstaller;
-use Webkernel\Integration\Registries;
+use Webkernel\Registries;
 use Webkernel\Integration\RegistryCredentials;
 use Webkernel\Integration\Git\Exceptions\NetworkException;
 
@@ -280,7 +280,7 @@ class CustomModules extends Page implements HasForms
 
     public static function getNavigationIcon(): string|BackedEnum|Htmlable|null
     {
-        return 'heroicon-o-cube-transparent';
+        return 'package';
     }
 
     public static function getNavigationLabel(): string

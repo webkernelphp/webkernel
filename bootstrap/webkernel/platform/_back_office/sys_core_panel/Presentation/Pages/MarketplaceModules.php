@@ -177,16 +177,16 @@ class MarketplaceModules extends Page
 
     public static function getNavigationIcon(): string|BackedEnum|Htmlable|null
     {
-        return 'heroicon-o-star';
+        return 'store';
     }
 
     public static function getNavigationLabel(): string
     {
-        return 'Marketplace';
+        return 'Marketplaces';
     }
 
     public function getTitle(): string|Htmlable
     {
-        return 'Marketplace';
+        return 'Marketplaces';
     }
 }

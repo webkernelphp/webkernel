@@ -15,10 +15,15 @@ class WebkernelSettingsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->defaultSort('sort_order', 'asc')
             ->columns([
                 TextColumn::make('label')
                     ->searchable()
                     ->sortable()
+                    ->formatStateUsing(function ($state, $record) {
+                        $prefix = $record->depends_on_key ? '└─ ' : '';
+                        return $prefix . $state;
+                    })
                     ->description(fn ($record) => $record->description),
 
                 TextColumn::make('key')
