@@ -5,6 +5,8 @@ namespace Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\P
 use Carbon\Carbon;
 use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Models\ComposerPackage;
 use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Services\ComposerService;
+use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Actions\UpdateComposerPackageAction;
+use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Actions\UpdateAllComposerPackagesAction;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -23,30 +25,26 @@ class DependencyManagerPage extends Page implements HasTable
 
     protected static ?int $navigationSort = 1;
 
-    protected string $view = 'filament-dependency-manager::pages.dependency-manager';
+    protected string $view = 'webkernel-system::pages.dependency-manager';
 
     public function getTitle(): string
     {
-        return config('dependency-manager.composer.title')
-            ?? __('filament-dependency-manager::dependency-manager.composer.title');
+        return 'Composer Dependencies';
     }
 
     public static function getNavigationLabel(): string
     {
-        return config('dependency-manager.composer.navigation_label')
-            ?? __('filament-dependency-manager::dependency-manager.composer.navigation_label');
+        return 'Composer';
     }
 
     public static function getNavigationGroup(): ?string
     {
-        return config('dependency-manager.navigation.group')
-            ?? __('filament-dependency-manager::dependency-manager.navigation.group');
+        return 'Maintenance';
     }
 
     public static function getNavigationIcon(): ?string
     {
-        return config('dependency-manager.composer.icon')
-            ?? 'heroicon-o-code-bracket-square';
+        return 'heroicon-o-code-bracket-square';
     }
 
     public static function getNavigationBadge(): ?string
@@ -67,7 +65,7 @@ class DependencyManagerPage extends Page implements HasTable
             ->query(ComposerPackage::query())
             ->columns([
                 TextColumn::make('name')
-                    ->label(__('filament-dependency-manager::dependency-manager.table.columns.package'))
+                    ->label('Package')
                     ->weight('bold')
                     ->searchable()
                     ->sortable()
@@ -75,17 +73,17 @@ class DependencyManagerPage extends Page implements HasTable
                     ->openUrlInNewTab(),
 
                 TextColumn::make('version')
-                    ->label(__('filament-dependency-manager::dependency-manager.table.columns.installed'))
+                    ->label('Installed')
                     ->badge()
                     ->color('gray'),
 
                 TextColumn::make('latest')
-                    ->label(__('filament-dependency-manager::dependency-manager.table.columns.latest'))
+                    ->label('Latest')
                     ->badge()
                     ->color('success'),
 
                 TextColumn::make('latest-status')
-                    ->label(__('filament-dependency-manager::dependency-manager.table.columns.update_type'))
+                    ->label('Update Type')
                     ->badge()
                     ->sortable()
                     ->color(fn (string $state) => match ($state) {
@@ -94,48 +92,37 @@ class DependencyManagerPage extends Page implements HasTable
                         default => 'success',
                     })
                     ->formatStateUsing(fn (string $state) => match ($state) {
-                        'semver-safe-update' => __('filament-dependency-manager::dependency-manager.table.status.minor'),
-                        'update-possible' => __('filament-dependency-manager::dependency-manager.table.status.major'),
-                        default => __('filament-dependency-manager::dependency-manager.table.status.up_to_date'),
+                        'semver-safe-update' => 'Minor Update',
+                        'update-possible' => 'Major Update',
+                        default => 'Up to date',
                     }),
 
                 TextColumn::make('latest-release-date')
-                    ->label(__('filament-dependency-manager::dependency-manager.table.columns.last_updated'))
+                    ->label('Last Updated')
                     ->formatStateUsing(
                         fn ($state) => $state ? Carbon::parse($state)->diffForHumans() : '—'
                     ),
 
                 TextColumn::make('description')
-                    ->label(__('filament-dependency-manager::dependency-manager.table.columns.description'))
+                    ->label('Description')
                     ->limit(50)
                     ->tooltip(fn ($state) => $state)
                     ->color('gray'),
             ])
             ->actions([
-                Action::make('copy_command')
-                    ->label(__('filament-dependency-manager::dependency-manager.table.actions.copy_command'))
-                    ->icon('heroicon-o-clipboard-document')
-                    ->color('warning')
-                    ->action(function (ComposerPackage $record) {
-                        $command = "composer require {$record->name}:{$record->latest}";
-                        $this->js("navigator.clipboard.writeText('{$command}')");
-                        Notification::make()
-                            ->title(__('filament-dependency-manager::dependency-manager.table.actions.copy_success'))
-                            ->body($command)
-                            ->success()
-                            ->send();
-                    }),
+                UpdateComposerPackageAction::make(),
 
                 Action::make('changelog')
-                    ->label(__('filament-dependency-manager::dependency-manager.table.actions.changelog'))
+                    ->label('Changelog')
                     ->icon('heroicon-o-document-text')
                     ->color('info')
                     ->url(fn (ComposerPackage $record) => "https://github.com/{$record->name}/releases")
                     ->openUrlInNewTab(),
             ])
             ->headerActions([
+                UpdateAllComposerPackagesAction::make(),
                 Action::make('refresh')
-                    ->label(__('filament-dependency-manager::dependency-manager.table.actions.refresh'))
+                    ->label('Refresh List')
                     ->icon('heroicon-o-arrow-path')
                     ->action(function () {
                         app(ComposerService::class)->clearCache();
@@ -144,17 +131,17 @@ class DependencyManagerPage extends Page implements HasTable
             ])
             ->filters([
                 SelectFilter::make('latest-status')
-                    ->label(__('filament-dependency-manager::dependency-manager.table.columns.update_type'))
+                    ->label('Update Type')
                     ->options([
-                        'semver-safe-update' => __('filament-dependency-manager::dependency-manager.table.status.minor'),
-                        'update-possible' => __('filament-dependency-manager::dependency-manager.table.status.major'),
+                        'semver-safe-update' => 'Minor Update',
+                        'update-possible' => 'Major Update',
                     ])
                     ->query(
                         fn (Builder $query, array $data) => $query->when($data['value'] ?? null, fn ($q) => $q->where('latest-status', $data['value']))
                     ),
             ])
-            ->emptyStateHeading(__('filament-dependency-manager::dependency-manager.table.empty.heading'))
-            ->emptyStateDescription(__('filament-dependency-manager::dependency-manager.table.empty.description'))
+            ->emptyStateHeading('No packages found')
+            ->emptyStateDescription('All packages are up to date or no packages are installed.')
             ->emptyStateIcon('heroicon-o-check-circle');
     }
 }

@@ -2,38 +2,25 @@
 
 namespace Webkernel\BackOffice\System\Presentation\Resources\DependencyManager;
 
-use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Commands\InstallCommand;
-use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Testing\TestsFilamentDependencyManager;
-use Livewire\Features\SupportTesting\Testable;
-use Spatie\LaravelPackageTools\Package;
-use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Illuminate\Support\ServiceProvider;
 
-class FilamentDependencyManagerServiceProvider extends PackageServiceProvider
+class FilamentDependencyManagerServiceProvider extends ServiceProvider
 {
-    public static string $name = 'filament-dependency-manager';
-
-    public static string $viewNamespace = 'filament-dependency-manager';
-
-    public function configurePackage(Package $package): void
+    public function register(): void
     {
-        $package
-            ->name(static::$name)
-            ->hasConfigFile('dependency-manager')       // → config/dependency-manager.php
-            ->hasViews(static::$viewNamespace)           // → resources/views/vendor/filament-dependency-manager
-            ->hasTranslations()                          // → lang/vendor/filament-dependency-manager
-            ->hasCommand(InstallCommand::class);
+        $this->loadViewsFrom(
+            __DIR__ . '/resources/views',
+            'webkernel-system'
+        );
+
+        $this->loadTranslationsFrom(
+            __DIR__ . '/resources/lang',
+            'dependency-manager'
+        );
     }
 
-    public function packageRegistered(): void {}
-
-    public function packageBooted(): void
+    public function boot(): void
     {
-        // Testing
-        Testable::mixin(new TestsFilamentDependencyManager);
-    }
-
-    protected function getAssetPackageName(): ?string
-    {
-        return 'daljo25/filament-dependency-manager';
+        // Views are loaded in register
     }
 }

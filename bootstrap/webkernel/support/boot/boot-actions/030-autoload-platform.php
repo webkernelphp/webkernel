@@ -57,6 +57,7 @@ spl_autoload_register(static function (string $class): void {
                 'Webkernel\\Arcanes\\'       => WEBKERNEL_PATH . '/platform/arcanes',
                 'Webkernel\\QuickTouch\\'    => WEBKERNEL_PATH . '/support/quick_touch',
                 'Webkernel\\Routes\\'        => WEBKERNEL_PATH . '/platform/routing',
+                'Webkernel\\Builders\\DBStudio\\'        => WEBKERNEL_PATH . '/platform/_builders/db_studio',
 
                 /* System Panel Specific Assets */
                 'Webkernel\\BackOffice\\System\\'               => WEBKERNEL_PATH . '/platform/_back_office/sys_core_panel',

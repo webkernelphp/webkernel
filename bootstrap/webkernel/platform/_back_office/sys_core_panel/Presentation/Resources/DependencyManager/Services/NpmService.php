@@ -16,6 +16,7 @@ class NpmService
 
     public function __construct()
     {
+        $this->phpBinary = PHP_BINARY;
         $finder = new ExecutableFinder;
 
         $this->client = config('dependency-manager.npm_client', 'npm');
@@ -23,9 +24,6 @@ class NpmService
         $this->binary = config('dependency-manager.npm_binary')
             ?? $finder->find($this->client)
             ?? $this->client;
-
-        $this->phpBinary = config('dependency-manager.php_binary')
-            ?? PHP_BINARY;
     }
 
     public function getOutdatedPackages(): array

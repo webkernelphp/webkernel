@@ -14,21 +14,19 @@ class ComposerService
 
     public function __construct()
     {
+        $this->phpBinary = PHP_BINARY;
         $finder = new ExecutableFinder;
 
         $this->composerBinary = config('dependency-manager.composer_binary')
             ?? $finder->find('composer')
             ?? 'composer';
-
-        $this->phpBinary = config('dependency-manager.php_binary')
-            ?? PHP_BINARY;
     }
 
     public function getOutdatedPackages(): array
     {
         return Cache::remember('filament-dependency-manager:composer-outdated', 3600, function () {
             $process = new Process(
-                [$this->composerBinary, 'outdated', '--direct', '--format=json'],
+                [$this->composerBinary, 'outdated', '--format=json'],
                 base_path()
             );
 

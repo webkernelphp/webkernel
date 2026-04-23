@@ -17,13 +17,20 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Webkernel\Pages\Dashboard;
-use Webkernel\Pages\DependencyManager;
+use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Pages\DependencyManagerPage;
+use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Pages\NpmDependencyManagerPage;
+use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\FilamentDependencyManagerServiceProvider;
 use Filament\Support\Enums\Width;
 use Filament\Support\Colors\Color;
 use Filament\Navigation\NavigationGroup;
 
 final class SystemPanelProvider extends PanelProvider
 {
+    public function boot(): void
+    {
+        $this->app->register(FilamentDependencyManagerServiceProvider::class);
+    }
+
     public function panel(Panel $panel): Panel
     {
         return $panel
@@ -74,7 +81,11 @@ final class SystemPanelProvider extends PanelProvider
                 in: __DIR__ . '/../Presentation/Pages',
                 for: 'Webkernel\BackOffice\System\Presentation\Pages',
             )
-            ->pages([Dashboard::class])
+            ->pages([
+                Dashboard::class,
+                DependencyManagerPage::class,
+                NpmDependencyManagerPage::class,
+            ])
             ->discoverWidgets(
                 in: __DIR__ . '/../Presentation/Widgets',
                 for: 'Webkernel\BackOffice\System\Presentation\Widgets',
