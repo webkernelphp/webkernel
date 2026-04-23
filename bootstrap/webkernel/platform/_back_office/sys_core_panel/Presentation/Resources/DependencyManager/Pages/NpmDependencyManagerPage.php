@@ -2,6 +2,7 @@
 
 namespace Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Pages;
 
+use Illuminate\Contracts\View\View;
 use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Models\NpmPackage;
 use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Services\NpmService;
 use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Actions\UpdateNpmPackageAction;
@@ -39,10 +40,10 @@ class NpmDependencyManagerPage extends Page implements HasTable
                 ->icon('heroicon-o-information-circle')
                 ->color('gray')
                 ->tooltip('About NPM')
+                ->slideOver()
                 ->modalHeading('About NPM')
-                ->modal()
                 ->modalWidth('2xl')
-                ->modalContent(fn (): string => view('webkernel-system::modals.about-npm')->render()),
+                ->modalContent(fn (): View => view('webkernel-system::modals.about-npm')),
         ];
     }
 

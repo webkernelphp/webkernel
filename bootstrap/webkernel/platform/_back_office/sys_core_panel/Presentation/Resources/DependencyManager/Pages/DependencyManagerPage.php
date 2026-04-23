@@ -3,6 +3,7 @@
 namespace Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Pages;
 
 use Carbon\Carbon;
+use Illuminate\Contracts\View\View;
 use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Models\ComposerPackage;
 use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Services\ComposerService;
 use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Actions\UpdateComposerPackageAction;
@@ -40,10 +41,10 @@ class DependencyManagerPage extends Page implements HasTable
                 ->icon('heroicon-o-information-circle')
                 ->color('gray')
                 ->tooltip('About Composer')
+                ->slideOver()
                 ->modalHeading('About Composer')
-                ->modal()
                 ->modalWidth('2xl')
-                ->modalContent(fn (): string => view('webkernel-system::modals.about-composer')->render()),
+                ->modalContent(fn (): View => view('webkernel-system::modals.about-composer')),
         ];
     }
 
