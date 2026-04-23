@@ -161,6 +161,7 @@ class ComposerService
     {
         return Cache::remember('filament-dependency-manager:composer-all', 3600, function () {
             $installedPath = base_path('vendor/composer/installed.json');
+            $lockPath = base_path('composer.lock');
 
             if (!file_exists($installedPath)) {
                 return [];
@@ -171,12 +172,23 @@ class ComposerService
                 return [];
             }
 
+            // Load release dates from composer.lock
+            $releaseDates = [];
+            if (file_exists($lockPath)) {
+                $lock = json_decode(file_get_contents($lockPath), true);
+                if (isset($lock['packages'])) {
+                    foreach ($lock['packages'] as $pkg) {
+                        $releaseDates[$pkg['name'] ?? ''] = $pkg['time'] ?? null;
+                    }
+                }
+            }
+
             $outdated = $this->getOutdatedPackages();
             $reverseDeps = $this->buildReverseDependencyMap($installed['packages']);
             $outdatedMap = collect($outdated)->keyBy('name')->toArray();
 
             return collect($installed['packages'])
-                ->map(function (array $package) use ($outdatedMap, $reverseDeps) {
+                ->map(function (array $package) use ($outdatedMap, $reverseDeps, $releaseDates) {
                     $name = $package['name'] ?? '';
                     $version = $package['version'] ?? '0.0.0';
 
@@ -190,6 +202,7 @@ class ComposerService
                         'description' => $package['description'] ?? '',
                         'latest' => $outdatedInfo['latest'] ?? $version,
                         'latest-status' => $outdatedInfo['latest-status'] ?? 'up-to-date',
+                        'latest-release-date' => $releaseDates[$name] ?? null,
                         'type' => 'dependency',
                         'required_by' => implode(',', $deps),
                         'has_update' => $hasUpdate,
