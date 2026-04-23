@@ -12,10 +12,11 @@ use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use UnitEnum;
+use Webkernel\BackOffice\System\Contracts\UpgradeOperation;
 use Webkernel\BackOffice\System\Models\WebkernelRelease;
 use Webkernel\BackOffice\System\Models\WebkernelUpdateCheck;
 
-class WebkernelUpgrade extends Page
+class WebkernelUpgrade extends Page implements UpgradeOperation
 {
     protected string $view = 'webkernel-system::filament.pages.webkernel-upgrade';
 
@@ -397,5 +398,48 @@ class WebkernelUpgrade extends Page
     public function getTitle(): string|Htmlable
     {
         return 'Webkernel Core';
+    }
+
+    /**
+     * UpgradeOperation contract: Operation title for ProcessUpgrade page
+     */
+    public function getUpgradeTitle(): string
+    {
+        return 'Webkernel Core Update';
+    }
+
+    public function getUpgradeSecondaryLogo(): ?string
+    {
+        return null; // Webkernel is the primary, no secondary logo
+    }
+
+    public function getUpgradeSteps(): array
+    {
+        return [
+            'backup' => [
+                'label' => 'Creating backup',
+                'progressPercent' => 15,
+            ],
+            'download' => [
+                'label' => 'Downloading release',
+                'progressPercent' => 35,
+            ],
+            'extract' => [
+                'label' => 'Extracting files',
+                'progressPercent' => 50,
+            ],
+            'verify' => [
+                'label' => 'Verifying integrity',
+                'progressPercent' => 65,
+            ],
+            'swap' => [
+                'label' => 'Swapping kernel',
+                'progressPercent' => 80,
+            ],
+            'cleanup' => [
+                'label' => 'Cleaning up',
+                'progressPercent' => 90,
+            ],
+        ];
     }
 }

@@ -15,14 +15,14 @@ interface UpgradeOperation
      * Get the operation title displayed at the top.
      * Example: "Webkernel Update", "Module Installation", "Database Migration"
      */
-    public function getTitle(): string;
+    public function getUpgradeTitle(): string;
 
     /**
      * Get the secondary logo URL (shown to the right of Webkernel logo).
      * Use this to brand your module or operation. Return null for Webkernel-only operations.
      * The primary Webkernel favicon is always shown and cannot be overridden.
      */
-    public function getSecondaryLogo(): ?string;
+    public function getUpgradeSecondaryLogo(): ?string;
 
     /**
      * Define the steps for this operation.
@@ -34,5 +34,5 @@ interface UpgradeOperation
      *     'download' => ['label' => 'Downloading files', 'progressPercent' => 35],
      *   ]
      */
-    public function getSteps(): array;
+    public function getUpgradeSteps(): array;
 }
