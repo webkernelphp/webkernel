@@ -4,7 +4,6 @@ namespace Webkernel\Commands\Kernel;
 
 use Illuminate\Console\Command;
 use Webkernel\Integration\Git\Exceptions\NetworkException;
-use Webkernel\BackOffice\System\Domain\Updates\WebkernelUpdater;
 
 use function Laravel\Prompts\text;
 use function Laravel\Prompts\confirm;
@@ -36,6 +35,24 @@ final class UpdateCommand extends Command
         {--pre-release  : Include pre-release versions }';
 
     protected $description = 'Update the Webkernel core to the latest or a specific version.';
+
+    private function resolveLatestVersion(bool $includePreRelease): string
+    {
+        $query = \Webkernel\BackOffice\System\Domain\Updates\Models\WebkernelRelease
+            ::forTarget('webkernel', 'foundation')
+            ->orderByDesc('published_at');
+
+        if (!$includePreRelease) {
+            $query->stable();
+        }
+
+        $latest = $query->first();
+        if (!$latest) {
+            throw new \RuntimeException('No releases available');
+        }
+
+        return $latest->version;
+    }
 
     public function handle(): int
     {
@@ -69,25 +86,41 @@ final class UpdateCommand extends Command
 
         // ── Execute ───────────────────────────────────────────────────────────
         try {
-            $updater = WebkernelUpdater::webkernel()
-                ->withBackup($backup)
-                ->keepDirs($keepDirs)
-                ->includePreReleases($preRelease);
+            // Determine target version
+            $targetVersion = $version ?? $this->resolveLatestVersion($preRelease);
 
-            if ($version !== null) {
-                $updater = $updater->toVersion($version);
+            // Find release metadata
+            $release = \Webkernel\BackOffice\System\Domain\Updates\Models\WebkernelRelease
+                ::forTarget('webkernel', 'foundation')
+                ->where('version', $targetVersion)
+                ->first();
+
+            if (!$release) {
+                error("Release not found: v{$targetVersion}");
+                return self::FAILURE;
             }
 
-            if ($token !== null) {
-                $updater = $updater->withToken($token);
-            }
+            $downloadUrl = "https://github.com/webkernelphp/foundation/releases/download/{$release->tag_name}/foundation.zip";
 
-            $path = spin(
-                fn () => $updater->execute(),
+            $result = spin(
+                function () use ($downloadUrl, $keepDirs) {
+                    return webkernel()->do()
+                        ->from($downloadUrl)
+                        ->backup(path: WEBKERNEL_PATH, except: $keepDirs)
+                        ->extract()
+                        ->swap()
+                        ->run();
+                },
                 'Updating kernel…',
             );
 
-            $this->components->info("Kernel updated at: {$path}");
+            if (!$result->success) {
+                $result->rollback();
+                error("Update failed: {$result->error}");
+                return self::FAILURE;
+            }
+
+            $this->components->info("Kernel updated to v{$targetVersion}");
 
             return self::SUCCESS;
         } catch (NetworkException $e) {

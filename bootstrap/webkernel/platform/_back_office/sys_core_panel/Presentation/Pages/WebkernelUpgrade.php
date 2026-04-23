@@ -10,8 +10,6 @@ use Illuminate\Contracts\Support\Htmlable;
 use UnitEnum;
 use Webkernel\Integration\Git\Exceptions\NetworkException;
 use Webkernel\BackOffice\System\Domain\Updates\Models\WebkernelUpdateCheck;
-use Webkernel\BackOffice\System\Domain\Updates\WebkernelUpdateChecker;
-use Webkernel\BackOffice\System\Domain\Updates\WebkernelUpdater;
 
 /**
  * WebkernelUpgrade
@@ -70,19 +68,18 @@ class WebkernelUpgrade extends Page
     private function loadFromLocalRegistry(): void
     {
         try {
-            $checker = WebkernelUpdateChecker::forWebkernel();
-            $latest  = $checker->latestKnownRelease();
-            $lastLog = WebkernelUpdateCheck::lastSuccess(
-                WebkernelUpdateChecker::WEBKERNEL_TARGET_TYPE,
-                WebkernelUpdateChecker::WEBKERNEL_SLUG,
-            );
+            // Fetch latest releases from DB
+            $latest = \Webkernel\BackOffice\System\Domain\Updates\Models\WebkernelRelease
+                ::forTarget('webkernel', 'foundation')
+                ->stable()
+                ->orderByDesc('published_at')
+                ->first();
 
             if ($latest !== null) {
-                $this->latestVersion = $latest->tag_name;
-                $this->isUpToDate    = $checker->isUpToDate($this->currentVersion);
-                $this->lastChecked   = $lastLog?->checked_at->toIso8601String() ?? '';
+                $this->latestVersion = $latest->version;
+                $this->isUpToDate    = version_compare($this->currentVersion, $latest->version, '>=');
+                $this->lastChecked   = $latest->updated_at->toIso8601String();
 
-                // Meta comes from the tag annotation, stored in DB
                 $this->features = $latest->metaFeatures();
                 $this->docLinks = $latest->metaDocLinks();
                 $this->videoId  = $latest->metaVideoId();
@@ -90,13 +87,9 @@ class WebkernelUpgrade extends Page
 
             // All stable releases for rollback modal
             $rows = \Webkernel\BackOffice\System\Domain\Updates\Models\WebkernelRelease
-                ::forTarget(
-                    WebkernelUpdateChecker::WEBKERNEL_TARGET_TYPE,
-                    WebkernelUpdateChecker::WEBKERNEL_SLUG,
-                )
+                ::forTarget('webkernel', 'foundation')
                 ->stable()
                 ->orderByDesc('published_at')
-                ->orderByDesc('created_at')
                 ->limit(20)
                 ->get();
 
@@ -109,36 +102,71 @@ class WebkernelUpgrade extends Page
             ])->all();
 
         } catch (\Throwable) {
-            // DB not yet migrated — fallbacks (empty arrays) already set as property defaults
+            // DB not yet migrated
         }
     }
 
     public function checkForUpdates(): void
     {
         try {
-            $checker = WebkernelUpdateChecker::forWebkernel()->force();
-            $log     = $checker->check();
+            // Fetch releases from GitHub API and sync to DB
+            $ctx = webkernel()->do()
+                ->from('https://api.github.com/repos/webkernelphp/foundation/releases')
+                ->filter(fn($r) => !$r['prerelease'] && !$r['draft'])
+                ->map(fn($r) => [
+                    'tag_name' => $r['name'],
+                    'version' => ltrim($r['name'], 'v'),
+                    'release_notes' => $r['body'] ?? null,
+                    'published_at' => $r['published_at'],
+                    'author_login' => $r['user']['login'] ?? null,
+                ])
+                ->create(fn($rows) =>
+                    \Webkernel\BackOffice\System\Domain\Updates\Models\WebkernelRelease::syncFromProvider(
+                        $rows->toArray(),
+                        'webkernel',
+                        'foundation'
+                    )
+                )
+                ->run();
 
-            if ($log->status === WebkernelUpdateCheck::STATUS_SUCCESS) {
-                $latest              = $checker->latestKnownRelease();
-                $this->latestVersion = $latest?->tag_name ?? '';
-                $this->isUpToDate    = $checker->isUpToDate($this->currentVersion);
-                $this->lastChecked   = $log->checked_at->toIso8601String();
+            // Check rate limits
+            $rateLimit = $ctx->rateLimit();
+            if ($rateLimit['remaining'] !== null && (int)$rateLimit['remaining'] < 10) {
+                Notification::make()
+                    ->title("GitHub rate limit: {$rateLimit['remaining']} requests remaining")
+                    ->warning()
+                    ->send();
+            }
+
+            // Reload latest from DB
+            $latest = \Webkernel\BackOffice\System\Domain\Updates\Models\WebkernelRelease
+                ::forTarget('webkernel', 'foundation')
+                ->stable()
+                ->orderByDesc('published_at')
+                ->first();
+
+            if ($latest !== null) {
+                $this->latestVersion = $latest->version;
+                $this->isUpToDate    = version_compare($this->currentVersion, $latest->version, '>=');
+                $this->lastChecked   = now()->toIso8601String();
 
                 if ($this->isUpToDate) {
-                    Notification::make()->title('Webkernel is up to date (v' . $this->currentVersion . ').')->success()->send();
+                    Notification::make()
+                        ->title("Webkernel is up to date (v{$this->currentVersion})")
+                        ->success()
+                        ->send();
                 } else {
-                    Notification::make()->title("Update available: v{$this->latestVersion}")->warning()->send();
+                    Notification::make()
+                        ->title("Update available: v{$latest->version}")
+                        ->warning()
+                        ->send();
                 }
-            } elseif ($log->status === WebkernelUpdateCheck::STATUS_RATE_LIMITED) {
-                Notification::make()->title('GitHub rate limit reached. Try again later.')->warning()->send();
-            } elseif ($log->status === WebkernelUpdateCheck::STATUS_SKIPPED) {
-                Notification::make()->title('Already checked recently. Showing cached result.')->info()->send();
-            } else {
-                Notification::make()->title('Check failed: ' . ($log->error_message ?? 'unknown error'))->danger()->send();
             }
         } catch (\Throwable $e) {
-            Notification::make()->title('Could not check for updates: ' . $e->getMessage())->danger()->send();
+            Notification::make()
+                ->title('Could not check for updates: ' . $e->getMessage())
+                ->danger()
+                ->send();
         }
     }
 
@@ -152,15 +180,36 @@ class WebkernelUpgrade extends Page
         $this->updateStatus = 'Starting kernel update…';
 
         try {
-            $updater = WebkernelUpdater::webkernel()
-                ->withBackup($this->createBackup)
-                ->keepDirs(['var-elements']);
+            $this->updateStatus = 'Finding latest release…';
+            $latest = \Webkernel\BackOffice\System\Domain\Updates\Models\WebkernelRelease
+                ::forTarget('webkernel', 'foundation')
+                ->stable()
+                ->orderByDesc('published_at')
+                ->first();
 
-            $this->updateStatus = 'Downloading new kernel…';
-            $updater->execute();
+            if (!$latest) {
+                throw new \RuntimeException('No releases available');
+            }
+
+            $this->updateStatus = 'Downloading release…';
+            $downloadUrl = "https://github.com/webkernelphp/foundation/releases/download/{$latest->tag_name}/foundation.zip";
+
+            $result = webkernel()->do()
+                ->from($downloadUrl)
+                ->backup(path: WEBKERNEL_PATH, except: ['var-elements', 'var-logs'])
+                ->extract()
+                ->swap()
+                ->run();
+
+            if (!$result->success) {
+                $this->updateError = 'Update failed: ' . $result->error;
+                $result->rollback();
+                throw new \RuntimeException($result->error);
+            }
 
             $this->updateStatus = 'Kernel updated successfully!';
             $this->isUpToDate   = true;
+            $this->currentVersion = $latest->version;
 
             Notification::make()->title('Kernel update complete. Please refresh the page.')->success()->send();
         } catch (NetworkException $e) {
@@ -183,13 +232,34 @@ class WebkernelUpgrade extends Page
         $this->updateStatus = "Rolling back to v{$version}…";
 
         try {
-            $updater = WebkernelUpdater::webkernel()
-                ->toVersion($version)
-                ->withBackup($this->createBackup);
+            $release = \Webkernel\BackOffice\System\Domain\Updates\Models\WebkernelRelease
+                ::forTarget('webkernel', 'foundation')
+                ->where('version', $version)
+                ->first();
 
-            $updater->execute();
+            if (!$release) {
+                throw new \RuntimeException("Release not found: v{$version}");
+            }
+
+            $this->updateStatus = 'Downloading release…';
+            $downloadUrl = "https://github.com/webkernelphp/foundation/releases/download/{$release->tag_name}/foundation.zip";
+
+            $result = webkernel()->do()
+                ->from($downloadUrl)
+                ->backup(path: WEBKERNEL_PATH, except: ['var-elements', 'var-logs'])
+                ->extract()
+                ->swap()
+                ->run();
+
+            if (!$result->success) {
+                $this->updateError = 'Rollback failed: ' . $result->error;
+                $result->rollback();
+                throw new \RuntimeException($result->error);
+            }
 
             $this->updateStatus = "Rollback to v{$version} complete. Please refresh.";
+            $this->currentVersion = $version;
+
             Notification::make()->title("Rolled back to v{$version}.")->success()->send();
         } catch (\Throwable $e) {
             $this->updateError = 'Rollback failed: ' . $e->getMessage();
@@ -208,13 +278,33 @@ class WebkernelUpgrade extends Page
         $this->updateStatus = 'Force-resetting kernel…';
 
         try {
-            $updater = WebkernelUpdater::webkernel()
-                ->toVersion($this->currentVersion)
-                ->withBackup($this->createBackup);
+            $release = \Webkernel\BackOffice\System\Domain\Updates\Models\WebkernelRelease
+                ::forTarget('webkernel', 'foundation')
+                ->where('version', $this->currentVersion)
+                ->first();
 
-            $updater->execute();
+            if (!$release) {
+                throw new \RuntimeException("Release not found: v{$this->currentVersion}");
+            }
+
+            $this->updateStatus = 'Downloading release…';
+            $downloadUrl = "https://github.com/webkernelphp/foundation/releases/download/{$release->tag_name}/foundation.zip";
+
+            $result = webkernel()->do()
+                ->from($downloadUrl)
+                ->backup(path: WEBKERNEL_PATH, except: ['var-elements', 'var-logs'])
+                ->extract()
+                ->swap()
+                ->run();
+
+            if (!$result->success) {
+                $this->updateError = 'Force reset failed: ' . $result->error;
+                $result->rollback();
+                throw new \RuntimeException($result->error);
+            }
 
             $this->updateStatus = 'Kernel has been force-reset. Please refresh.';
+
             Notification::make()->title('Kernel force-reset complete.')->success()->send();
         } catch (\Throwable $e) {
             $this->updateError = 'Force reset failed: ' . $e->getMessage();
