@@ -3,7 +3,7 @@
 /* Define Support Path */
 
 defined('WEBKERNEL_MAIN_SUPPORT_PATH')
-    || define('WEBKERNEL_MAIN_SUPPORT_PATH', WEBKERNEL_PATH . '/platform/support');
+    || define('WEBKERNEL_MAIN_SUPPORT_PATH', WEBKERNEL_PATH . '/support');
 
 /* --- Runtime & helpers --- */
 

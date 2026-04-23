@@ -79,9 +79,9 @@ final class WebApp extends Application
             ])
             ->withCommands()
             ->withRouting(
-                web: WEBKERNEL_MAIN_SUPPORT_PATH . '/routes/web.php',
-                api: WEBKERNEL_MAIN_SUPPORT_PATH . '/routes/api.php',
-                commands: WEBKERNEL_MAIN_SUPPORT_PATH . '/routes/console.php',
+                web: WEBKERNEL_PATH . '/platform/routing/routes/web.php',
+                api: WEBKERNEL_PATH . '/platform/routing/routes/api.php',
+                commands: WEBKERNEL_PATH . '/platform/routing/routes/console.php',
                 health: '/up',
             )
             ->withMiddleware(function (Middleware $m): void {

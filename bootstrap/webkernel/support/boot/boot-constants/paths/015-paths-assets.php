@@ -4,9 +4,9 @@
 
 defined('SVG_COLLECTION_PATHS')
     || define('SVG_COLLECTION_PATHS', [
-        'bootstrap/webkernel/platform/support/boot/_dist/export-svg/custom',
-        'bootstrap/webkernel/platform/support/boot/_dist/export-svg/lucide',
-        'bootstrap/webkernel/platform/support/boot/_dist/export-svg/simple-icons',
+        'bootstrap/webkernel/support/boot/_dist/export-svg/custom',
+        'bootstrap/webkernel/support/boot/_dist/export-svg/lucide',
+        'bootstrap/webkernel/support/boot/_dist/export-svg/simple-icons',
     ]);
 
 /**

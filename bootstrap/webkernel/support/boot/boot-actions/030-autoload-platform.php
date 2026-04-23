@@ -46,27 +46,27 @@ spl_autoload_register(static function (string $class): void {
                 'Webkernel\\Users\\'         => WEBKERNEL_PATH . '/aptitudes/instance/users',
 
                 /* Backend Layer: System Infrastructure */
-                'Webkernel\\System\\'        => WEBKERNEL_PATH . '/_backend',
+                'Webkernel\\System\\'        => WEBKERNEL_PATH . '/platform/_backend',
 
                 /* Platform Layer */
                 'Webkernel\\Arcanes\\'       => WEBKERNEL_PATH . '/platform/arcanes',
-                'Webkernel\\QuickTouch\\'    => WEBKERNEL_PATH . '/platform/quick_touch',
-                'Webkernel\\Routes\\'        => WEBKERNEL_PATH . '/platform/routes',
+                'Webkernel\\QuickTouch\\'    => WEBKERNEL_PATH . '/support/quick_touch',
+                'Webkernel\\Routes\\'        => WEBKERNEL_PATH . '/platform/routing',
 
                 /* System Panel Specific Assets */
-                'Webkernel\\BackOffice\\System\\'       => WEBKERNEL_PATH . '/_back_office/sys_core_panel',
-                'Webkernel\\BackOffice\\Businesses\\'   => WEBKERNEL_PATH . '/_back_office/sys_biz_panel',
-                'Webkernel\\BackOffice\\Installer\\'    => WEBKERNEL_PATH . '/_back_office/installer_panel',
+                'Webkernel\\BackOffice\\System\\'       => WEBKERNEL_PATH . '/platform/_back_office/sys_core_panel',
+                'Webkernel\\BackOffice\\Businesses\\'   => WEBKERNEL_PATH . '/platform/_back_office/sys_biz_panel',
+                'Webkernel\\BackOffice\\Installer\\'    => WEBKERNEL_PATH . '/platform/_back_office/installer_panel',
 
 
                 /* Support Layer */
 
                 /* Application Data Models */
-                'App\\Models\\'              => WEBKERNEL_PATH . '/platform/support/boot/app-models',
+                'App\\Models\\'              => WEBKERNEL_PATH . '/support/boot/app-models',
 
                 /* Commands and Providers */
-                'Webkernel\\Providers\\'     => WEBKERNEL_PATH . '/platform/support/providers',
-                'Webkernel\\Commands\\'            => WEBKERNEL_PATH . '/platform/support/commands',
+                'Webkernel\\Providers\\'     => WEBKERNEL_PATH . '/platform/providers',
+                'Webkernel\\Commands\\'            => WEBKERNEL_PATH . '/support/commands',
             ],
             WEBKERNEL_DEV_NAMESPACES,
             [
