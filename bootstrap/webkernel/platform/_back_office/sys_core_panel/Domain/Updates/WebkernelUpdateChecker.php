@@ -290,75 +290,71 @@ final class WebkernelUpdateChecker
                 $adapter = $adapter->withToken($this->explicitToken);
             }
 
-            if (!($adapter instanceof GitHubAdapter)) {
-                return;
-            }
+            if ($adapter instanceof GitHubAdapter) {
+                $tagObj = $adapter->annotatedTag($source, $tagName);
+                if ($tagObj !== null && ($tagObj['message'] ?? '') !== '') {
+                    $message = $tagObj['message'];
+                    $lines = explode("\n", $message);
 
-            $tagObj = $adapter->annotatedTag($source, $tagName);
-            if ($tagObj === null || ($tagObj['message'] ?? '') === '') {
-                return;
-            }
+                    if (count($lines) >= 3) {
+                        $metaJson = trim($lines[2]);
+                        if ($metaJson !== '' && str_starts_with($metaJson, '{')) {
+                            $metaEnd = strpos($metaJson, '}');
+                            if ($metaEnd !== false) {
+                                $metaJson = substr($metaJson, 0, $metaEnd + 1);
+                                $meta = json_decode($metaJson, true);
+                                if (is_array($meta)) {
+                                    $record->tag_annotation = $message;
+                                    $record->tagger_name = $tagObj['tagger']['name'] ?? null;
+                                    $record->tagger_email = $tagObj['tagger']['email'] ?? null;
+                                    if (isset($tagObj['tagger']['date'])) {
+                                        $record->tagged_at = \Illuminate\Support\Carbon::parse($tagObj['tagger']['date']);
+                                    }
 
-            $message = $tagObj['message'];
-            $lines = explode("\n", $message);
-
-            if (count($lines) < 3) {
-                return;
+                                    if (isset($meta['codename'])) {
+                                        $record->codename = $meta['codename'];
+                                    }
+                                    if (isset($meta['notes'])) {
+                                        $record->meta_notes = $meta['notes'];
+                                    }
+                                    if (isset($meta['video'])) {
+                                        $record->meta_video_url = $meta['video'];
+                                    }
+                                    if (isset($meta['features']) && is_array($meta['features'])) {
+                                        $record->meta_features = json_encode($meta['features']);
+                                    }
+                                    if (isset($meta['doc_links']) && is_array($meta['doc_links'])) {
+                                        $record->meta_doc_links = json_encode($meta['doc_links']);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
-
-            $metaJson = trim($lines[2]);
-            if ($metaJson === '' || !str_starts_with($metaJson, '{')) {
-                return;
-            }
-
-            $metaEnd = strpos($metaJson, '}');
-            if ($metaEnd === false) {
-                return;
-            }
-
-            $metaJson = substr($metaJson, 0, $metaEnd + 1);
-            $meta = json_decode($metaJson, true);
-            if (!is_array($meta)) {
-                return;
-            }
-
-            $record->tag_annotation = $message;
-            $record->tagger_name = $tagObj['tagger']['name'] ?? null;
-            $record->tagger_email = $tagObj['tagger']['email'] ?? null;
-            if (isset($tagObj['tagger']['date'])) {
-                $record->tagged_at = \Illuminate\Support\Carbon::parse($tagObj['tagger']['date']);
-            }
-
-            if (isset($meta['codename'])) {
-                $record->codename = $meta['codename'];
-            }
-            if (isset($meta['notes'])) {
-                $record->meta_notes = $meta['notes'];
-            }
-            if (isset($meta['video'])) {
-                $record->meta_video_url = $meta['video'];
-            }
-            if (isset($meta['features']) && is_array($meta['features'])) {
-                $record->meta_features = json_encode($meta['features']);
-            }
-            if (isset($meta['doc_links']) && is_array($meta['doc_links'])) {
-                $record->meta_doc_links = json_encode($meta['doc_links']);
-            }
-
-            $this->applyReleaseMetaFallback($record);
-        } catch (\Throwable $e) {
-            error_log('applyAnnotatedTagData failed: ' . $e->getMessage());
+        } catch (\Throwable) {
+            // API fetch failed — will fallback to release-meta.php
         }
+
+        $this->applyReleaseMetaFallback($record);
     }
 
     private function applyReleaseMetaFallback(WebkernelRelease $record): void
     {
-        if (!defined('WEBKERNEL_PATH')) {
-            return;
+        $releaseMetaPaths = [
+            defined('WEBKERNEL_PATH') ? WEBKERNEL_PATH . '/release-meta.php' : null,
+            base_path('bootstrap/webkernel/release-meta.php'),
+        ];
+
+        $releaseMetaPath = null;
+        foreach ($releaseMetaPaths as $path) {
+            if ($path && is_file($path)) {
+                $releaseMetaPath = $path;
+                break;
+            }
         }
 
-        $releaseMetaPath = WEBKERNEL_PATH . '/release-meta.php';
-        if (!is_file($releaseMetaPath)) {
+        if (!$releaseMetaPath) {
             return;
         }
 
