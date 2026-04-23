@@ -22,9 +22,11 @@ class WebkernelUpgrade extends Page
     protected static string|UnitEnum|null $navigationGroup          = 'System';
 
     public bool   $isUpdating       = false;
+    public bool   $isProcessing     = false;
     public string $updateStatus     = '';
     public string $updateError      = '';
     public bool   $createBackup     = true;
+    public int    $progressPercent  = 0;
 
     public string $currentVersion   = WEBKERNEL_VERSION;
     public string $currentCodename  = WEBKERNEL_CODENAME;
@@ -54,6 +56,26 @@ class WebkernelUpgrade extends Page
         $this->filamentVersion = \Composer\InstalledVersions::getPrettyVersion('filament/filament');
 
         $this->loadFromLocalRegistry();
+    }
+
+    public function getProgressPercentage(): int
+    {
+        return match(true) {
+            str_contains($this->updateStatus, 'Creating backup') => 15,
+            str_contains($this->updateStatus, 'Finding latest') => 20,
+            str_contains($this->updateStatus, 'Downloading') => 35,
+            str_contains($this->updateStatus, 'Extracting') => 50,
+            str_contains($this->updateStatus, 'Verifying') => 65,
+            str_contains($this->updateStatus, 'Swapping') => 80,
+            str_contains($this->updateStatus, 'Cleaning') => 90,
+            str_contains($this->updateStatus, 'successfully') => 100,
+            default => $this->progressPercent,
+        };
+    }
+
+    public function updateProgress(): void
+    {
+        // Progress updates automatically via getProgressPercentage()
     }
 
     private function loadFromLocalRegistry(): void
@@ -161,11 +183,14 @@ class WebkernelUpgrade extends Page
 
     public function updateKernel(): void
     {
-        $this->isUpdating  = true;
-        $this->updateError = '';
-        $this->updateStatus = 'Starting kernel update…';
+        $this->isUpdating   = true;
+        $this->isProcessing = true;
+        $this->updateError  = '';
+        $this->progressPercent = 5;
+        $this->updateStatus = 'Creating backup…';
 
         try {
+            $this->progressPercent = 10;
             $this->updateStatus = 'Finding latest release…';
             $latest = WebkernelRelease::forTarget('webkernel', 'foundation')
                 ->stable()
@@ -176,8 +201,15 @@ class WebkernelUpgrade extends Page
                 throw new \RuntimeException('No releases available');
             }
 
+            $this->progressPercent = 20;
             $this->updateStatus = 'Downloading release…';
             $downloadUrl = $latest->zipball_url ?? "https://github.com/webkernelphp/foundation/archive/refs/tags/{$latest->tag_name}.zip";
+
+            $this->progressPercent = 40;
+            $this->updateStatus = 'Extracting files…';
+
+            $this->progressPercent = 50;
+            $this->updateStatus = 'Verifying integrity…';
 
             $result = webkernel()->do()
                 ->from($downloadUrl)
@@ -187,26 +219,37 @@ class WebkernelUpgrade extends Page
                 ->run();
 
             if (!$result->success) {
+                $this->progressPercent = 0;
+                $this->updateError = $result->error ?? 'Update failed';
                 $result->rollback();
-                throw new \RuntimeException($result->error ?? 'Update failed');
+                throw new \RuntimeException($this->updateError);
             }
 
+            $this->progressPercent = 85;
+            $this->updateStatus = 'Cleaning up…';
+
+            $this->progressPercent = 100;
             $this->updateStatus = 'Kernel updated successfully!';
             $this->isUpToDate   = true;
             $this->currentVersion = $latest->version;
+
+            sleep(1);
 
             Notification::make()
                 ->title('Kernel update complete. Please refresh the page.')
                 ->success()
                 ->send();
         } catch (\Throwable $e) {
-            $this->updateError = $e->getMessage();
+            if (!$this->updateError) {
+                $this->updateError = $e->getMessage();
+            }
             Notification::make()
                 ->title('Update failed: ' . $this->updateError)
                 ->danger()
                 ->send();
         } finally {
             $this->isUpdating = false;
+            $this->isProcessing = false;
         }
     }
 

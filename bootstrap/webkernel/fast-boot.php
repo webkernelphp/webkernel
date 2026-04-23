@@ -5,19 +5,19 @@ defined('BASE_PATH')      || define('BASE_PATH',      dirname(__DIR__, 2));
 defined('WEBKERNEL_PATH') || define('WEBKERNEL_PATH', __DIR__);
 
 // -- Release data -- stamped by Makefile release|patch|minor|major|info -------
-defined('WEBKERNEL_VERSION')     || define('WEBKERNEL_VERSION','0.11.6');
-defined('WEBKERNEL_BUILD')       || define('WEBKERNEL_BUILD',97);
-defined('WEBKERNEL_SEMVER')      || define('WEBKERNEL_SEMVER','0.11.6+97');
+defined('WEBKERNEL_VERSION')     || define('WEBKERNEL_VERSION','0.11.9');
+defined('WEBKERNEL_BUILD')       || define('WEBKERNEL_BUILD',127);
+defined('WEBKERNEL_SEMVER')      || define('WEBKERNEL_SEMVER','0.11.9+127');
 defined('WEBKERNEL_CODENAME')    || define('WEBKERNEL_CODENAME','waterfall');
 defined('WEBKERNEL_CHANNEL')     || define('WEBKERNEL_CHANNEL','stable');
 defined('WEBKERNEL_RELEASED_AT') || define('WEBKERNEL_RELEASED_AT','2026-04-23');
 defined('WEBKERNEL_BRANCH')      || define('WEBKERNEL_BRANCH','main');
-defined('WEBKERNEL_TAG')         || define('WEBKERNEL_TAG','v0.11.6');
+defined('WEBKERNEL_TAG')         || define('WEBKERNEL_TAG','v0.11.9');
 
 defined('WEBKERNEL_REQUIRES') || define('WEBKERNEL_REQUIRES', [
     'php'       => '8.4.19',
-    'laravel'   => '13.4.0',
-    'filament'  => '5.5.0',
+    'laravel'   => '13.6.0',
+    'filament'  => '5.6.0',
     'livewire'  => '4.2.4',
     'composer'  => '2.9.5',
 ]);

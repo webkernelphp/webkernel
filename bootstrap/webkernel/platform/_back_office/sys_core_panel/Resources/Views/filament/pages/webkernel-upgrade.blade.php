@@ -1,4 +1,10 @@
 <x-filament-panels::page>
+
+@if($this->isProcessing)
+    @include('webkernel-system::filament.pages.processing-upgrade')
+    @php return; @endphp
+@endif
+
 @php
     $steps = [
         [
