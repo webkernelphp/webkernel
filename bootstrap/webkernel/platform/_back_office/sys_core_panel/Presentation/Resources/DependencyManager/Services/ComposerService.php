@@ -156,4 +156,75 @@ class ComposerService
 
         return "{$repositoryUrl}/releases/tag/{$latest}";
     }
+
+    public function getAllInstalledPackages(): array
+    {
+        return Cache::remember('filament-dependency-manager:composer-all', 3600, function () {
+            $installedPath = base_path('vendor/composer/installed.json');
+
+            if (!file_exists($installedPath)) {
+                return [];
+            }
+
+            $installed = json_decode(file_get_contents($installedPath), true);
+            if (!isset($installed['packages'])) {
+                return [];
+            }
+
+            $outdated = $this->getOutdatedPackages();
+            $reverseDeps = $this->buildReverseDependencyMap($installed['packages']);
+            $outdatedMap = collect($outdated)->keyBy('name')->toArray();
+
+            return collect($installed['packages'])
+                ->map(function (array $package) use ($outdatedMap, $reverseDeps) {
+                    $name = $package['name'] ?? '';
+                    $version = $package['version'] ?? '0.0.0';
+
+                    $outdatedInfo = $outdatedMap[$name] ?? null;
+                    $hasUpdate = $outdatedInfo !== null;
+
+                    return [
+                        'name' => $name,
+                        'version' => $version,
+                        'description' => $package['description'] ?? '',
+                        'latest' => $outdatedInfo['latest'] ?? $version,
+                        'latest-status' => $outdatedInfo['latest-status'] ?? 'up-to-date',
+                        'type' => 'dependency',
+                        'required_by' => json_encode($reverseDeps[$name] ?? []),
+                        'has_update' => $hasUpdate,
+                    ];
+                })
+                ->sortBy('name')
+                ->values()
+                ->toArray();
+        });
+    }
+
+    protected function buildReverseDependencyMap(array $packages): array
+    {
+        $map = [];
+
+        foreach ($packages as $package) {
+            $name = $package['name'] ?? '';
+            if (!$name) {
+                continue;
+            }
+
+            $requires = array_merge(
+                $package['require'] ?? [],
+                $package['require-dev'] ?? []
+            );
+
+            foreach (array_keys($requires) as $required) {
+                if (!isset($map[$required])) {
+                    $map[$required] = [];
+                }
+                if (!in_array($name, $map[$required])) {
+                    $map[$required][] = $name;
+                }
+            }
+        }
+
+        return $map;
+    }
 }

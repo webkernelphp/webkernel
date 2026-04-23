@@ -3,8 +3,11 @@
 namespace Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Actions;
 
 use Filament\Actions\Action;
+use Filament\Forms\Components\Radio;
 use Filament\Notifications\Notification;
 use Symfony\Component\Process\Process;
+use Webkernel\BackOffice\System\Jobs\UpdateAllComposerPackagesJob;
+use Webkernel\BackOffice\System\Models\WebkernelBackgroundTask;
 use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Services\ComposerService;
 
 class UpdateAllComposerPackagesAction extends Action
@@ -22,13 +25,26 @@ class UpdateAllComposerPackagesAction extends Action
             ->label('Update All Packages')
             ->icon('heroicon-o-bolt')
             ->color('warning')
-            ->requiresConfirmation()
+            ->form([
+                Radio::make('mode')
+                    ->label('How would you like to run this?')
+                    ->options([
+                        'sync' => 'Run now (browser waits — may take several minutes)',
+                        'background' => 'Run in background (recommended)',
+                    ])
+                    ->default('background')
+                    ->required(),
+            ])
             ->modalHeading('Update All Composer Packages')
-            ->modalDescription('This will update all outdated packages to their latest versions. This may take several minutes.')
+            ->modalDescription('This will update all outdated packages to their latest versions.')
             ->modalSubmitActionLabel('Update All')
-            ->action(function () {
+            ->action(function (array $data) {
                 try {
-                    $this->updateAllPackages();
+                    if ($data['mode'] === 'background') {
+                        $this->updateAllPackagesInBackground();
+                    } else {
+                        $this->updateAllPackagesSync();
+                    }
                 } catch (\Exception $e) {
                     Notification::make()
                         ->title('Bulk Update Failed')
@@ -39,7 +55,24 @@ class UpdateAllComposerPackagesAction extends Action
             });
     }
 
-    private function updateAllPackages(): void
+    private function updateAllPackagesInBackground(): void
+    {
+        $task = WebkernelBackgroundTask::create([
+            'type' => 'composer_update_all',
+            'label' => 'Update all Composer packages',
+            'status' => 'pending',
+        ]);
+
+        dispatch(new UpdateAllComposerPackagesJob($task->id));
+
+        Notification::make()
+            ->title('Background Task Created')
+            ->body('Updating all packages. Check Background Tasks for status.')
+            ->success()
+            ->send();
+    }
+
+    private function updateAllPackagesSync(): void
     {
         $service = app(ComposerService::class);
         $composerBinary = config('dependency-manager.composer_binary', 'composer');
@@ -67,6 +100,7 @@ class UpdateAllComposerPackagesAction extends Action
             }
 
             $service->clearCache();
+            \Illuminate\Support\Facades\Cache::forget('filament-dependency-manager:composer-all');
 
             Notification::make()
                 ->title('All Composer Packages Updated')

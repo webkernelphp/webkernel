@@ -127,4 +127,79 @@ class NpmService
 
         return 'semver-safe-update'; // minor/patch
     }
+
+    public function getAllInstalledPackages(): array
+    {
+        return Cache::remember('filament-dependency-manager:npm-all', 3600, function () {
+            $lockPath = base_path('package-lock.json');
+
+            if (!file_exists($lockPath)) {
+                return [];
+            }
+
+            $lock = json_decode(file_get_contents($lockPath), true);
+            if (!isset($lock['packages'])) {
+                return [];
+            }
+
+            $outdated = $this->getOutdatedPackages();
+            $reverseDeps = $this->buildReverseDependencyMap($lock['packages']);
+            $outdatedMap = collect($outdated)->keyBy('name')->toArray();
+
+            $packages = [];
+
+            foreach ($lock['packages'] as $packagePath => $packageInfo) {
+                if (empty($packagePath) || $packagePath === '') {
+                    continue;
+                }
+
+                $name = $packageInfo['name'] ?? $packagePath;
+                $version = $packageInfo['version'] ?? '0.0.0';
+
+                $outdatedInfo = $outdatedMap[$name] ?? null;
+                $hasUpdate = $outdatedInfo !== null;
+
+                $packages[] = [
+                    'name' => $name,
+                    'version' => $version,
+                    'description' => $packageInfo['description'] ?? '',
+                    'latest' => $outdatedInfo['latest'] ?? $version,
+                    'latest-status' => $outdatedInfo['latest-status'] ?? 'up-to-date',
+                    'type' => $packageInfo['dev'] ? 'devDependencies' : 'dependencies',
+                    'required_by' => json_encode($reverseDeps[$name] ?? []),
+                    'has_update' => $hasUpdate,
+                ];
+            }
+
+            return collect($packages)
+                ->sortBy('name')
+                ->values()
+                ->toArray();
+        });
+    }
+
+    protected function buildReverseDependencyMap(array $packages): array
+    {
+        $map = [];
+
+        foreach ($packages as $packagePath => $packageInfo) {
+            $name = $packageInfo['name'] ?? $packagePath;
+            if (!$name) {
+                continue;
+            }
+
+            $requires = $packageInfo['dependencies'] ?? [];
+
+            foreach (array_keys($requires) as $required) {
+                if (!isset($map[$required])) {
+                    $map[$required] = [];
+                }
+                if (!in_array($name, $map[$required])) {
+                    $map[$required][] = $name;
+                }
+            }
+        }
+
+        return $map;
+    }
 }

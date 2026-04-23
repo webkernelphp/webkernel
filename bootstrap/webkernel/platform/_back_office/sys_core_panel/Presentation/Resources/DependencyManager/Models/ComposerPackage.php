@@ -16,11 +16,18 @@ class ComposerPackage extends Model
         'latest' => 'string',
         'latest-status' => 'string',
         'latest-release-date' => 'string',
-        'description' => 'string',
+        'description' => 'text',
+        'type' => 'string',
+        'required_by' => 'text',
+        'has_update' => 'boolean',
+    ];
+
+    protected $casts = [
+        'required_by' => 'json',
     ];
 
     public function getRows(): array
     {
-        return app(ComposerService::class)->getOutdatedPackages();
+        return app(ComposerService::class)->getAllInstalledPackages();
     }
 }

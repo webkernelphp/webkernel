@@ -20,9 +20,12 @@ use Webkernel\Pages\Dashboard;
 use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Pages\DependencyManagerPage;
 use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Pages\NpmDependencyManagerPage;
 use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\FilamentDependencyManagerServiceProvider;
+use Webkernel\BackOffice\System\Models\WebkernelBackgroundTask;
+use Webkernel\BackOffice\System\Presentation\Resources\BackgroundTasks\BackgroundTasksResource;
 use Filament\Support\Enums\Width;
 use Filament\Support\Colors\Color;
 use Filament\Navigation\NavigationGroup;
+use Filament\Navigation\UserMenuItem;
 
 final class SystemPanelProvider extends PanelProvider
 {
@@ -91,6 +94,13 @@ final class SystemPanelProvider extends PanelProvider
                 for: 'Webkernel\BackOffice\System\Presentation\Widgets',
             )
             ->widgets([AccountWidget::class, FilamentInfoWidget::class])
+            ->userMenuItems([
+                UserMenuItem::make()
+                    ->label(fn () => WebkernelBackgroundTask::active()->count() . ' background task(s) running')
+                    ->icon('heroicon-o-clock')
+                    ->url(fn () => BackgroundTasksResource::getUrl())
+                    ->visible(fn () => WebkernelBackgroundTask::active()->count() > 0),
+            ])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

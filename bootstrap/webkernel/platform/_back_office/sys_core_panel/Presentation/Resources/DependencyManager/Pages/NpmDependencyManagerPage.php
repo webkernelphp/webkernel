@@ -10,6 +10,7 @@ use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\TagsColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
@@ -102,6 +103,10 @@ class NpmDependencyManagerPage extends Page implements HasTable
                         'update-possible' => 'Major Update',
                         default => 'Up to date',
                     }),
+
+                TagsColumn::make('required_by')
+                    ->label('Required By')
+                    ->separator(','),
             ])
             ->actions([
                 UpdateNpmPackageAction::make(),
@@ -119,11 +124,23 @@ class NpmDependencyManagerPage extends Page implements HasTable
                     ->label('Refresh List')
                     ->icon('heroicon-o-arrow-path')
                     ->action(function () {
-                        app(NpmService::class)->clearCache();
+                        $service = app(NpmService::class);
+                        $service->clearCache();
+                        \Illuminate\Support\Facades\Cache::forget('filament-dependency-manager:npm-all');
                         $this->resetTable();
                     }),
             ])
             ->filters([
+                SelectFilter::make('has_update')
+                    ->label('Status')
+                    ->options([
+                        '1' => 'Has Update',
+                        '0' => 'Up to Date',
+                    ])
+                    ->query(
+                        fn (Builder $query, array $data) => $query->when($data['value'] !== null, fn ($q) => $q->where('has_update', $data['value'] === '1'))
+                    ),
+
                 SelectFilter::make('latest-status')
                     ->label('Update Type')
                     ->options([

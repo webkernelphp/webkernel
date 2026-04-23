@@ -16,11 +16,17 @@ class NpmPackage extends Model
         'version' => 'string',
         'latest' => 'string',
         'latest-status' => 'string',
-        'description' => 'string',
+        'description' => 'text',
+        'required_by' => 'text',
+        'has_update' => 'boolean',
+    ];
+
+    protected $casts = [
+        'required_by' => 'json',
     ];
 
     public function getRows(): array
     {
-        return app(NpmService::class)->getOutdatedPackages();
+        return app(NpmService::class)->getAllInstalledPackages();
     }
 }

@@ -11,6 +11,7 @@ use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\TagsColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
@@ -108,6 +109,10 @@ class DependencyManagerPage extends Page implements HasTable
                     ->limit(50)
                     ->tooltip(fn ($state) => $state)
                     ->color('gray'),
+
+                TagsColumn::make('required_by')
+                    ->label('Required By')
+                    ->separator(','),
             ])
             ->actions([
                 UpdateComposerPackageAction::make(),
@@ -125,11 +130,23 @@ class DependencyManagerPage extends Page implements HasTable
                     ->label('Refresh List')
                     ->icon('heroicon-o-arrow-path')
                     ->action(function () {
-                        app(ComposerService::class)->clearCache();
+                        $service = app(ComposerService::class);
+                        $service->clearCache();
+                        \Illuminate\Support\Facades\Cache::forget('filament-dependency-manager:composer-all');
                         $this->resetTable();
                     }),
             ])
             ->filters([
+                SelectFilter::make('has_update')
+                    ->label('Status')
+                    ->options([
+                        '1' => 'Has Update',
+                        '0' => 'Up to Date',
+                    ])
+                    ->query(
+                        fn (Builder $query, array $data) => $query->when($data['value'] !== null, fn ($q) => $q->where('has_update', $data['value'] === '1'))
+                    ),
+
                 SelectFilter::make('latest-status')
                     ->label('Update Type')
                     ->options([
