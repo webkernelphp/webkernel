@@ -47,6 +47,7 @@ spl_autoload_register(static function (string $class): void {
 
                 /* Backend Layer: System Infrastructure — subdivided by concern */
                 'Webkernel\\System\\Host\\'   => WEBKERNEL_PATH . '/platform/_backend/host',
+                'Webkernel\\System\\Security\\' => WEBKERNEL_PATH . '/platform/security',
                 'Webkernel\\System\\Access\\' => WEBKERNEL_PATH . '/platform/_backend/access',
                 'Webkernel\\System\\Ops\\'    => WEBKERNEL_PATH . '/platform/_backend/ops',
                 'Webkernel\\System\\'         => WEBKERNEL_PATH . '/platform/_backend', // Fallback: WebkernelAPI, WebAppInterface
@@ -55,7 +56,6 @@ spl_autoload_register(static function (string $class): void {
                 'Webkernel\\Arcanes\\'       => WEBKERNEL_PATH . '/platform/arcanes',
                 'Webkernel\\QuickTouch\\'    => WEBKERNEL_PATH . '/support/quick_touch',
                 'Webkernel\\Routes\\'        => WEBKERNEL_PATH . '/platform/routing',
-                'Webkernel\\System\\Security\\'        => WEBKERNEL_PATH . '/platform/_backend/security',
 
                 /* System Panel Specific Assets */
                 'Webkernel\\BackOffice\\System\\'       => WEBKERNEL_PATH . '/platform/_back_office/sys_core_panel',
