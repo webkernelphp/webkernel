@@ -52,5 +52,5 @@ return [
             'body'  => 'Progress is saved to disk. Close the browser mid-install and it resumes exactly where it stopped.',
         ],
     ],
-    'video' => 'https://www.youtube.com/watch?v=FdZikRU97CI',   // https:// URL — YouTube, CDN, or any direct link
+    'video' => 'https://www.youtube.com/watch?v=w7jKcbVcI54',   // https:// URL — YouTube, CDN, or any direct link
 ];

@@ -4,6 +4,9 @@ namespace Webkernel\BackOffice\System\Presentation\Pages;
 
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
@@ -16,8 +19,10 @@ use Webkernel\BackOffice\System\Contracts\UpgradeOperation;
 use Webkernel\BackOffice\System\Models\WebkernelRelease;
 use Webkernel\BackOffice\System\Models\WebkernelUpdateCheck;
 
-class WebkernelUpgrade extends Page implements UpgradeOperation
+class WebkernelUpgrade extends Page implements UpgradeOperation, HasForms
 {
+    use InteractsWithForms;
+
     protected string $view = 'webkernel-system::filament.pages.webkernel-upgrade';
 
     protected static ?int                 $navigationSort           = 6;
@@ -53,6 +58,22 @@ class WebkernelUpgrade extends Page implements UpgradeOperation
     public string $videoId          = '';
     public string $selectedVersion  = '';
 
+    protected function getFormSchema(): array
+    {
+        return [
+            Select::make('selectedVersion')
+                ->label('Select Release')
+                ->options(collect($this->releases)->pluck('version')->mapWithKeys(fn($v) => [
+                    $v => collect($this->releases)->firstWhere('version', $v)
+                        ? "v{$v} — " . collect($this->releases)->firstWhere('version', $v)['codename'] . " (" . collect($this->releases)->firstWhere('version', $v)['date'] . ")"
+                        : $v
+                ])->toArray())
+                ->native(false)
+                ->live()
+                ->afterStateUpdated(fn($state) => $this->selectReleaseVersion($state)),
+        ];
+    }
+
     public function mount(): void
     {
         $this->phpVersion      = PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION . '.' . PHP_RELEASE_VERSION;
@@ -68,7 +89,7 @@ class WebkernelUpgrade extends Page implements UpgradeOperation
     private function loadCurrentVersionMetadata(): void
     {
         try {
-            $metaPath = dirname(__DIR__, 5) . '/release-meta.php';
+            $metaPath = WEBKERNEL_PATH . '/release-meta.php';
             if (is_file($metaPath)) {
                 $meta = include $metaPath;
                 if (is_array($meta)) {

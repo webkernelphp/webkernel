@@ -1268,34 +1268,7 @@
         @endphp
         @if($uniqueVersions > 1)
         <div style="margin: 1.5rem auto 2rem; max-width: 320px; display: flex; justify-content: center;">
-            <x-filament::input.wrapper label="Select Release">
-                <select
-                    wire:change="selectReleaseVersion($event.target.value)"
-                    style="
-                        width: 100%;
-                        padding: 0.625rem;
-                        border: 1px solid var(--form-field-border-color);
-                        border-radius: var(--radius-lg);
-                        background-color: var(--form-field-background-color);
-                        color: var(--form-field-color);
-                        font: inherit;
-                        font-size: 0.875rem;
-                        transition: border-color 150ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 150ms cubic-bezier(0.16, 1, 0.3, 1);
-                        appearance: none;
-                        background-image: url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke-width=%221.5%22 stroke=%22currentColor%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22m7 8 5 5 5-5%22 /%3E%3C/svg%3E');
-                        background-position: right 0.5rem center;
-                        background-repeat: no-repeat;
-                        background-size: 1.5em 1.5em;
-                        padding-right: 2.5rem;
-                    "
-                >
-                    @foreach($releases as $release)
-                        <option value="{{ $release['version'] }}" @if($release['version'] === $selectedVersion) selected @endif>
-                            v{{ $release['version'] }} — {{ $release['codename'] }} ({{ $release['date'] }})
-                        </option>
-                    @endforeach
-                </select>
-            </x-filament::input.wrapper>
+            {{ $this->form->getComponent('selectedVersion')->render() }}
         </div>
         @endif
         <div class="webkernel-upgrade-page-hero-cta">
