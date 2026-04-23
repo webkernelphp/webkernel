@@ -545,9 +545,17 @@ final class Modules extends ServiceProvider
             }
             foreach (glob($dir . '/*.php') ?: [] as $file) {
                 $key = pathinfo($file, PATHINFO_FILENAME);
-                if (!$this->app['config']->has($key)) {
-                    $this->mergeConfigFrom($file, $key);
+                if ($this->app['config']->has($key)) {
+                    continue;
                 }
+                $config = require $file;
+                if (!is_array($config)) {
+                    continue;
+                }
+                $this->app['config']->set($key, array_merge(
+                    $this->app['config']->get($key, []),
+                    $config
+                ));
             }
         }
     }
