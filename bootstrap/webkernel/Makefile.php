@@ -42,6 +42,14 @@ function gitBranch(): string
     return $b !== '' ? $b : git(['describe', '--all', '--exact-match', 'HEAD'], 'detached');
 }
 function gitTag(): string { return git(['describe', '--exact-match', '--tags', 'HEAD'], ''); }
+function gitSigningFormat(): string { return git(['config', '--get', 'gpg.format'], 'openpgp'); }
+function gitSigningKey(): string { return git(['config', '--get', 'user.signingkey'], ''); }
+function hasSigningConfig(): bool
+{
+    $format = gitSigningFormat();
+    $key = gitSigningKey();
+    return ($format === 'ssh' || $format === 'openpgp') && $key !== '';
+}
 // ── Argument parsing ──────────────────────────────────────────────────────────
 function parseArgs(array $argv): array
 {
@@ -363,11 +371,13 @@ function gitCommitAndTag(string $semver, string $codename): void
 {
     if (!confirm("Commit all changes in bootstrap/ and tag {$semver}?", default: true)) {
         warning('Skipped git commit. Remember to commit manually.');
+        $signFlags = hasSigningConfig() ? '-S' : '';
+        $tagSignFlags = hasSigningConfig() ? '-s' : '';
         note(implode("\n", [
             '  cd bootstrap',
             '  git add .',
-            "  git commit -m \"release: {$semver} ({$codename})\"",
-            "  git tag {$semver}",
+            "  git commit {$signFlags} -m \"release: {$semver} ({$codename})\"",
+            "  git tag {$tagSignFlags} {$semver}",
             '  git push origin HEAD',
             "  git push origin {$semver}",
         ]));
@@ -382,13 +392,15 @@ function gitCommitAndTag(string $semver, string $codename): void
     spin(function () use ($commitMsg, $semver, &$committed): void {
         Process::fromArray(['git', 'add', '.'], cwd: BOOTSTRAP_DIR)->run();
 
-        $commit = Process::fromArray(['git', 'commit', '-m', $commitMsg], cwd: BOOTSTRAP_DIR);
+        $commitCmd = hasSigningConfig() ? ['git', 'commit', '-S', '-m', $commitMsg] : ['git', 'commit', '-m', $commitMsg];
+        $commit = Process::fromArray($commitCmd, cwd: BOOTSTRAP_DIR);
         $commit->run();
         if (!$commit->isSuccessful()) { return; }
 
         $committed = true;
 
-        Process::fromArray(['git', 'tag', $semver], cwd: BOOTSTRAP_DIR)->run();
+        $tagCmd = hasSigningConfig() ? ['git', 'tag', '-s', $semver] : ['git', 'tag', $semver];
+        Process::fromArray($tagCmd, cwd: BOOTSTRAP_DIR)->run();
     }, "Committing bootstrap/ → {$semver}…");
     if (!$committed) {
         warning('Git commit failed — nothing to commit or an error occurred.');
@@ -419,6 +431,23 @@ function runStamp(string $version, int $build): void
     if (!confirm('I confirm this is a development build, not a certified production instance', default: false)) {
         warning('Aborted. No files were modified.');
         exit(0);
+    }
+    if (!hasSigningConfig()) {
+        warning('No GPG/SSH signing key configured');
+        note(implode("\n", [
+            'Commits and tags will NOT be signed. To enable signing:',
+            '',
+            '  # For SSH signing (recommended):',
+            '  git config --global gpg.format ssh',
+            '  git config --global user.signingkey ~/.ssh/id_ed25519.pub',
+            '',
+            '  # For GPG signing:',
+            '  git config --global user.signingkey YOUR_KEY_ID',
+            '',
+            'See: https://docs.github.com/en/authentication/managing-commit-signature-verification',
+        ]));
+    } else {
+        info('✓ Commits and tags will be signed');
     }
     $codename = text(
         label: 'Codename',
