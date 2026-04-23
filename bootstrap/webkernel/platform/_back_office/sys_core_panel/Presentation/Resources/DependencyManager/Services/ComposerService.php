@@ -15,16 +15,44 @@ class ComposerService
     public function __construct()
     {
         $this->phpBinary = PHP_BINARY;
-        $finder = new ExecutableFinder;
+        $this->composerBinary = $this->resolveComposerBinary();
+    }
 
-        $this->composerBinary = config('dependency-manager.composer_binary')
-            ?? $finder->find('composer')
-            ?? 'composer';
+    protected function resolveComposerBinary(): string
+    {
+        $configured = config('dependency-manager.composer_binary');
+        if ($configured && $this->binaryExists($configured)) {
+            return $configured;
+        }
+
+        $finder = new ExecutableFinder;
+        $found = $finder->find('composer');
+        if ($found) {
+            return $found;
+        }
+
+        $localPhar = base_path('composer.phar');
+        if (file_exists($localPhar)) {
+            return $this->phpBinary . ' ' . $localPhar;
+        }
+
+        return 'composer';
+    }
+
+    protected function binaryExists(string $binary): bool
+    {
+        $process = new Process(['which', $binary]);
+        $process->run();
+        return $process->isSuccessful();
     }
 
     public function getOutdatedPackages(): array
     {
         return Cache::remember('filament-dependency-manager:composer-outdated', 3600, function () {
+            if (!$this->ensureComposerExists()) {
+                return [];
+            }
+
             $process = new Process(
                 [$this->composerBinary, 'outdated', '--format=json'],
                 base_path()
@@ -47,6 +75,48 @@ class ComposerService
 
             return $output['installed'] ?? [];
         });
+    }
+
+    protected function ensureComposerExists(): bool
+    {
+        $process = new Process([$this->composerBinary, '--version']);
+        $process->run();
+
+        if ($process->isSuccessful()) {
+            return true;
+        }
+
+        return $this->downloadComposer();
+    }
+
+    protected function downloadComposer(): bool
+    {
+        $composerPath = base_path('composer.phar');
+
+        if (file_exists($composerPath)) {
+            $this->composerBinary = $this->phpBinary . ' ' . $composerPath;
+            return true;
+        }
+
+        $downloadUrl = 'https://getcomposer.org/composer.phar';
+
+        $process = new Process([
+            'curl',
+            '-fsSL',
+            $downloadUrl,
+            '-o',
+            $composerPath,
+        ]);
+
+        $process->setTimeout(300);
+        $process->run();
+
+        if (!$process->isSuccessful() || !file_exists($composerPath)) {
+            return false;
+        }
+
+        $this->composerBinary = $this->phpBinary . ' ' . $composerPath;
+        return true;
     }
 
     public function clearCache(): void

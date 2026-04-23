@@ -17,13 +17,31 @@ class NpmService
     public function __construct()
     {
         $this->phpBinary = PHP_BINARY;
-        $finder = new ExecutableFinder;
-
         $this->client = config('dependency-manager.npm_client', 'npm');
+        $this->binary = $this->resolveNpmBinary();
+    }
 
-        $this->binary = config('dependency-manager.npm_binary')
-            ?? $finder->find($this->client)
-            ?? $this->client;
+    protected function resolveNpmBinary(): string
+    {
+        $configured = config('dependency-manager.npm_binary');
+        if ($configured && $this->binaryExists($configured)) {
+            return $configured;
+        }
+
+        $finder = new ExecutableFinder;
+        $found = $finder->find($this->client);
+        if ($found) {
+            return $found;
+        }
+
+        return $this->client;
+    }
+
+    protected function binaryExists(string $binary): bool
+    {
+        $process = new Process(['which', $binary]);
+        $process->run();
+        return $process->isSuccessful();
     }
 
     public function getOutdatedPackages(): array

@@ -45,8 +45,12 @@ class UpdateAllComposerPackagesAction extends Action
         $composerBinary = config('dependency-manager.composer_binary', 'composer');
 
         try {
+            $command = str_contains($composerBinary, ' ')
+                ? array_merge(explode(' ', $composerBinary), ['update', '--no-interaction', '--no-dev'])
+                : [$composerBinary, 'update', '--no-interaction', '--no-dev'];
+
             $process = new Process(
-                [$composerBinary, 'update', '--no-interaction', '--no-dev'],
+                $command,
                 base_path(),
                 [
                     'PATH' => dirname(PHP_BINARY) . ':/usr/local/bin:/usr/bin:/bin',

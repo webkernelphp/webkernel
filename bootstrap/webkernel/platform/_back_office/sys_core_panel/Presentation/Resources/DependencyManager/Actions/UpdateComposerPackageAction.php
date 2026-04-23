@@ -43,11 +43,16 @@ class UpdateComposerPackageAction extends Action
     private function updatePackage(ComposerPackage $record): void
     {
         $service = app(ComposerService::class);
-        $composerBinary = config('dependency-manager.composer_binary', 'composer');
 
         try {
+            $composerBinary = config('dependency-manager.composer_binary', 'composer');
+
+            $command = str_contains($composerBinary, ' ')
+                ? array_merge(explode(' ', $composerBinary), ['require', "{$record->name}:{$record->latest}", '--no-interaction', '--no-dev'])
+                : [$composerBinary, 'require', "{$record->name}:{$record->latest}", '--no-interaction', '--no-dev'];
+
             $process = new Process(
-                [$composerBinary, 'require', "{$record->name}:{$record->latest}", '--no-interaction', '--no-dev'],
+                $command,
                 base_path(),
                 [
                     'PATH' => dirname(PHP_BINARY) . ':/usr/local/bin:/usr/bin:/bin',
