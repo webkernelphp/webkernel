@@ -81,10 +81,19 @@ class WebkernelUpgrade extends Page
     private function loadFromLocalRegistry(): void
     {
         try {
-            $latest = WebkernelRelease::forTarget('webkernel', 'foundation')
+            $rows = WebkernelRelease::forTarget('webkernel', 'foundation')
                 ->stable()
-                ->orderByDesc('version')
-                ->first();
+                ->get();
+
+            if ($rows->isEmpty()) {
+                return;
+            }
+
+            $sorted = $rows->sort(function($a, $b) {
+                return version_compare($b->version, $a->version);
+            });
+
+            $latest = $sorted->first();
 
             if ($latest !== null) {
                 $this->latestVersion = $latest->version;
@@ -92,13 +101,7 @@ class WebkernelUpgrade extends Page
                 $this->lastChecked   = $latest->updated_at->toIso8601String();
             }
 
-            $rows = WebkernelRelease::forTarget('webkernel', 'foundation')
-                ->stable()
-                ->orderByDesc('version')
-                ->limit(20)
-                ->get();
-
-            $this->releases = $rows->map(fn($r) => [
+            $this->releases = $sorted->take(20)->map(fn($r) => [
                 'version'  => $r->version,
                 'codename' => $r->codename ?? '',
                 'date'     => $r->published_at?->toDateString() ?? $r->created_at->toDateString(),
@@ -192,10 +195,11 @@ class WebkernelUpgrade extends Page
         try {
             $this->progressPercent = 10;
             $this->updateStatus = 'Finding latest release…';
-            $latest = WebkernelRelease::forTarget('webkernel', 'foundation')
+            $releases = WebkernelRelease::forTarget('webkernel', 'foundation')
                 ->stable()
-                ->orderByDesc('version')
-                ->first();
+                ->get();
+
+            $latest = $releases->sortByDesc(fn($r) => $r->version, SORT_NATURAL)->first();
 
             if (!$latest) {
                 throw new \RuntimeException('No releases available');
