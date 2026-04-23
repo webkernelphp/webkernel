@@ -2,6 +2,7 @@
 
 namespace Webkernel\BackOffice\System\Providers;
 
+use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -95,9 +96,10 @@ final class SystemPanelProvider extends PanelProvider
             )
             ->widgets([AccountWidget::class, FilamentInfoWidget::class])
             ->userMenuItems([
-                MenuItem::make()
-                    ->label(fn () => WebkernelBackgroundTask::active()->count() . ' background task(s) running')
-                    ->icon('heroicon-o-clock')
+                Action::make('user-background-tasks')
+                    ->label('Background Tasks')
+                    ->icon('play')
+                    ->badge(fn () => WebkernelBackgroundTask::active()->count())
                     ->url(fn () => BackgroundTasksResource::getUrl())
                     ->visible(fn () => WebkernelBackgroundTask::active()->count() > 0),
             ])

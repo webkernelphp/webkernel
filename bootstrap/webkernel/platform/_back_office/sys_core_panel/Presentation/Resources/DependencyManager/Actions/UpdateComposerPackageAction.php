@@ -27,6 +27,7 @@ class UpdateComposerPackageAction extends Action
             ->label('Update Package')
             ->icon('heroicon-o-arrow-up-circle')
             ->color('success')
+            ->visible(fn (ComposerPackage $record): bool => (bool) $record->has_update)
             ->form([
                 Radio::make('mode')
                     ->label('How would you like to run this?')

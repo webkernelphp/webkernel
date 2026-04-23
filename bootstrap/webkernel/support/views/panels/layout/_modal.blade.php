@@ -1,10 +1,24 @@
 {{-- webkernel::panels.layout._modal — overlay backdrop + window glass + spring animation (private partial) --}}
 <style>
 @media (min-width: 768px) {
+
+    @if(false)
+    .fi-modal-window {
+        max-height: 90vh !important;
+    }
+    @endif
+
+    body.fi-modal-open {
+        overflow: auto !important;
+    }
+
     .fi-modal>.fi-modal-window-ctn {
         display: unset;
     }
 
+    .fi-modal>.fi-modal-close-overlay {
+        inset: unset;
+    }
     .fi-modal-overlay,
     .fi-modal-close-overlay {
         backdrop-filter: saturate(150%) brightness(0.6) !important;
@@ -12,20 +26,148 @@
         transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
     .fi-modal-window {
-        animation: wds-modal-spring 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-        backdrop-filter: blur(25px) saturate(100%) !important;
-        background: rgba(255, 255, 255, 0.9) !important;
-        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        order: 1px solid rgba(255, 255, 255, 0.3) !important;
         box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37) !important;
     }
     .dark .fi-modal-window {
-        background: rgba(0, 0, 0, 0.25) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5) !important;
     }
-    @keyframes wds-modal-spring {
-        from { transform: scale(0.95) translateY(10px); opacity: 0; }
-        to   { transform: scale(1)    translateY(0);    opacity: 1; }
-    }
 }
 </style>
+
+{{-- Make Modal Draggable --}}
+
+<style>
+/**
+ * Filament v5 Draggable Modal Styles
+ */
+
+.fi-modal-window {
+  transition: none !important;
+}
+
+.fi-modal-header,
+.fi-modal-heading,
+[data-slot="title"] {
+  cursor: move !important;
+}
+
+.fi-modal-header button,
+.fi-modal-header a,
+.fi-modal-header input {
+  cursor: pointer !important;
+}</style>
+
+<script>
+/**
+ * Filament v5 Draggable Modal
+ */
+(function () {
+    'use strict';
+
+    const modalSelectors = [
+        '.fi-modal-window',
+        '[role="dialog"]',
+    ];
+
+    const headerSelectors = [
+        '.fi-modal-header',
+        '.fi-modal-heading',
+        '[data-slot="title"]',
+        'header',
+    ];
+
+    function makeDraggable(modal) {
+        if (!modal || modal.dataset.draggableModalAttached === '1') return;
+
+        const dialogWindow = modal.classList.contains('fi-modal-window')
+            ? modal
+            : (modal.querySelector('.fi-modal-window') || modal);
+
+        if (!dialogWindow) return;
+        modal.dataset.draggableModalAttached = '1';
+
+        let handle = null;
+        for (const sel of headerSelectors) {
+            handle = dialogWindow.querySelector(sel);
+            if (handle) break;
+        }
+
+        if (!handle) handle = dialogWindow;
+
+        handle.style.cursor = 'move';
+        handle.style.userSelect = 'none';
+
+        let startX = 0, startY = 0, initialX = 0, initialY = 0;
+
+        function onMouseDown(e) {
+            if (e.button !== 0) return;
+            if (e.target.closest('button, input, select, textarea, a')) return;
+
+            const rect = dialogWindow.getBoundingClientRect();
+
+            initialX = rect.left;
+            initialY = rect.top;
+
+            startX = e.clientX;
+            startY = e.clientY;
+
+            dialogWindow.style.width = rect.width + 'px';
+            // dialogWindow.style.height = rect.height + 'px'; // Let height be auto
+            dialogWindow.style.position = 'fixed';
+            dialogWindow.style.margin = '0';
+            dialogWindow.style.transform = 'none';
+            dialogWindow.style.left = initialX + 'px';
+            dialogWindow.style.top = initialY + 'px';
+            dialogWindow.style.right = 'auto';
+            dialogWindow.style.bottom = 'auto';
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+
+            e.preventDefault();
+        }
+
+        function onMouseMove(e) {
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+
+            dialogWindow.style.left = (initialX + dx) + 'px';
+            dialogWindow.style.top = (initialY + dy) + 'px';
+        }
+
+        function onMouseUp() {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        }
+
+        handle.addEventListener('mousedown', onMouseDown);
+    }
+
+    const observer = new MutationObserver(mutations => {
+        for (const m of mutations) {
+            for (const node of m.addedNodes) {
+                if (!(node instanceof HTMLElement)) continue;
+                if (modalSelectors.some(s => node.matches(s))) {
+                    setTimeout(() => makeDraggable(node), 100);
+                } else {
+                    const found = node.querySelector(modalSelectors.join(','));
+                    if (found) setTimeout(() => makeDraggable(found), 100);
+                }
+            }
+        }
+    });
+
+    function init() {
+        document.querySelectorAll(modalSelectors.join(',')).forEach(makeDraggable);
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>

@@ -1,9 +1,5 @@
-{{-- webkernel::panels.layout._main — fi-main surface card (tablet) + fixed layout (desktop) (private partial) --}}
-<style>
-:root {
-    --radius-xl: 6px;
-    --radius-lg: 6px;
-}
+{{-- webkernel::panels.layout._main — fi-main surface card (tablet) + fixed layout (desktop) (private partial)
+
 
 @media (min-width: 768px) {
     .fi-main { margin-inline: 0 !important; transition: opacity 0.25s ease-out, transform 0.25s ease-out; will-change: opacity, transform; }
@@ -14,4 +10,11 @@
     .fi-main-ctn .fi-main > *     { border-radius: inherit !important; }
     .fi-main-ctn .fi-main > * > * { border-radius: var(--wds-radius-content) !important; }
 }
+--}}
+<style>
+:root {
+    --radius-xl: 6px;
+    --radius-lg: 6px;
+}
+
 </style>
