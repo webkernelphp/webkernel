@@ -6,12 +6,12 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\Radio;
 use Filament\Notifications\Notification;
 use Symfony\Component\Process\Process;
-use Webkernel\BackOffice\System\Jobs\UpdateAllComposerPackagesJob;
-use Webkernel\BackOffice\System\Models\WebkernelBackgroundTask;
 use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Services\ComposerService;
+use Webkernel\Traits\HasBackgroundTasks;
 
 class UpdateAllComposerPackagesAction extends Action
 {
+    use HasBackgroundTasks;
     public static function getDefaultName(): ?string
     {
         return 'update_all_composer_packages';
@@ -25,7 +25,7 @@ class UpdateAllComposerPackagesAction extends Action
             ->label('Update All Packages')
             ->icon('heroicon-o-bolt')
             ->color('warning')
-            ->form([
+            ->schema([
                 Radio::make('mode')
                     ->label('How would you like to run this?')
                     ->options([
@@ -57,13 +57,12 @@ class UpdateAllComposerPackagesAction extends Action
 
     private function updateAllPackagesInBackground(): void
     {
-        $task = WebkernelBackgroundTask::create([
-            'type' => 'composer_update_all',
-            'label' => 'Update all Composer packages',
-            'status' => 'pending',
-        ]);
+        $task = $this->createBackgroundTask(
+            'composer_update_all',
+            'Update all Composer packages'
+        );
 
-        dispatch(new UpdateAllComposerPackagesJob($task->id));
+        $this->dispatchAllComposerPackagesUpdate((string) $task->id);
 
         Notification::make()
             ->title('Background Task Created')

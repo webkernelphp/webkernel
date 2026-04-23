@@ -6,12 +6,12 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\Radio;
 use Filament\Notifications\Notification;
 use Symfony\Component\Process\Process;
-use Webkernel\BackOffice\System\Jobs\UpdateAllNpmPackagesJob;
-use Webkernel\BackOffice\System\Models\WebkernelBackgroundTask;
 use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Services\NpmService;
+use Webkernel\Traits\HasBackgroundTasks;
 
 class UpdateAllNpmPackagesAction extends Action
 {
+    use HasBackgroundTasks;
     public static function getDefaultName(): ?string
     {
         return 'update_all_npm_packages';
@@ -57,13 +57,12 @@ class UpdateAllNpmPackagesAction extends Action
 
     private function updateAllPackagesInBackground(): void
     {
-        $task = WebkernelBackgroundTask::create([
-            'type' => 'npm_update_all',
-            'label' => 'Update all NPM packages',
-            'status' => 'pending',
-        ]);
+        $task = $this->createBackgroundTask(
+            'npm_update_all',
+            'Update all NPM packages'
+        );
 
-        dispatch(new UpdateAllNpmPackagesJob($task->id));
+        $this->dispatchAllNpmPackagesUpdate((string) $task->id);
 
         Notification::make()
             ->title('Background Task Created')

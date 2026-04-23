@@ -6,13 +6,14 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\Radio;
 use Filament\Notifications\Notification;
 use Symfony\Component\Process\Process;
-use Webkernel\BackOffice\System\Jobs\UpdateComposerPackageJob;
-use Webkernel\BackOffice\System\Models\WebkernelBackgroundTask;
 use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Models\ComposerPackage;
 use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Services\ComposerService;
+use Webkernel\Traits\HasBackgroundTasks;
 
 class UpdateComposerPackageAction extends Action
 {
+    use HasBackgroundTasks;
+
     public static function getDefaultName(): ?string
     {
         return 'update_composer_package';
@@ -58,17 +59,13 @@ class UpdateComposerPackageAction extends Action
 
     private function updatePackageInBackground(ComposerPackage $record): void
     {
-        $task = WebkernelBackgroundTask::create([
-            'type' => 'composer_update',
-            'label' => "Update {$record->name} to {$record->latest}",
-            'payload' => [
-                'package' => $record->name,
-                'version' => $record->latest,
-            ],
-            'status' => 'pending',
-        ]);
+        $task = $this->createBackgroundTask(
+            'composer_update',
+            "Update {$record->name} to {$record->latest}",
+            ['package' => $record->name, 'version' => $record->latest]
+        );
 
-        dispatch(new UpdateComposerPackageJob($task->id, $record->name, $record->latest));
+        $this->dispatchComposerPackageUpdate((string) $task->id, $record->name, $record->latest);
 
         Notification::make()
             ->title('Background Task Created')

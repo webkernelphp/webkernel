@@ -11,7 +11,6 @@ use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\TagsColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
@@ -109,10 +108,6 @@ class DependencyManagerPage extends Page implements HasTable
                     ->limit(50)
                     ->tooltip(fn ($state) => $state)
                     ->color('gray'),
-
-                TagsColumn::make('required_by')
-                    ->label('Required By')
-                    ->separator(','),
             ])
             ->actions([
                 UpdateComposerPackageAction::make(),

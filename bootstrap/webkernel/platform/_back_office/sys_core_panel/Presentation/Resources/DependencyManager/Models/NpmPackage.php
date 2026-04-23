@@ -17,20 +17,12 @@ class NpmPackage extends Model
         'latest' => 'string',
         'latest-status' => 'string',
         'description' => 'text',
-        'required_by' => 'text',
         'has_update' => 'boolean',
     ];
 
-    public function getRequiredByAttribute(): array
-    {
-        if (empty($this->attributes['required_by'])) {
-            return [];
-        }
-        return array_filter(explode(',', $this->attributes['required_by']));
-    }
-
     public function getRows(): array
     {
-        return app(NpmService::class)->getAllInstalledPackages();
+        $rows = app(NpmService::class)->getAllInstalledPackages();
+        return collect($rows)->map(fn ($row) => collect($row)->except('required_by')->toArray())->toArray();
     }
 }

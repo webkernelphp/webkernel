@@ -18,20 +18,12 @@ class ComposerPackage extends Model
         'latest-release-date' => 'string',
         'description' => 'text',
         'type' => 'string',
-        'required_by' => 'text',
         'has_update' => 'boolean',
     ];
 
-    public function getRequiredByAttribute(): array
-    {
-        if (empty($this->attributes['required_by'])) {
-            return [];
-        }
-        return array_filter(explode(',', $this->attributes['required_by']));
-    }
-
     public function getRows(): array
     {
-        return app(ComposerService::class)->getAllInstalledPackages();
+        $rows = app(ComposerService::class)->getAllInstalledPackages();
+        return collect($rows)->map(fn ($row) => collect($row)->except('required_by')->toArray())->toArray();
     }
 }

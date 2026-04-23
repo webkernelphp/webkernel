@@ -10,7 +10,6 @@ use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\TagsColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
@@ -103,10 +102,6 @@ class NpmDependencyManagerPage extends Page implements HasTable
                         'update-possible' => 'Major Update',
                         default => 'Up to date',
                     }),
-
-                TagsColumn::make('required_by')
-                    ->label('Required By')
-                    ->separator(','),
             ])
             ->actions([
                 UpdateNpmPackageAction::make(),

@@ -6,13 +6,13 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\Radio;
 use Filament\Notifications\Notification;
 use Symfony\Component\Process\Process;
-use Webkernel\BackOffice\System\Jobs\UpdateNpmPackageJob;
-use Webkernel\BackOffice\System\Models\WebkernelBackgroundTask;
 use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Models\NpmPackage;
 use Webkernel\BackOffice\System\Presentation\Resources\DependencyManager\Services\NpmService;
+use Webkernel\Traits\HasBackgroundTasks;
 
 class UpdateNpmPackageAction extends Action
 {
+    use HasBackgroundTasks;
     public static function getDefaultName(): ?string
     {
         return 'update_npm_package';
@@ -58,17 +58,13 @@ class UpdateNpmPackageAction extends Action
 
     private function updatePackageInBackground(NpmPackage $record): void
     {
-        $task = WebkernelBackgroundTask::create([
-            'type' => 'npm_update',
-            'label' => "Update {$record->name} to {$record->latest}",
-            'payload' => [
-                'package' => $record->name,
-                'version' => $record->latest,
-            ],
-            'status' => 'pending',
-        ]);
+        $task = $this->createBackgroundTask(
+            'npm_update',
+            "Update {$record->name} to {$record->latest}",
+            ['package' => $record->name, 'version' => $record->latest]
+        );
 
-        dispatch(new UpdateNpmPackageJob($task->id, $record->name, $record->latest));
+        $this->dispatchNpmPackageUpdate((string) $task->id, $record->name, $record->latest);
 
         Notification::make()
             ->title('Background Task Created')
