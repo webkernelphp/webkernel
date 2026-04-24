@@ -35,15 +35,8 @@ final class ServiceProvider extends Laravel
     {
         // ── Panel ──────────────────────────────────────────────────────────────
 
-        $this->app->singleton(
-            RemoteComponentRegistry::class,
-            DefaultRemoteComponentRegistry::class,
-        );
 
-        $this->app->singleton(
-            PanelConfigStore::class,
-            fn () => new PanelConfigStore(storage_path('webkernel/panels')),
-        );
+
 
         // ── Command replacer ───────────────────────────────────────────────────
 
