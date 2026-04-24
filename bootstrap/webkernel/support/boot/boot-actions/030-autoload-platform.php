@@ -16,63 +16,12 @@ spl_autoload_register(static function (string $class): void {
     if ($prefixes === null) {
         $prefixes = array_merge(
             [
-                /* Core Layer: Connectors */
-
-                // General contracts & facades (directly in the connectors package namespace)
-                'Webkernel\\Connectors\\Contracts\\' => WEBKERNEL_PATH . '/aptitudes/connectors/contracts',
-                'Webkernel\\Connectors\\Traits\\'    => WEBKERNEL_PATH . '/aptitudes/connectors/traits',
-                'Webkernel\\Connectors\\'            => WEBKERNEL_PATH . '/aptitudes/connectors/facades',
-
-                // Domain-specific connectors
-                'Webkernel\\Communication\\' => WEBKERNEL_PATH . '/aptitudes/connectors/src/communication',
-                'Webkernel\\Social\\'        => WEBKERNEL_PATH . '/aptitudes/connectors/src/social',
-                'Webkernel\\Payment\\'       => WEBKERNEL_PATH . '/aptitudes/connectors/src/payment',
-                'Webkernel\\Integration\\'   => WEBKERNEL_PATH . '/aptitudes/connectors/src/integration',
-                'Webkernel\\Productivity\\'  => WEBKERNEL_PATH . '/aptitudes/connectors/src/productivity',
-                'Webkernel\\FFI\\'           => WEBKERNEL_PATH . '/aptitudes/connectors/src/native/ffi',
-
-                /* Aptitudes Layer: Core Business Logic */
-                'Webkernel\\Async\\'         => WEBKERNEL_PATH . '/aptitudes/async',
-                'Webkernel\\Components\\'    => WEBKERNEL_PATH . '/aptitudes/components',
-                'Webkernel\\Pages\\'         => WEBKERNEL_PATH . '/aptitudes/pages',
-                'Webkernel\\Panels\\'        => WEBKERNEL_PATH . '/aptitudes/panels',
-                'Webkernel\\Plugins\\'       => WEBKERNEL_PATH . '/aptitudes/plugins',
-                'Webkernel\\Traits\\'        => WEBKERNEL_PATH . '/aptitudes/traits',
-                'Webkernel\\Generators\\'    => WEBKERNEL_PATH . '/aptitudes/generators',
-                'Webkernel\\Query\\'         => WEBKERNEL_PATH . '/aptitudes/query-builder',
-
-                /* Instance Layer: High-Level Business Logic */
-                'Webkernel\\Businesses\\'    => WEBKERNEL_PATH . '/aptitudes/instance/businesses',
-                'Webkernel\\Users\\'         => WEBKERNEL_PATH . '/aptitudes/instance/users',
-
-                /* Backend Layer: System Infrastructure — subdivided by concern */
-                'Webkernel\\System\\Host\\'      => WEBKERNEL_PATH . '/platform/_backend/host',
-                'Webkernel\\System\\Console\\'   => WEBKERNEL_PATH . '/platform/_backend/host/Console',
-                'Webkernel\\System\\Security\\'  => WEBKERNEL_PATH . '/platform/security',
-                'Webkernel\\System\\Access\\'    => WEBKERNEL_PATH . '/platform/_backend/access',
-                'Webkernel\\System\\Ops\\'       => WEBKERNEL_PATH . '/platform/_backend/ops',
-                'Webkernel\\System\\'            => WEBKERNEL_PATH . '/platform/_backend', // Fallback: WebkernelAPI, WebAppInterface
-
-                /* Platform Layer */
-                'Webkernel\\Arcanes\\'       => WEBKERNEL_PATH . '/platform/arcanes',
-                'Webkernel\\QuickTouch\\'    => WEBKERNEL_PATH . '/support/quick_touch',
-                'Webkernel\\Routes\\'        => WEBKERNEL_PATH . '/platform/routing',
-                'Webkernel\\Builders\\DBStudio\\'        => WEBKERNEL_PATH . '/platform/_builders/db_studio',
-
-                /* System Panel Specific Assets */
-                'Webkernel\\BackOffice\\System\\'               => WEBKERNEL_PATH . '/platform/_back_office/sys_core_panel',
-                'Webkernel\\BackOffice\\Businesses\\'           => WEBKERNEL_PATH . '/platform/_back_office/sys_biz_panel',
-                'Webkernel\\BackOffice\\Installer\\'            => WEBKERNEL_PATH . '/platform/_back_office/installer_panel',
-
-
-                /* Support Layer */
+                /* Commands and Providers */
+                'Webkernel\\Commands\\'            => WEBKERNEL_PATH . '/platform/commands',
 
                 /* Application Data Models */
                 'App\\Models\\'              => WEBKERNEL_PATH . '/support/boot/app-models',
 
-                /* Commands and Providers */
-                'Webkernel\\Providers\\'     => WEBKERNEL_PATH . '/platform/providers',
-                'Webkernel\\Commands\\'            => WEBKERNEL_PATH . '/support/commands',
             ],
             WEBKERNEL_DEV_NAMESPACES,
             [
