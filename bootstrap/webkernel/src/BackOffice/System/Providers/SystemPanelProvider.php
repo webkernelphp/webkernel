@@ -25,8 +25,6 @@ use Webkernel\BackOffice\System\Models\WebkernelBackgroundTask;
 use Webkernel\BackOffice\System\Presentation\Resources\BackgroundTasks\BackgroundTasksResource;
 use Filament\Support\Enums\Width;
 use Filament\Support\Colors\Color;
-use Filament\Navigation\NavigationGroup;
-use Filament\Navigation\MenuItem;
 
 final class SystemPanelProvider extends PanelProvider
 {
@@ -52,26 +50,6 @@ final class SystemPanelProvider extends PanelProvider
             ->globalSearch()
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth('screen-xxl')
-            ->navigationGroups([
-                NavigationGroup::make()
-                    ->label('System')
-                    ->icon('layout-dashboard'),
-
-                NavigationGroup::make()
-                    ->label('Infrastructure')
-                    ->icon('database')
-                    ->collapsed(),
-
-                NavigationGroup::make()
-                    ->label('Marketplace')
-                    ->icon('shopping-bag')
-                    ->collapsed(),
-
-                NavigationGroup::make()
-                    ->label('Maintenance')
-                    ->icon('wrench')
-                    ->collapsed(),
-            ])
             ->colors([
                 'primary' => Color::Blue,
             ])
@@ -79,32 +57,20 @@ final class SystemPanelProvider extends PanelProvider
             ->databaseNotifications()
             ->databaseNotificationsPolling('3s')
             ->profile(isSimple: false)
-            ->discoverResources(
-                in: __DIR__ . '/../Presentation/Resources',
-                for: 'Webkernel\BackOffice\System\Presentation\Resources',
-            )
-            ->discoverPages(
-                in: __DIR__ . '/../Presentation/Pages',
-                for: 'Webkernel\BackOffice\System\Presentation\Pages',
-            )
+
+
             ->pages([
                 Dashboard::class,
-                DependencyManagerPage::class,
-                NpmDependencyManagerPage::class,
             ])
-            ->discoverWidgets(
-                in: __DIR__ . '/../Presentation/Widgets',
-                for: 'Webkernel\BackOffice\System\Presentation\Widgets',
-            )
-            ->widgets([AccountWidget::class, FilamentInfoWidget::class])
-            ->userMenuItems([
-                Action::make('user-background-tasks')
-                    ->label('Background Tasks')
-                    ->icon('play')
-                    ->badge(fn () => WebkernelBackgroundTask::active()->count())
-                    ->url(fn () => BackgroundTasksResource::getUrl())
-                    ->visible(fn () => WebkernelBackgroundTask::active()->count() > 0),
-            ])
+
+            //->userActions([
+            //    Action::make('user-background-tasks')
+            //        ->label('Background Tasks')
+            //        ->icon('play')
+            //        ->badge(fn () => WebkernelBackgroundTask::active()->count())
+            //        ->url(fn () => BackgroundTasksResource::getUrl())
+            //        ->visible(fn () => WebkernelBackgroundTask::active()->count() > 0),
+            //])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

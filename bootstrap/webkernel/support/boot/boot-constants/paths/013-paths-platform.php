@@ -3,10 +3,10 @@
 /* --- Platform --- */
 
 defined('WEBKERNEL_PLATFORM_ROOT')
-    || define('WEBKERNEL_PLATFORM_ROOT', WEBKERNEL_PATH . '/platform');
+    || define('WEBKERNEL_PLATFORM_ROOT', WEBKERNEL_PATH . '/support');
 
 defined('WEBKERNEL_ARCANES_ROOT')
-    || define('WEBKERNEL_ARCANES_ROOT', WEBKERNEL_PATH . '/Arcanes');
+    || define('WEBKERNEL_ARCANES_ROOT', WEBKERNEL_PATH . '/src/Arcanes');
 
 defined('WEBKERNEL_PLATFORM_CMD_OVERRIDES')
     || define('WEBKERNEL_PLATFORM_CMD_OVERRIDES', WEBKERNEL_PATH . '/support/boot-actions/commands-overrides.php');
