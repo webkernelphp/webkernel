@@ -20,7 +20,7 @@ class MarketplaceModules extends Page
 
     protected static ?int                       $navigationSort           = 51;
     protected static bool                       $shouldRegisterNavigation = true;
-    protected static string|UnitEnum|null       $navigationGroup          = 'Install Module';
+    protected static string|UnitEnum|null       $navigationGroup          = 'Modules & Extensions';
 
     // ── Livewire state ────────────────────────────────────────────────────────
 

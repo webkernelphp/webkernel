@@ -54,7 +54,7 @@ class NpmDependencyManagerPage extends Page implements HasTable
 
     public static function getNavigationGroup(): ?string
     {
-        return 'Maintenance';
+        return 'Modules & Extensions';
     }
 
     public static function getNavigationIcon(): ?string

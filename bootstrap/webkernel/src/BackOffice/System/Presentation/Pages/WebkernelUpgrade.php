@@ -28,7 +28,7 @@ class WebkernelUpgrade extends Page implements UpgradeOperation, HasForms
 
     protected static ?int                 $navigationSort           = 6;
     protected static bool                 $shouldRegisterNavigation = true;
-    protected static string|UnitEnum|null $navigationGroup          = 'Manage Instance';
+    protected static string|UnitEnum|null $navigationGroup          = 'Core Instance';
 
     public bool   $isUpdating       = false;
     public bool   $isProcessing     = false;

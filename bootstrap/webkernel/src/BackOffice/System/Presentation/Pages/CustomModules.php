@@ -38,7 +38,7 @@ class CustomModules extends Page implements HasForms
 
     protected static ?int                       $navigationSort           = 52;
     protected static bool                       $shouldRegisterNavigation = true;
-    protected static string|UnitEnum|null       $navigationGroup          = 'Install Module';
+    protected static string|UnitEnum|null       $navigationGroup          = 'Modules & Extensions';
 
     // ── Livewire state ────────────────────────────────────────────────────────
 

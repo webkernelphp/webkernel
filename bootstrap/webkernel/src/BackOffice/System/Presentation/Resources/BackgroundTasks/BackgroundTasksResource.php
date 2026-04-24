@@ -12,6 +12,7 @@ class BackgroundTasksResource extends Resource
 {
     protected static ?string $model = WebkernelBackgroundTask::class;
 
+    protected static bool $shouldRegisterNavigation = false;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-queue-list';
     protected static string|UnitEnum|null $navigationGroup = 'Maintenance';

@@ -51,49 +51,86 @@ final class SystemPanelProvider extends PanelProvider
             ->spa()
             ->globalSearch()
             ->navigationItems([
+                // CORE INSTANCE
                 NavigationItem::make('Settings')
                     ->icon('cog')
                     ->url(fn () => WebkernelSettingResource::getUrl('index'))
-                    ->group('System'),
-                NavigationItem::make('Logging')
-                    ->icon('document-text')
-                    ->group('System'),
-                NavigationItem::make('Security')
-                    ->icon('lock-closed')
-                    ->group('System'),
+                    ->group('Core Instance'),
+                NavigationItem::make('Instance Info')
+                    ->icon('information-circle')
+                    ->url('/')->group('Core Instance'),
+
+                // USERS & PERMISSIONS
                 NavigationItem::make('Users & Access')
                     ->icon('users')
-                    ->group('Infrastructure'),
-                NavigationItem::make('Storage')
-                    ->icon('document')
-                    ->group('Infrastructure'),
-                NavigationItem::make('Database')
-                    ->icon('server')
-                    ->group('Infrastructure'),
-                NavigationItem::make('Performance')
-                    ->icon('chart-bar')
-                    ->group('Infrastructure'),
+                    ->url('/')->group('Users & Permissions'),
+                NavigationItem::make('Roles & Privileges')
+                    ->icon('shield-check')
+                    ->url('/')->group('Users & Permissions'),
+                NavigationItem::make('Audit Logs')
+                    ->icon('document-text')
+                    ->url('/')->group('Users & Permissions'),
+
+                // MODULES & EXTENSIONS
                 NavigationItem::make('Modules')
                     ->icon('puzzle')
-                    ->group('Marketplace'),
+                    ->url('/')->group('Modules & Extensions'),
                 NavigationItem::make('Integrations')
                     ->icon('link')
-                    ->group('Marketplace'),
-                NavigationItem::make('Composer')
-                    ->icon('code-bracket')
-                    ->url(fn () => DependencyManagerPage::getUrl())
-                    ->group('Maintenance'),
-                NavigationItem::make('NPM')
-                    ->icon('code-bracket')
-                    ->url(fn () => NpmDependencyManagerPage::getUrl())
-                    ->group('Maintenance'),
+                    ->url('/')->group('Modules & Extensions'),
+                // INFRASTRUCTURE
+                NavigationItem::make('Database')
+                    ->icon('server')
+                    ->url('/')->group('Infrastructure'),
+                NavigationItem::make('Storage')
+                    ->icon('document')
+                    ->url('/')->group('Infrastructure'),
+                NavigationItem::make('Cache')
+                    ->icon('bolt')
+                    ->url('/')->group('Infrastructure'),
+                NavigationItem::make('Queue')
+                    ->icon('queue-list')
+                    ->url('/')->group('Infrastructure'),
+
+                // OBSERVABILITY
+                NavigationItem::make('Logging')
+                    ->icon('document-text')
+                    ->url('/')->group('Observability'),
+                NavigationItem::make('Monitoring')
+                    ->icon('chart-bar')
+                    ->url('/')->group('Observability'),
+                NavigationItem::make('Health Checks')
+                    ->icon('heart')
+                    ->url('/')->group('Observability'),
+
+                // SECURITY
+                NavigationItem::make('Security Settings')
+                    ->icon('lock-closed')
+                    ->url('/')->group('Security'),
+                NavigationItem::make('Integrity Verification')
+                    ->icon('check-badge')
+                    ->url('/')->group('Security'),
+                NavigationItem::make('API Keys')
+                    ->icon('key')
+                    ->url('/')->group('Security'),
+
+                // MAINTENANCE
                 NavigationItem::make('Background Tasks')
                     ->icon('play')
                     ->url(fn () => BackgroundTasksResource::getUrl('index'))
                     ->group('Maintenance'),
-                NavigationItem::make('Monitoring')
-                    ->icon('signal')
-                    ->group('Maintenance'),
+                NavigationItem::make('Scheduled Jobs')
+                    ->icon('calendar')
+                    ->url('/')->group('Maintenance'),
+                NavigationItem::make('Backups & Restore')
+                    ->icon('archive-box')
+                    ->url('/')->group('Maintenance'),
+                NavigationItem::make('System Cleanup')
+                    ->icon('trash')
+                    ->url('/')->group('Maintenance'),
+                NavigationItem::make('Updates')
+                    ->icon('arrow-up-circle')
+                    ->url('/')->group('Maintenance'),
             ])
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth('screen-xxl')
