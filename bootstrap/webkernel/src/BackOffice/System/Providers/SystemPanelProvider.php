@@ -53,34 +53,47 @@ final class SystemPanelProvider extends PanelProvider
             ->navigationItems([
                 NavigationItem::make('Settings')
                     ->icon('cog')
-                    ->url(fn () => WebkernelSettingResource::getUrl('index')),
+                    ->url(fn () => WebkernelSettingResource::getUrl('index'))
+                    ->group('System'),
                 NavigationItem::make('Logging')
-                    ->icon('document-text'),
+                    ->icon('document-text')
+                    ->group('System'),
                 NavigationItem::make('Security')
-                    ->icon('lock-closed'),
+                    ->icon('lock-closed')
+                    ->group('System'),
                 NavigationItem::make('Users & Access')
-                    ->icon('users'),
+                    ->icon('users')
+                    ->group('Infrastructure'),
                 NavigationItem::make('Storage')
-                    ->icon('document'),
+                    ->icon('document')
+                    ->group('Infrastructure'),
                 NavigationItem::make('Database')
-                    ->icon('server'),
+                    ->icon('server')
+                    ->group('Infrastructure'),
                 NavigationItem::make('Performance')
-                    ->icon('chart-bar'),
+                    ->icon('chart-bar')
+                    ->group('Infrastructure'),
                 NavigationItem::make('Modules')
-                    ->icon('puzzle'),
+                    ->icon('puzzle')
+                    ->group('Marketplace'),
                 NavigationItem::make('Integrations')
-                    ->icon('link'),
+                    ->icon('link')
+                    ->group('Marketplace'),
                 NavigationItem::make('Composer')
                     ->icon('code-bracket')
-                    ->url(fn () => DependencyManagerPage::getUrl()),
+                    ->url(fn () => DependencyManagerPage::getUrl())
+                    ->group('Maintenance'),
                 NavigationItem::make('NPM')
                     ->icon('code-bracket')
-                    ->url(fn () => NpmDependencyManagerPage::getUrl()),
+                    ->url(fn () => NpmDependencyManagerPage::getUrl())
+                    ->group('Maintenance'),
                 NavigationItem::make('Background Tasks')
                     ->icon('play')
-                    ->url(fn () => BackgroundTasksResource::getUrl('index')),
+                    ->url(fn () => BackgroundTasksResource::getUrl('index'))
+                    ->group('Maintenance'),
                 NavigationItem::make('Monitoring')
-                    ->icon('signal'),
+                    ->icon('signal')
+                    ->group('Maintenance'),
             ])
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth('screen-xxl')
@@ -91,13 +104,25 @@ final class SystemPanelProvider extends PanelProvider
             ->databaseNotifications()
             ->databaseNotificationsPolling('3s')
             ->profile(isSimple: false)
+
             ->discoverResources(
                 in: __DIR__ . '/../Presentation/Resources',
                 for: 'Webkernel\BackOffice\System\Presentation\Resources',
             )
+            ->discoverPages(
+                in: __DIR__ . '/../Presentation/Pages',
+                for: 'Webkernel\BackOffice\System\Presentation\Pages',
+            )
             ->pages([
                 Dashboard::class,
+                DependencyManagerPage::class,
+                NpmDependencyManagerPage::class,
             ])
+            ->discoverWidgets(
+                in: __DIR__ . '/../Presentation/Widgets',
+                for: 'Webkernel\BackOffice\System\Presentation\Widgets',
+            )
+            ->widgets([AccountWidget::class, FilamentInfoWidget::class])
 
             //->userActions([
             //    Action::make('user-background-tasks')
