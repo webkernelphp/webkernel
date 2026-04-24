@@ -38,7 +38,7 @@ final class UpdateCommand extends Command
 
     private function resolveLatestVersion(bool $includePreRelease): string
     {
-        $query = \Webkernel\BackOffice\System\Domain\Updates\Models\WebkernelRelease
+        $query = \Webkernel\CP\System\Domain\Updates\Models\WebkernelRelease
             ::forTarget('webkernel', 'foundation')
             ->orderByDesc('published_at');
 
@@ -90,7 +90,7 @@ final class UpdateCommand extends Command
             $targetVersion = $version ?? $this->resolveLatestVersion($preRelease);
 
             // Find release metadata
-            $release = \Webkernel\BackOffice\System\Domain\Updates\Models\WebkernelRelease
+            $release = \Webkernel\CP\System\Domain\Updates\Models\WebkernelRelease
                 ::forTarget('webkernel', 'foundation')
                 ->where('version', $targetVersion)
                 ->first();

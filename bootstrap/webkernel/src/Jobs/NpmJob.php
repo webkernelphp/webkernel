@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Webkernel\Jobs;
 
-use Webkernel\BackOffice\System\Models\WebkernelBackgroundTask;
+use Webkernel\CP\System\Models\WebkernelBackgroundTask;
 
 class NpmJob extends Job
 {

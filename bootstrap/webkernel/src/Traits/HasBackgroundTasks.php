@@ -3,11 +3,11 @@
 namespace Webkernel\Traits;
 
 use Webkernel\Process;
-use Webkernel\BackOffice\System\Jobs\UpdateAllComposerPackagesJob;
-use Webkernel\BackOffice\System\Jobs\UpdateAllNpmPackagesJob;
-use Webkernel\BackOffice\System\Jobs\UpdateComposerPackageJob;
-use Webkernel\BackOffice\System\Jobs\UpdateNpmPackageJob;
-use Webkernel\BackOffice\System\Models\WebkernelBackgroundTask;
+use Webkernel\CP\System\Jobs\UpdateAllComposerPackagesJob;
+use Webkernel\CP\System\Jobs\UpdateAllNpmPackagesJob;
+use Webkernel\CP\System\Jobs\UpdateComposerPackageJob;
+use Webkernel\CP\System\Jobs\UpdateNpmPackageJob;
+use Webkernel\CP\System\Models\WebkernelBackgroundTask;
 
 trait HasBackgroundTasks
 {

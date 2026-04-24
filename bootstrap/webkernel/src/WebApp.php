@@ -13,7 +13,7 @@ use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Webkernel\Exceptions\Handler as WebkernelExceptionHandler;
-use Webkernel\BackOffice\Installer\Presentation\Installer\InstallationState;
+use Webkernel\CP\Installer\Presentation\Installer\InstallationState;
 use Webkernel\System\Security\CoreManifest;
 use Webkernel\System\Security\SealEnforcer;
 
@@ -76,7 +76,7 @@ final class WebApp extends Application
                 \Webkernel\Providers\CommandServiceProvider::class,
                 \Webkernel\Arcanes\Modules::class,
                 \Webkernel\Arcanes\Commands\DeclareCommands::class,
-                \Webkernel\BackOffice\Installer\Providers\InstallerPanelProvider::class,
+                \Webkernel\CP\Installer\Providers\InstallerPanelProvider::class,
             ])
             ->withCommands()
             ->withRouting(
