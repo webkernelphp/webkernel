@@ -188,7 +188,13 @@ final class Modules extends ServiceProvider
                 continue;
             }
 
-            foreach (glob($root . '/*', GLOB_ONLYDIR) ?: [] as $path) {
+            $dirs = array_merge(
+                glob($root . '/*', GLOB_ONLYDIR) ?: [],
+                glob($root . '/*/*', GLOB_ONLYDIR) ?: [],
+                glob($root . '/*/*/*', GLOB_ONLYDIR) ?: [],
+            );
+
+            foreach ($dirs as $path) {
                 $file = $path . '/' . $manifestFile;
                 if (!is_file($file)) {
                     continue;
@@ -457,11 +463,13 @@ final class Modules extends ServiceProvider
             );
         }
 
-        // Platform capabilities: <location>/<slug>/<manifestFile>
+        // Platform capabilities: <location>/**/<manifestFile>
         $platformManifest = $manifestFiles['platform'] ?? 'platform.php';
         foreach (WEBKERNEL_PLATFORM_LOCATIONS as $root) {
             if (is_dir($root)) {
                 $paths = array_merge($paths, glob($root . '/*/' . $platformManifest) ?: []);
+                $paths = array_merge($paths, glob($root . '/*/*/' . $platformManifest) ?: []);
+                $paths = array_merge($paths, glob($root . '/*/*/*/' . $platformManifest) ?: []);
             }
         }
 
