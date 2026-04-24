@@ -17,7 +17,7 @@ class ViewPathsAndComponents
         View::prependNamespace('errors', [WEBKERNEL_ERRORS_PAGES_PATH]);
 
         // --- Load Views ---
-        $quickTouchViewsPath     = WEBKERNEL_MAIN_SUPPORT_PATH . '/quick_touch';
+        $quickTouchViewsPath     = WEBKERNEL_PATH . '/src/QuickTouch';
         $webkernelViewsPath      = WEBKERNEL_MAIN_SUPPORT_PATH . '/views';
         $webkernelComponentsPath = $webkernelViewsPath . '/components';
         $svgExportPath           = WEBKERNEL_MAIN_SUPPORT_PATH . '/_dist/export-svg';
