@@ -3,7 +3,7 @@
 namespace Webkernel\BackOffice\System\Models;
 
 use Webkernel\Users\Models\User;
-use Webkernel\Notifications\BackgroundTaskNotification;
+use Webkernel\Notifications\Models\Notification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\AsCollection;
 use Illuminate\Database\Eloquent\Model;
@@ -163,15 +163,13 @@ class WebkernelBackgroundTask extends Model
             return;
         }
 
-        $user = User::find($this->user_id);
-        if (!$user) {
-            return;
-        }
-
         $title = $this->status === 'failed' ? "Task Failed: {$this->label}" : "Task Completed: {$this->label}";
-        $body = $this->suggested_action ?? $this->output;
-        $status = $this->status === 'failed' ? 'danger' : 'success';
 
-        $user->notify(new BackgroundTaskNotification($title, $body, $status));
+        Notification::createForUser(
+            userId: $this->user_id,
+            title: $title,
+            body: $this->suggested_action ?? $this->output,
+            status: $this->status === 'failed' ? 'danger' : 'success',
+        );
     }
 }
