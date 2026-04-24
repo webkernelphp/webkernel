@@ -91,8 +91,10 @@ final class SystemPanelProvider extends PanelProvider
             ->databaseNotifications()
             ->databaseNotificationsPolling('3s')
             ->profile(isSimple: false)
-
-
+            ->discoverResources(
+                in: __DIR__ . '/../Presentation/Resources',
+                for: 'Webkernel\BackOffice\System\Presentation\Resources',
+            )
             ->pages([
                 Dashboard::class,
             ])
