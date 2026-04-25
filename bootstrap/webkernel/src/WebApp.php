@@ -101,8 +101,8 @@ final class WebApp extends Application
             ->withProviders([
                 \Webkernel\ServiceProvider::class,
                 \Webkernel\Providers\CommandServiceProvider::class,
-                \Webkernel\Arcanes\Modules::class,
-                \Webkernel\Arcanes\Commands\DeclareCommands::class,
+                \Webkernel\Base\Arcanes\Modules::class,
+                \Webkernel\Base\Arcanes\Commands\DeclareCommands::class,
                 \Webkernel\CP\Installer\Providers\InstallerPanelProvider::class,
             ])
             ->withCommands()
