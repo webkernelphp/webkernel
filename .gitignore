@@ -53,6 +53,7 @@ composer.lock
 # -----------------------------
 merge.txt
 merged-data-*.txt
+merged-data-*.md
 merged-data-*.zip
 merge-specs.txt
 elmouya.*

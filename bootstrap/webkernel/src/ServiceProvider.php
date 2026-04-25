@@ -15,8 +15,8 @@ use Webkernel\Providers\ViewPathsAndComponents;
  *  - Filament render-hook registration.
  *
  * Does NOT own:
- *  - Module / aptitude booting  → {@see \Webkernel\Arcanes\Modules}
- *  - Artisan command overrides  → {@see \Webkernel\Arcanes\Commands\DeclareCommands}
+ *  - Module / aptitude booting  → {@see \Webkernel\Base\Arcanes\Modules}
+ *  - Artisan command overrides  → {@see \Webkernel\Base\Arcanes\Commands\DeclareCommands}
  */
 final class ServiceProvider extends Laravel
 {

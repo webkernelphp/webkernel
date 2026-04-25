@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
 if (!function_exists('webkernel')) {
-    function webkernel(): \Webkernel\System\WebkernelAPI
+    function webkernel(): \Webkernel\Base\System\WebkernelAPI
     {
-        return app(\Webkernel\System\WebkernelAPI::class);
+        return app(\Webkernel\Base\System\WebkernelAPI::class);
     }
 }
 

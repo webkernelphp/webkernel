@@ -31,7 +31,7 @@ use EmergencyPageBuilder;
  *   SealEnforcer  — boot-time scanner + inline real-time enforcement
  *   SealException — thrown on any boundary violation
  *
- * @package Webkernel\System\Security
+ * @package Webkernel\Base\System\Security
  */
 
 

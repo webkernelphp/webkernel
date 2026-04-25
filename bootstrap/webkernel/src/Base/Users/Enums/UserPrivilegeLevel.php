@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Webkernel\Base\Users\Enum;
+namespace Webkernel\Base\Users\Enums;
 
 /**
  * ════════════════════════════════════════════════════════════════════════════

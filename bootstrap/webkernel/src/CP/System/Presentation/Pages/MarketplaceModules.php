@@ -138,7 +138,7 @@ class MarketplaceModules extends Page
         }
 
         try {
-            $installer = \Webkernel\Integration\ModuleInstaller::module(
+            $installer = \Webkernel\Base\Integration\ModuleInstaller::module(
                 from:   'webkernelphp-com',
                 vendor: $module['vendor'],
                 slug:   $module['slug'],

@@ -4,64 +4,30 @@ namespace Webkernel\CP\System\Providers;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
-use Webkernel\Base\System\WebAppInterface;
-use Webkernel\Base\System\Host\Contracts\Managers\{
-    HostManagerInterface, InstanceManagerInterface, OsManagerInterface,
-    VersionManagerInterface};
 use Webkernel\Base\System\Access\Contracts\Managers\{
-    AppManagerInterface, AuthManagerInterface, ContextManagerInterface,
-    RuntimeManagerInterface, SecurityManagerInterface, UsersManagerInterface};
-use Webkernel\Base\System\WebkernelAPI;
-use Webkernel\Base\System\Host\Managers\{
-    VersionManager, HostManager, InstanceManager, OsManager};
+    UsersManagerInterface, AuthManagerInterface};
 use Webkernel\Base\System\Access\Managers\{
-    AppManager, AuthManager, ContextManager, RuntimeManager,
-    SecurityManager, UsersManager};
-/**
- * Binds all Webkernel manager interfaces to their concrete implementations.
- *
- * OCTANE BINDING STRATEGY
- * ───────────────────────
- * singleton() — stable data, does not change per request:
- *   Kernel, InstanceManager, HostManager, OsManager
- *
- * scoped() — recycled per Octane request:
- *   RuntimeManager, AppManager, SecurityManager, ContextManager, AuthManager
- */
+    UsersManager, AuthManager};
+
 final class SystemManagerServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
         // Root API singleton
-        $this->app->singleton(WebAppInterface::class, WebkernelAPI::class);
-        $this->app->singleton(WebkernelAPI::class);
+        $this->app->singleton(\Webkernel\Base\System\WebkernelAPI::class);
 
-        // ── Stable singletons ─────────────────────────────────────────────────
-        $this->app->singleton(InstanceManagerInterface::class, InstanceManager::class);
-        $this->app->singleton(HostManagerInterface::class, HostManager::class);
-        $this->app->singleton(OsManagerInterface::class, OsManager::class);
-        $this->app->singleton(VersionManagerInterface::class, VersionManager::class);
-
-        // ── Request-scoped bindings ───────────────────────────────────────────
-        $this->app->scoped(RuntimeManagerInterface::class, RuntimeManager::class);
-        $this->app->scoped(AppManagerInterface::class, AppManager::class);
-        $this->app->scoped(SecurityManagerInterface::class, SecurityManager::class);
-        $this->app->scoped(ContextManagerInterface::class, ContextManager::class);
+        // Bind managers used by WebkernelAPI
+        $this->app->scoped(UsersManagerInterface::class, function (): UsersManager {
+            $guard = config('webkernel-auth.guard', 'web');
+            return new UsersManager(Auth::guard($guard));
+        });
 
         $this->app->scoped(AuthManagerInterface::class, function (): AuthManager {
-            // Use the 'web' guard; override via config('webkernel-auth.guard')
             $guard = config('webkernel-auth.guard', 'web');
-
             return new AuthManager(
                 Auth::guard($guard),
                 $this->app->make(\Illuminate\Contracts\Auth\Access\Gate::class),
             );
-        });
-
-        $this->app->scoped(UsersManagerInterface::class, function (): UsersManager {
-            $guard = config('webkernel-auth.guard', 'web');
-
-            return new UsersManager(Auth::guard($guard));
         });
     }
 

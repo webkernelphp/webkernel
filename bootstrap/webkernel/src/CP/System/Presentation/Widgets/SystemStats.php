@@ -35,7 +35,7 @@ class SystemStats extends StatsOverviewWidget
     protected function getStats(): array
     {
         return [
-            Stat::make('Modules', \Webkernel\Query\QueryModules::make()->where('active')->is(true)->count()),
+            Stat::make('Modules', \Webkernel\Base\Query\QueryModules::make()->where('active')->is(true)->count()),
             Stat::make('Panels', count(filament()->getPanels())),
             Stat::make('Errors', 1000)->color('danger'),
         ];

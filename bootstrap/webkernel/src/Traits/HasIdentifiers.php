@@ -38,7 +38,7 @@ use Webkernel\Base\Generators\UniqueId\UniqueIdGenerator;
  *
  * @example — in a Blade template (via IdentifierClass):
  *
- *   @php $gen = new \Webkernel\Generators\UniqueId\IdentifierClass @endphp
+ *   @php $gen = new \Webkernel\Base\Generators\UniqueId\IdentifierClass @endphp
  *   <div id="{{ $gen->makeUniqueIdentifier()->get() }}">…</div>
  */
 trait HasIdentifiers

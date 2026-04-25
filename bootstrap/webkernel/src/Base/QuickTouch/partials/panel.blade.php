@@ -26,7 +26,7 @@
     }
     $hasPanels = count($wktPanels) > 1;
 
-    $quickTouchVersion = \Webkernel\QuickTouch\QuickTouch::version();
+    $quickTouchVersion = \Webkernel\Base\QuickTouch\QuickTouch::version();
 @endphp
 
 <div

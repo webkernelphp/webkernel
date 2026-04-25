@@ -1,13 +1,13 @@
 <?php declare(strict_types=1);
 
-use Webkernel\Generators\UniqueId\IdentifierClass;
+use Webkernel\Base\Generators\UniqueId\IdentifierClass;
 
 if (!function_exists('webkernel_id_generator')) {
     /**
      * Ultra-fast unique identifier generator with multiple strategies.
      *
      * Available methods (from HasIdentifiers and UniqueIdGenerator):
-     * @method makeUniqueIdentifier(): Webkernel\Generators\UniqueId\UniqueIdGenerator
+     * @method makeUniqueIdentifier(): Webkernel\Base\Generators\UniqueId\UniqueIdGenerator
      * @method make(): self
      * @method using(string $strategy): self
      * @method length(int $length): self

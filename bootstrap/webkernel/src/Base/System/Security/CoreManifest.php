@@ -3,10 +3,10 @@
 declare(strict_types=1);
 
 namespace Webkernel\Base\System\Security;
-use Webkernel\Base\Query\Traits\CacheLock;
-use Webkernel\Base\Query\Traits\Exportable;
-use Webkernel\Base\Query\Traits\FileSystemHelpers;
-use Webkernel\Base\Query\Traits\LoggerTrait;
+use Webkernel\Query\Traits\CacheLock;
+use Webkernel\Query\Traits\Exportable;
+use Webkernel\Query\Traits\FileSystemHelpers;
+use Webkernel\Query\Traits\LoggerTrait;
 
 /**
  * Webkernel — Core Manifest Manager
