@@ -4,7 +4,13 @@ namespace Webkernel\Businesses\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Webkernel\Businesses\Enum\BusinessStatus;
+use Webkernel\Databases\Models\DbConnection;
+use Webkernel\Domains\Models\Domain;
+use Webkernel\Modules\Models\BusinessModuleMap;
+use Webkernel\Modules\Models\Module;
 use Webkernel\Users\Models\User;
 
 /**
@@ -84,6 +90,24 @@ class Business extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function domains(): HasMany
+    {
+        return $this->hasMany(Domain::class, 'business_id');
+    }
+
+    public function modules(): BelongsToMany
+    {
+        return $this->belongsToMany(Module::class, 'business_module_map', 'business_id', 'module_id')
+                    ->using(BusinessModuleMap::class)
+                    ->withPivot(['id', 'is_enabled', 'config_json'])
+                    ->withTimestamps();
+    }
+
+    public function dbConnections(): HasMany
+    {
+        return $this->hasMany(DbConnection::class, 'business_id');
     }
 
     // ── Scopes ────────────────────────────────────────────────────────────────

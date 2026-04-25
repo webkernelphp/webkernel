@@ -51,7 +51,7 @@
     "scripts": {
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php bootstrap/webkernel/installer-guard.php package:discover"
+            "@php bootstrap/webkernel/support/boot/installer-guard.php package:discover"
         ],
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi",
@@ -118,9 +118,9 @@
             "composer dump-autoload"
         ],
         "w-clear-sudo": [
-            "@php bootstrap/webkernel/installer-guard.php ensure-storage-dirs",
-            "@php bootstrap/webkernel/installer-guard.php fix-permissions",
-            "@php bootstrap/webkernel/installer-guard.php run-as-owner composer w-clear"
+            "@php bootstrap/webkernel/support/boot/installer-guard.php ensure-storage-dirs",
+            "@php bootstrap/webkernel/support/boot/installer-guard.php fix-permissions",
+            "@php bootstrap/webkernel/support/boot/installer-guard.php run-as-owner composer w-clear"
         ],
         "ws-clear": [
             "composer w-clear",
@@ -143,7 +143,8 @@
             "@php artisan clear-compiled",
             "@php artisan ide-helper:eloquent",
             "@php artisan ide-helper:generate",
-            "@php artisan ide-helper:models -M"
+            "@php artisan ide-helper:models -M",
+            "@php bootstrap/webkernel/support/boot/_dev_tools/_ide_helper_generator.php _ide_helper_webkernel.php"
         ]
     },
     "extra": {

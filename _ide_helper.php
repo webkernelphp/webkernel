@@ -18,14 +18,36 @@ namespace Illuminate\Support\Facades {
      */
     class App {
         /**
+         * Verifies the core manifest and boots the SealEnforcer integrity layer.
+         *
+         * On first call it registers the autoload inspector and marks the system
+         * as booted. On subsequent calls it reloads the enforcer only when the
+         * manifest fingerprint has changed, avoiding redundant work.
+         *
+         * @param string $basePath Absolute path to the application root used to
+         *                         locate the manifest and trusted class paths.
+         * @return void
          * @static
          */
         public static function bootstrapCoreIntegrity($basePath)
         {
-            return \Webkernel\WebApp::bootstrapCoreIntegrity($basePath);
+            \Webkernel\WebApp::bootstrapCoreIntegrity($basePath);
         }
 
         /**
+         * Primary entry point for building the application. Resolves the base path,
+         * stores the running version, runs the integrity bootstrap, and wires up all
+         * core service providers, routes, middleware, and exception handling.
+         *
+         * Also re-runs integrity on every request rebinding so runtime tampering
+         * is caught immediately.
+         *
+         * @param string|null $basePath Absolute path to the application root.
+         *                              When null it is inferred automatically.
+         * @param string $version The running Webkernel version string, stored
+         *                              for later retrieval via webkernelVersion().
+         * @return \Illuminate\Foundation\Configuration\ApplicationBuilder The fully configured builder instance ready
+         *                              to be returned from bootstrap/app.php.
          * @static
          */
         public static function configure($basePath = null, $version = 'dev')
@@ -34,6 +56,11 @@ namespace Illuminate\Support\Facades {
         }
 
         /**
+         * Returns the Webkernel version string that was passed to configure().
+         *
+         * Falls back to 'dev' when called before configure() or in test contexts.
+         *
+         * @return string
          * @static
          */
         public static function webkernelVersion()
@@ -43,6 +70,15 @@ namespace Illuminate\Support\Facades {
         }
 
         /**
+         * Reads and caches the instance metadata JSON file that identifies this
+         * specific Webkernel installation (licence info, instance ID, etc.).
+         *
+         * The file path is taken from the WEBKERNEL_INSTANCE_FILE constant when
+         * defined, otherwise it defaults to storage/webkernel/instance.json.
+         * Result is cached in a static property so the file is only read once
+         * per process.
+         *
+         * @return array<string, mixed>
          * @static
          */
         public static function webkernelInstance()
@@ -52,6 +88,15 @@ namespace Illuminate\Support\Facades {
         }
 
         /**
+         * Convenience accessor that drills into the instance metadata using
+         * dot-notation to reach a value under data.attributes.{key}.
+         *
+         * Useful for reading licence fields, instance name, region, etc.
+         * without having to traverse the array manually.
+         *
+         * @param string $key Dot-notation key relative to data.attributes.
+         * @param mixed $default Value returned when the key is absent.
+         * @return mixed
          * @static
          */
         public static function webkernelInstanceAttribute($key, $default = null)
@@ -61,6 +106,15 @@ namespace Illuminate\Support\Facades {
         }
 
         /**
+         * Resolves the application's root PHP namespace by scanning the PSR-4
+         * autoload map in composer.json (and the bootstrap fallback) and matching
+         * the registered source path against the application's app/ directory.
+         *
+         * Overrides the Laravel default to support non-standard project layouts
+         * where composer.json may live under bootstrap/.
+         *
+         * @throws RuntimeException When no matching namespace can be found.
+         * @return string The resolved namespace, e.g. "App\".
          * @static
          */
         public static function getNamespace()
@@ -5477,7 +5531,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function lock($name, $seconds = 0, $owner = null)
         {
-            /** @var \Illuminate\Cache\DatabaseStore $instance */
+            /** @var \Illuminate\Cache\FileStore $instance */
             return $instance->lock($name, $seconds, $owner);
         }
 
@@ -5491,21 +5545,8 @@ namespace Illuminate\Support\Facades {
          */
         public static function restoreLock($name, $owner)
         {
-            /** @var \Illuminate\Cache\DatabaseStore $instance */
+            /** @var \Illuminate\Cache\FileStore $instance */
             return $instance->restoreLock($name, $owner);
-        }
-
-        /**
-         * Remove an item from the cache if it is expired.
-         *
-         * @param string $key
-         * @return bool
-         * @static
-         */
-        public static function forgetIfExpired($key)
-        {
-            /** @var \Illuminate\Cache\DatabaseStore $instance */
-            return $instance->forgetIfExpired($key);
         }
 
         /**
@@ -5516,58 +5557,71 @@ namespace Illuminate\Support\Facades {
          */
         public static function flush()
         {
-            /** @var \Illuminate\Cache\DatabaseStore $instance */
+            /** @var \Illuminate\Cache\FileStore $instance */
             return $instance->flush();
         }
 
         /**
-         * Get the underlying database connection.
+         * Get the full path for the given cache key.
          *
-         * @return \Illuminate\Database\SQLiteConnection
+         * @param string $key
+         * @return string
          * @static
          */
-        public static function getConnection()
+        public static function path($key)
         {
-            /** @var \Illuminate\Cache\DatabaseStore $instance */
-            return $instance->getConnection();
+            /** @var \Illuminate\Cache\FileStore $instance */
+            return $instance->path($key);
         }
 
         /**
-         * Set the underlying database connection.
+         * Get the Filesystem instance.
          *
-         * @param \Illuminate\Database\ConnectionInterface $connection
-         * @return \Illuminate\Cache\DatabaseStore
+         * @return \Illuminate\Filesystem\Filesystem
          * @static
          */
-        public static function setConnection($connection)
+        public static function getFilesystem()
         {
-            /** @var \Illuminate\Cache\DatabaseStore $instance */
-            return $instance->setConnection($connection);
+            /** @var \Illuminate\Cache\FileStore $instance */
+            return $instance->getFilesystem();
         }
 
         /**
-         * Get the connection used to manage locks.
+         * Get the working directory of the cache.
          *
-         * @return \Illuminate\Database\SQLiteConnection
+         * @return string
          * @static
          */
-        public static function getLockConnection()
+        public static function getDirectory()
         {
-            /** @var \Illuminate\Cache\DatabaseStore $instance */
-            return $instance->getLockConnection();
+            /** @var \Illuminate\Cache\FileStore $instance */
+            return $instance->getDirectory();
         }
 
         /**
-         * Specify the connection that should be used to manage locks.
+         * Set the working directory of the cache.
          *
-         * @param \Illuminate\Database\ConnectionInterface $connection
-         * @return \Illuminate\Cache\DatabaseStore
+         * @param string $directory
+         * @return \Illuminate\Cache\FileStore
          * @static
          */
-        public static function setLockConnection($connection)
+        public static function setDirectory($directory)
         {
-            /** @var \Illuminate\Cache\DatabaseStore $instance */
-            return $instance->setLockConnection($connection);
+            /** @var \Illuminate\Cache\FileStore $instance */
+            return $instance->setDirectory($directory);
+        }
+
+        /**
+         * Set the cache directory where locks should be stored.
+         *
+         * @param string|null $lockDirectory
+         * @return \Illuminate\Cache\FileStore
+         * @static
+         */
+        public static function setLockDirectory($lockDirectory)
+        {
+            /** @var \Illuminate\Cache\FileStore $instance */
+            return $instance->setLockDirectory($lockDirectory);
         }
 
         /**
@@ -5578,21 +5632,8 @@ namespace Illuminate\Support\Facades {
          */
         public static function getPrefix()
         {
-            /** @var \Illuminate\Cache\DatabaseStore $instance */
+            /** @var \Illuminate\Cache\FileStore $instance */
             return $instance->getPrefix();
-        }
-
-        /**
-         * Set the cache key prefix.
-         *
-         * @param string $prefix
-         * @return void
-         * @static
-         */
-        public static function setPrefix($prefix)
-        {
-            /** @var \Illuminate\Cache\DatabaseStore $instance */
-            $instance->setPrefix($prefix);
         }
 
         /**
@@ -5603,7 +5644,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function hasSeparateLockStore()
         {
-            /** @var \Illuminate\Cache\DatabaseStore $instance */
+            /** @var \Illuminate\Cache\FileStore $instance */
             return $instance->hasSeparateLockStore();
         }
 
@@ -13816,6 +13857,89 @@ namespace Illuminate\Support\Facades {
         }
 
         /**
+         * Release a reserved job back onto the queue after (n) seconds.
+         *
+         * @param string $queue
+         * @param \Illuminate\Queue\Jobs\DatabaseJobRecord $job
+         * @param int $delay
+         * @return mixed
+         * @static
+         */
+        public static function release($queue, $job, $delay)
+        {
+            /** @var \Illuminate\Queue\DatabaseQueue $instance */
+            return $instance->release($queue, $job, $delay);
+        }
+
+        /**
+         * Delete a reserved job from the queue.
+         *
+         * @param string $queue
+         * @param string $id
+         * @return void
+         * @throws \Throwable
+         * @static
+         */
+        public static function deleteReserved($queue, $id)
+        {
+            /** @var \Illuminate\Queue\DatabaseQueue $instance */
+            $instance->deleteReserved($queue, $id);
+        }
+
+        /**
+         * Delete a reserved job from the reserved queue and release it.
+         *
+         * @param string $queue
+         * @param \Illuminate\Queue\Jobs\DatabaseJob $job
+         * @param int $delay
+         * @return void
+         * @static
+         */
+        public static function deleteAndRelease($queue, $job, $delay)
+        {
+            /** @var \Illuminate\Queue\DatabaseQueue $instance */
+            $instance->deleteAndRelease($queue, $job, $delay);
+        }
+
+        /**
+         * Delete all of the jobs from the queue.
+         *
+         * @param string $queue
+         * @return int
+         * @static
+         */
+        public static function clear($queue)
+        {
+            /** @var \Illuminate\Queue\DatabaseQueue $instance */
+            return $instance->clear($queue);
+        }
+
+        /**
+         * Get the queue or return the default.
+         *
+         * @param string|null $queue
+         * @return string
+         * @static
+         */
+        public static function getQueue($queue)
+        {
+            /** @var \Illuminate\Queue\DatabaseQueue $instance */
+            return $instance->getQueue($queue);
+        }
+
+        /**
+         * Get the underlying database instance.
+         *
+         * @return \Illuminate\Database\Connection
+         * @static
+         */
+        public static function getDatabase()
+        {
+            /** @var \Illuminate\Queue\DatabaseQueue $instance */
+            return $instance->getDatabase();
+        }
+
+        /**
          * Get the maximum number of attempts for an object-based queue handler.
          *
          * @param mixed $job
@@ -13825,7 +13949,7 @@ namespace Illuminate\Support\Facades {
         public static function getJobTries($job)
         {
             //Method inherited from \Illuminate\Queue\Queue 
-            /** @var \Illuminate\Queue\SyncQueue $instance */
+            /** @var \Illuminate\Queue\DatabaseQueue $instance */
             return $instance->getJobTries($job);
         }
 
@@ -13839,7 +13963,7 @@ namespace Illuminate\Support\Facades {
         public static function getJobBackoff($job)
         {
             //Method inherited from \Illuminate\Queue\Queue 
-            /** @var \Illuminate\Queue\SyncQueue $instance */
+            /** @var \Illuminate\Queue\DatabaseQueue $instance */
             return $instance->getJobBackoff($job);
         }
 
@@ -13853,7 +13977,7 @@ namespace Illuminate\Support\Facades {
         public static function getJobExpiration($job)
         {
             //Method inherited from \Illuminate\Queue\Queue 
-            /** @var \Illuminate\Queue\SyncQueue $instance */
+            /** @var \Illuminate\Queue\DatabaseQueue $instance */
             return $instance->getJobExpiration($job);
         }
 
@@ -13867,7 +13991,7 @@ namespace Illuminate\Support\Facades {
         public static function createPayloadUsing($callback)
         {
             //Method inherited from \Illuminate\Queue\Queue 
-            \Illuminate\Queue\SyncQueue::createPayloadUsing($callback);
+            \Illuminate\Queue\DatabaseQueue::createPayloadUsing($callback);
         }
 
         /**
@@ -13879,20 +14003,20 @@ namespace Illuminate\Support\Facades {
         public static function getConfig()
         {
             //Method inherited from \Illuminate\Queue\Queue 
-            /** @var \Illuminate\Queue\SyncQueue $instance */
+            /** @var \Illuminate\Queue\DatabaseQueue $instance */
             return $instance->getConfig();
         }
 
         /**
          * Set the queue configuration array.
          *
-         * @return \Illuminate\Queue\SyncQueue
+         * @return \Illuminate\Queue\DatabaseQueue
          * @static
          */
         public static function setConfig($config)
         {
             //Method inherited from \Illuminate\Queue\Queue 
-            /** @var \Illuminate\Queue\SyncQueue $instance */
+            /** @var \Illuminate\Queue\DatabaseQueue $instance */
             return $instance->setConfig($config);
         }
 
@@ -13905,7 +14029,7 @@ namespace Illuminate\Support\Facades {
         public static function getContainer()
         {
             //Method inherited from \Illuminate\Queue\Queue 
-            /** @var \Illuminate\Queue\SyncQueue $instance */
+            /** @var \Illuminate\Queue\DatabaseQueue $instance */
             return $instance->getContainer();
         }
 
@@ -13918,7 +14042,7 @@ namespace Illuminate\Support\Facades {
         public static function setContainer($container)
         {
             //Method inherited from \Illuminate\Queue\Queue 
-            /** @var \Illuminate\Queue\SyncQueue $instance */
+            /** @var \Illuminate\Queue\DatabaseQueue $instance */
             $instance->setContainer($container);
         }
 
@@ -35533,6 +35657,93 @@ if (! function_exists('view')) {
         return $factory->make($view, $data, $mergeData);
     }
 }
+ declare(strict_types=1);
+
+// -- Foundation paths ---------------------------------------------------------
+defined('BASE_PATH')      || define('BASE_PATH',      dirname(__DIR__, 2));
+defined('WEBKERNEL_PATH') || define('WEBKERNEL_PATH', __DIR__);
+
+// -- Release data -- stamped by Makefile release|patch|minor|major|info -------
+defined('WEBKERNEL_VERSION')     || define('WEBKERNEL_VERSION','0.11.3');
+defined('WEBKERNEL_BUILD')       || define('WEBKERNEL_BUILD',131);
+defined('WEBKERNEL_SEMVER')      || define('WEBKERNEL_SEMVER','0.11.3+131');
+defined('WEBKERNEL_CODENAME')    || define('WEBKERNEL_CODENAME','waterfall');
+defined('WEBKERNEL_CHANNEL')     || define('WEBKERNEL_CHANNEL','stable');
+defined('WEBKERNEL_RELEASED_AT') || define('WEBKERNEL_RELEASED_AT','2026-04-23');
+defined('WEBKERNEL_BRANCH')      || define('WEBKERNEL_BRANCH','main');
+defined('WEBKERNEL_TAG')         || define('WEBKERNEL_TAG','v0.11.3');
+
+defined('WEBKERNEL_REQUIRES') || define('WEBKERNEL_REQUIRES', [
+    'php'       => '8.4.19',
+    'laravel'   => '13.6.0',
+    'filament'  => '5.6.0',
+    'livewire'  => '4.2.4',
+    'composer'  => '2.9.5',
+]);
+
+defined('WEBKERNEL_COMPATIBLE_WITH') || define('WEBKERNEL_COMPATIBLE_WITH', [
+    'php'       => '8.3.0',
+    'laravel'   => '13.0.0',
+    'filament'  => '5.0.0',
+    'livewire'  => '1.0.0',
+    'composer'  => '2.5.0',
+]);
+
+// -- Constants ----------------------------------------------------------------
+$_support_boot = WEBKERNEL_PATH . '/support/boot/';
+
+require "{$_support_boot}boot-constants/010-paths.php";
+require "{$_support_boot}boot-constants/020-registry.php";
+require "{$_support_boot}boot-constants/030-runtime.php";
+require "{$_support_boot}boot-constants/040-thresholds.php";
+require "{$_support_boot}boot-constants/050-security.php";
+require "{$_support_boot}boot-constants/060-globals.php";
+
+/* Arcanes subsystem constants (must come before autoloaders) */
+require "{$_support_boot}boot-constants/070-arcanes.php";
+
+/* Dev mode + dev namespace map */
+require "{$_support_boot}boot-actions/010-check-devmode.php";
+
+/* Cache directory bootstrap */
+require "{$_support_boot}boot-actions/020-cache-dir-bootstrap.php";
+
+/* PSR-4: Webkernel packages */
+require "{$_support_boot}boot-actions/030-autoload-platform.php";
+
+/* PSR-4: WebModule\* -- external modules */
+require "{$_support_boot}boot-actions/040-autoload-modules.php";
+
+/* Boot services */
+$_bs = "{$_support_boot}boot-services/";
+require_once "{$_bs}010-hmac-signer.php";
+require_once "{$_bs}020-webkernel-session.php";
+require_once "{$_bs}030-webkernel-router.php";
+
+/* Branding needs WebkernelRouter; defines WEBKERNEL_BRAND_LOGO_* */
+require_once "{$_bs}040-branding.php";
+require_once "{$_bs}050-emergency-page-builder.php";
+require_once "{$_bs}060-server-side-validator.php";
+require_once "{$_bs}070-http-client.php";
+
+/* needs WEBKERNEL_BRAND_LOGO_* */
+require_once "{$_bs}080-setup-flow.php";
+require_once "{$_bs}090-global-helpers.php";
+unset($_bs);
+
+/* First-boot guard (.env + SQLite) */
+require "{$_support_boot}boot-actions/050-setup_env.php";
+
+/* Platform helpers loader */
+require "{$_support_boot}platform-actions/010-load-helpers.php";
+
+// Cleanup
+unset($_support_boot);
+
+// -- Boot ---------------------------------------------------------------------
+return \Webkernel\WebApp::configure(...)
+    (basePath: BASE_PATH, version: WEBKERNEL_VERSION)
+    ->create(...);
 }
 
 namespace Illuminate\Support {

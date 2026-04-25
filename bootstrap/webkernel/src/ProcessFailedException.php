@@ -1,7 +1,4 @@
-<?php
-
-declare(strict_types=1);
-
+<?php declare(strict_types=1);
 namespace Webkernel;
 
 use RuntimeException;
@@ -15,6 +12,16 @@ final class ProcessFailedException extends RuntimeException
 {
     private Process $process;
 
+    /**
+     * Builds a detailed exception message from the failed process, including
+     * the command line, exit code, working directory, and any stdout/stderr
+     * output captured during execution. Throws an InvalidArgumentException
+     * immediately if the given process actually succeeded, since wrapping a
+     * successful process in a failure exception would be a programming error.
+     *
+     * @param Process $process The process that exited with a non-zero code.
+     * @throws \InvalidArgumentException When the given process did not fail.
+     */
     public function __construct(Process $process)
     {
         if ($process->isSuccessful()) {
@@ -47,6 +54,13 @@ final class ProcessFailedException extends RuntimeException
         $this->process = $process;
     }
 
+    /**
+     * Returns the failed process instance that triggered this exception.
+     * Useful for callers that need to inspect exit codes, output, or the
+     * original command after catching the exception.
+     *
+     * @return Process
+     */
     public function getProcess(): Process
     {
         return $this->process;

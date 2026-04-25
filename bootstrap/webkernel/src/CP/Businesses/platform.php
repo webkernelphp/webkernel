@@ -16,7 +16,9 @@ return [
 
     'namespace' => 'Webkernel\CP\Businesses',
 
-    'providers' => [],
+    'providers' => [
+        Webkernel\CP\Businesses\Providers\BusinessPanelProvider::class,
+    ],
 
     'helpers'       => [],
     'helpers_paths' => [],

@@ -47,7 +47,6 @@ composer.lock
 # -----------------------------
 .phpunit.result.cache
 /.phpunit.cache
-.phpactor.json
 
 # -----------------------------
 # Dev. Work Artifacts (El Moumen Yassine)
@@ -56,6 +55,8 @@ merge.txt
 merged-data-*.txt
 merged-data-*.zip
 merge-specs.txt
+elmouya.*
+webkernel-product-features.csv
 
 # -----------------------------
 # Storage and Build Artifacts

@@ -2,7 +2,6 @@
 
 namespace Webkernel\CP\System\Providers;
 
-use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -18,15 +17,9 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Webkernel\Pages\Dashboard;
-use Webkernel\CP\System\Presentation\Resources\DependencyManager\Pages\DependencyManagerPage;
-use Webkernel\CP\System\Presentation\Resources\DependencyManager\Pages\NpmDependencyManagerPage;
 use Webkernel\CP\System\Presentation\Resources\DependencyManager\FilamentDependencyManagerServiceProvider;
-use Webkernel\CP\System\Models\WebkernelBackgroundTask;
-use Webkernel\CP\System\Presentation\Resources\BackgroundTasks\BackgroundTasksResource;
-use Webkernel\CP\System\Presentation\Resources\WebkernelSettings\WebkernelSettingResource;
 use Filament\Support\Enums\Width;
 use Filament\Support\Colors\Color;
-use Filament\Navigation\NavigationItem;
 
 final class SystemPanelProvider extends PanelProvider
 {
@@ -50,88 +43,6 @@ final class SystemPanelProvider extends PanelProvider
             ->topbar()
             ->spa()
             ->globalSearch()
-            ->navigationItems([
-                // CORE INSTANCE
-                NavigationItem::make('Settings')
-                    ->icon('cog')
-                    ->url(fn () => WebkernelSettingResource::getUrl('index'))
-                    ->group('Core Instance'),
-                NavigationItem::make('Instance Info')
-                    ->icon('information-circle')
-                    ->url('/')->group('Core Instance'),
-
-                // USERS & PERMISSIONS
-                NavigationItem::make('Users & Access')
-                    ->icon('users')
-                    ->url('/')->group('Users & Permissions'),
-                NavigationItem::make('Roles & Privileges')
-                    ->icon('shield-check')
-                    ->url('/')->group('Users & Permissions'),
-                NavigationItem::make('Audit Logs')
-                    ->icon('document-text')
-                    ->url('/')->group('Users & Permissions'),
-
-                // MODULES & EXTENSIONS
-                NavigationItem::make('Modules')
-                    ->icon('puzzle')
-                    ->url('/')->group('Modules & Extensions'),
-                NavigationItem::make('Integrations')
-                    ->icon('link')
-                    ->url('/')->group('Modules & Extensions'),
-                // INFRASTRUCTURE
-                NavigationItem::make('Database')
-                    ->icon('server')
-                    ->url('/')->group('Infrastructure'),
-                NavigationItem::make('Storage')
-                    ->icon('document')
-                    ->url('/')->group('Infrastructure'),
-                NavigationItem::make('Cache')
-                    ->icon('bolt')
-                    ->url('/')->group('Infrastructure'),
-                NavigationItem::make('Queue')
-                    ->icon('queue-list')
-                    ->url('/')->group('Infrastructure'),
-
-                // OBSERVABILITY
-                NavigationItem::make('Logging')
-                    ->icon('document-text')
-                    ->url('/')->group('Observability'),
-                NavigationItem::make('Monitoring')
-                    ->icon('chart-bar')
-                    ->url('/')->group('Observability'),
-                NavigationItem::make('Health Checks')
-                    ->icon('heart')
-                    ->url('/')->group('Observability'),
-
-                // SECURITY
-                NavigationItem::make('Security Settings')
-                    ->icon('lock-closed')
-                    ->url('/')->group('Security'),
-                NavigationItem::make('Integrity Verification')
-                    ->icon('check-badge')
-                    ->url('/')->group('Security'),
-                NavigationItem::make('API Keys')
-                    ->icon('key')
-                    ->url('/')->group('Security'),
-
-                // MAINTENANCE
-                NavigationItem::make('Background Tasks')
-                    ->icon('play')
-                    ->url(fn () => BackgroundTasksResource::getUrl('index'))
-                    ->group('Maintenance'),
-                NavigationItem::make('Scheduled Jobs')
-                    ->icon('calendar')
-                    ->url('/')->group('Maintenance'),
-                NavigationItem::make('Backups & Restore')
-                    ->icon('archive-box')
-                    ->url('/')->group('Maintenance'),
-                NavigationItem::make('System Cleanup')
-                    ->icon('trash')
-                    ->url('/')->group('Maintenance'),
-                NavigationItem::make('Updates')
-                    ->icon('arrow-up-circle')
-                    ->url('/')->group('Maintenance'),
-            ])
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth('screen-xxl')
             ->colors([
@@ -152,8 +63,6 @@ final class SystemPanelProvider extends PanelProvider
             )
             ->pages([
                 Dashboard::class,
-                DependencyManagerPage::class,
-                NpmDependencyManagerPage::class,
             ])
             ->discoverWidgets(
                 in: __DIR__ . '/../Presentation/Widgets',

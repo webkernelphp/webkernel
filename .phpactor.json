@@ -1,0 +1,23 @@
+{
+    "language_server.enable": true,
+    "language_server.session_parameters": {
+        "trace.value": "off"
+    },
+    "language_server.diagnostics.disabled": false,
+    "code_transform.add_missing_properties": true,
+    "code_transform.add_missing_imports": true,
+    "indexer.enabled": true,
+    "indexer.exclude_paths": ["vendor", "bootstrap/cache", "storage", "node_modules"],
+    "autoload": {
+        "Webkernel\\": "bootstrap/webkernel/src",
+        "Webkernel\\QuickTouch\\": "bootstrap/webkernel/src/quicktouch",
+        "Webkernel\\Arcanes\\": "bootstrap/webkernel/src/arcanes",
+        "WebModule\\": "modules",
+        "App\\": "app"
+    },
+    "env.variable_overrides": {
+        "BASE_PATH": ".",
+        "WEBKERNEL_PATH": "bootstrap/webkernel"
+    },
+    "language_server_phpstan.enabled": true
+}

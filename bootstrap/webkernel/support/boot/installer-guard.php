@@ -90,7 +90,7 @@ if (!file_exists($envFile)) {
 
 // ── All guards passed: run the artisan command ────────────────────────────
 $artisan = dirname(dirname(__DIR__)) . '/artisan';
-$phpBin  = PHP_BINARY ?: 'php';
+$phpBin  = PHP_BINARY;
 $command = $subCommand ?: 'package:discover';
 $extra   = array_slice($argv, 2);
 $args    = array_map('escapeshellarg', $extra);

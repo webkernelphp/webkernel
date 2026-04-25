@@ -2,17 +2,13 @@
 namespace Webkernel;
 
 use Illuminate\Config\Repository as ConfigRepository;
-use Illuminate\Contracts\Debug\ExceptionHandler as ExceptionHandlerContract;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\ApplicationBuilder;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
 use RuntimeException;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\HttpException;
-use Webkernel\Exceptions\Handler as WebkernelExceptionHandler;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Webkernel\CP\Installer\Presentation\Installer\InstallationState;
 use Webkernel\System\Security\CoreManifest;
 use Webkernel\System\Security\SealEnforcer;
@@ -26,7 +22,13 @@ final class WebApp extends Application
 
     // -------------------------------------------------------------------------
 
-    public function __construct($basePath = null)
+    /**
+     * Boots the application container, ensuring the config repository
+     * is always bound even before any service provider has run.
+     *
+     * @param string|null $basePath Absolute path to the application root.
+     */
+    public function __construct(?string $basePath = null)
     {
         parent::__construct($basePath);
 
@@ -37,8 +39,19 @@ final class WebApp extends Application
 
     // -------------------------------------------------------------------------
 
+    /**
+     * Verifies the core manifest and boots the SealEnforcer integrity layer.
+     * On first call it registers the autoload inspector and marks the system
+     * as booted. On subsequent calls it reloads the enforcer only when the
+     * manifest fingerprint has changed, avoiding redundant work.
+     *
+     * @param string $basePath Absolute path to the application root used to
+     *                         locate the manifest and trusted class paths.
+     * @return void
+     */
     public static function bootstrapCoreIntegrity(string $basePath): void
     {
+        /** @var array{fingerprint?: string} $status */
         $status      = CoreManifest::verify(basePath: $basePath, manifestPath: WEBKERNEL_CACHE_PATH_MANIFEST);
         $fingerprint = $status['fingerprint'] ?? null;
 
@@ -59,6 +72,20 @@ final class WebApp extends Application
 
     // -------------------------------------------------------------------------
 
+    /**
+     * Primary entry point for building the application. Resolves the base path,
+     * stores the running version, runs the integrity bootstrap, and wires up all
+     * core service providers, routes, middleware, and exception handling.
+     * Also re-runs integrity on every request rebinding so runtime tampering
+     * is caught immediately.
+     *
+     * @param string|null $basePath Absolute path to the application root.
+     *                              When null it is inferred automatically.
+     * @param string      $version  The running Webkernel version string, stored
+     *                              for later retrieval via webkernelVersion().
+     * @return ApplicationBuilder   The fully configured builder instance ready
+     *                              to be returned from bootstrap/app.php.
+     */
     public static function configure(?string $basePath = null, string $version = 'dev'): ApplicationBuilder
     {
         $basePath = \is_string($basePath) ? $basePath : static::inferBasePath();
@@ -88,15 +115,13 @@ final class WebApp extends Application
             ->withMiddleware(function (Middleware $m): void {
                 $m->prepend(InstallationGuard::class);
             })
-            //->withExceptions(fn(Exceptions $e): null => null);
-
-            ->withExceptions(function (Exceptions $exceptions) {
-                // This ensures that right before an exception is rendered,
-                // the 'errors' namespace points to your custom directory.
-                $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e) {
+            ->withExceptions(function (Exceptions $exceptions): void {
+                // Forces the 'errors' view namespace to our custom pages directory
+                // right before any HTTP exception is rendered, so standard Laravel
+                // error views are never accidentally served.
+                $exceptions->render(function (HttpExceptionInterface $e): ?\Illuminate\Http\Response {
                     $path = WEBKERNEL_ERRORS_PAGES_PATH;
 
-                    // Force the namespace right now
                     View::replaceNamespace('errors', [$path]);
 
                     $status = $e->getStatusCode();
@@ -106,6 +131,8 @@ final class WebApp extends Application
                             'exception' => $e,
                         ], $status);
                     }
+
+                    return null;
                 });
             });
 
@@ -114,11 +141,27 @@ final class WebApp extends Application
 
     // -------------------------------------------------------------------------
 
+    /**
+     * Returns the Webkernel version string that was passed to configure().
+     * Falls back to 'dev' when called before configure() or in test contexts.
+     *
+     * @return string
+     */
     public function webkernelVersion(): string
     {
         return self::$webkernelVersion ?? 'dev';
     }
 
+    /**
+     * Reads and caches the instance metadata JSON file that identifies this
+     * specific Webkernel installation (licence info, instance ID, etc.).
+     * The file path is taken from the WEBKERNEL_INSTANCE_FILE constant when
+     * defined, otherwise it defaults to storage/webkernel/instance.json.
+     * Result is cached in a static property so the file is only read once
+     * per process.
+     *
+     * @return array<string, mixed>
+     */
     public function webkernelInstance(): array
     {
         if (self::$instanceData === null) {
@@ -134,6 +177,16 @@ final class WebApp extends Application
         return self::$instanceData;
     }
 
+    /**
+     * Convenience accessor that drills into the instance metadata using
+     * dot-notation to reach a value under data.attributes.{key}.
+     * Useful for reading licence fields, instance name, region, etc.
+     * without having to traverse the array manually.
+     *
+     * @param string $key     Dot-notation key relative to data.attributes.
+     * @param mixed  $default Value returned when the key is absent.
+     * @return mixed
+     */
     public function webkernelInstanceAttribute(string $key, mixed $default = null): mixed
     {
         return data_get($this->webkernelInstance(), 'data.attributes.' . $key, $default);
@@ -141,6 +194,16 @@ final class WebApp extends Application
 
     // -------------------------------------------------------------------------
 
+    /**
+     * Resolves the application's root PHP namespace by scanning the PSR-4
+     * autoload map in composer.json (and the bootstrap fallback) and matching
+     * the registered source path against the application's app/ directory.
+     * Overrides the Laravel default to support non-standard project layouts
+     * where composer.json may live under bootstrap/.
+     *
+     * @throws RuntimeException When no matching namespace can be found.
+     * @return string           The resolved namespace, e.g. "App\".
+     */
     public function getNamespace(): string
     {
         if (! is_null($this->namespace)) {
@@ -164,6 +227,14 @@ final class WebApp extends Application
         throw new RuntimeException('Unable to detect application namespace.');
     }
 
+    /**
+     * Parses the autoload.psr-4 section out of a composer.json file.
+     * Returns an empty array when the file does not exist or cannot be decoded,
+     * so callers never have to guard against missing files themselves.
+     *
+     * @param string $path Absolute path to the composer.json file to read.
+     * @return array<string, string|string[]> PSR-4 namespace-to-path map.
+     */
     private function readComposerPsr4(string $path): array
     {
         if (! is_file($path)) {
@@ -178,6 +249,17 @@ final class WebApp extends Application
 
 final class InstallationGuard
 {
+    /**
+     * Intercepts every incoming HTML request and redirects to the installer
+     * when the application has not yet been fully installed. API requests,
+     * installer routes, and the health check endpoint are always let through
+     * so they never get caught in the redirect loop.
+     *
+     * @param \Illuminate\Http\Request $request The incoming HTTP request.
+     * @param \Closure                 $next    The next middleware in the pipeline.
+     * @return mixed                            A redirect response or the result
+     *                                          of the next middleware.
+     */
     public function handle(\Illuminate\Http\Request $request, \Closure $next): mixed
     {
         $isHtmlRequest   = str_starts_with($request->header('Accept', ''), 'text/html');
