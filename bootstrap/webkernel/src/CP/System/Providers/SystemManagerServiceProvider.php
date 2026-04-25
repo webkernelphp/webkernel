@@ -87,9 +87,9 @@ final class SystemManagerServiceProvider extends ServiceProvider
         // Registered unconditionally so Artisan::call() works from web requests
         // (e.g. the installer panel calling webkernel:install).
         $this->commands([
-            \Webkernel\System\Host\Console\DetectCapabilities::class,
-            \Webkernel\System\Host\Console\Install::class,
-            \Webkernel\System\Host\Console\RefreshPhpReleasesCache::class,
+            \Webkernel\Base\System\Host\Console\DetectCapabilities::class,
+            \Webkernel\Base\System\Host\Console\Install::class,
+            \Webkernel\Base\System\Host\Console\RefreshPhpReleasesCache::class,
         ]);
 
         // ── Octane worker lifecycle hooks ─────────────────────────────────────
@@ -99,9 +99,9 @@ final class SystemManagerServiceProvider extends ServiceProvider
             \Illuminate\Support\Facades\Event::listen(
                 \Laravel\Octane\Events\WorkerStarting::class,
                 static function (): void {
-                    \Webkernel\System\Host\Support\CapabilityMap::reset();
-                    \Webkernel\System\Host\Support\CapabilityMap::get();  // pre-warm
-                    \Webkernel\System\Host\Support\StaticDataCache::reset();
+                    \Webkernel\Base\System\Host\Support\CapabilityMap::reset();
+                    \Webkernel\Base\System\Host\Support\CapabilityMap::get();  // pre-warm
+                    \Webkernel\Base\System\Host\Support\StaticDataCache::reset();
                 }
             );
         }
