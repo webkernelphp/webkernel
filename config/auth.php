@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\User;
+use Webkernel\Base\Users\Models\User;
 
 return [
 

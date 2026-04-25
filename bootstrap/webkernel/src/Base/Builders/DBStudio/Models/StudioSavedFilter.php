@@ -2,7 +2,7 @@
 
 namespace Webkernel\Base\Builders\DBStudio\Models;
 
-use App\Models\User;
+use Webkernel\Base\Users\Models\User;
 use Webkernel\Base\Builders\DBStudio\Filtering\FilterGroup;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;

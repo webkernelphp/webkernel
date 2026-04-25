@@ -57,7 +57,7 @@ class StudioMigrationLog extends Model
 
     public function performer(): BelongsTo
     {
-        return $this->belongsTo(config('auth.providers.users.model', 'App\\Models\\User'), 'performed_by');
+        return $this->belongsTo(config('auth.providers.users.model'), 'performed_by');
     }
 
     public function scopeForTenant($query, ?int $tenantId)
