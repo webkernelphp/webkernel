@@ -7,7 +7,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use UnitEnum;
-use Webkernel\Businesses\Models\Business;
+use Webkernel\Base\Businesses\Models\Business;
 use Webkernel\CP\System\Presentation\Resources\Businesses\Pages\CreateBusiness;
 use Webkernel\CP\System\Presentation\Resources\Businesses\Pages\EditBusiness;
 use Webkernel\CP\System\Presentation\Resources\Businesses\Pages\ListBusinesses;

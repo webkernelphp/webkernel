@@ -17,12 +17,12 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
-use Webkernel\Businesses\Models\Business;
-use Webkernel\Connectors\Mailer;
+use Webkernel\Base\Businesses\Models\Business;
+use Webkernel\Base\Connectors\Mailer;
 use Webkernel\CP\Installer\Presentation\Installer\InstallationState;
-use Webkernel\System\Host\Support\CapabilityMap;
-use Webkernel\Users\Enum\UserPrivilegeLevel;
-use Webkernel\Users\Models\User;
+use Webkernel\Base\System\Host\Support\CapabilityMap;
+use Webkernel\Base\Users\Enums\UserPrivilegeLevel;
+use Webkernel\Base\Users\Models\User;
 
 /**
  * First-run installation wizard.

@@ -7,7 +7,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use UnitEnum;
-use Webkernel\Audit\Models\AuditLog;
+use Webkernel\Base\Audit\Models\AuditLog;
 use Webkernel\CP\System\Presentation\Resources\AuditLog\Pages\ListAuditLogs;
 
 class AuditLogResource extends Resource

@@ -7,7 +7,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use UnitEnum;
-use Webkernel\Domains\Models\Domain;
+use Webkernel\Base\Domains\Models\Domain;
 use Webkernel\CP\Businesses\Presentation\Resources\Domains\Pages\CreateBusinessDomain;
 use Webkernel\CP\Businesses\Presentation\Resources\Domains\Pages\EditBusinessDomain;
 use Webkernel\CP\Businesses\Presentation\Resources\Domains\Pages\ListBusinessDomains;

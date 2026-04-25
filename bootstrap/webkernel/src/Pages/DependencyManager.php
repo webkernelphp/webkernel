@@ -9,7 +9,7 @@ use Filament\Pages\Page;
 use Filament\Support\Enums\ActionSize;
 use Illuminate\Support\Collection;
 use Webkernel\Process;
-use Webkernel\Query\QueryModules;
+use Webkernel\Base\Query\QueryModules;
 use Webkernel\Traits\HasSelfResolvedView;
 use BackedEnum;
 

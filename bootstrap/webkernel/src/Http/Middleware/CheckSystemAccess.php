@@ -4,7 +4,7 @@ namespace Webkernel\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Webkernel\Users\Enum\UserPrivilegeLevel;
+use Webkernel\Base\Users\Enums\UserPrivilegeLevel;
 
 /**
  * CheckSystemAccess — gates the System Panel to App Owner and Super Admins.

@@ -2,7 +2,7 @@
 
 namespace Webkernel\CP\System\Models;
 
-use Webkernel\Users\Models\User;
+use Webkernel\Base\Users\Models\User;
 use Webkernel\Notifications\Models\Notification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\AsCollection;

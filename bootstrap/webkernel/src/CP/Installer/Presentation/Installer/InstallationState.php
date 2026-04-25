@@ -2,7 +2,7 @@
 
 namespace Webkernel\CP\Installer\Presentation\Installer;
 
-use Webkernel\Users\Models\UserPrivilege;
+use Webkernel\Base\Users\Models\UserPrivilege;
 
 /**
  * Canonical installation-state resolver.

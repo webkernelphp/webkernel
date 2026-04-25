@@ -4,8 +4,8 @@ namespace Webkernel\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Webkernel\Businesses\Models\Business;
-use Webkernel\Domains\Models\Domain;
+use Webkernel\Base\Businesses\Models\Business;
+use Webkernel\Base\Domains\Models\Domain;
 
 /**
  * ResolveDomainContext — resolves the incoming Host header to a domain record.

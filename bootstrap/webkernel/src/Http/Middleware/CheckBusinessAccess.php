@@ -4,8 +4,8 @@ namespace Webkernel\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Webkernel\Businesses\Models\Business;
-use Webkernel\Domains\Enum\PanelType;
+use Webkernel\Base\Businesses\Models\Business;
+use Webkernel\Base\Users\Enums\PanelType;
 
 /**
  * CheckBusinessAccess — gates access to a Business Panel.
@@ -21,7 +21,7 @@ class CheckBusinessAccess
 {
     public function handle(Request $request, Closure $next): mixed
     {
-        /** @var \Webkernel\Domains\Models\Domain|null $domain */
+        /** @var \Webkernel\Base\Domains\Models\Domain|null $domain */
         $domain = $request->attributes->get('domain');
 
         if (! $domain || $domain->panel_type !== PanelType::BUSINESS) {

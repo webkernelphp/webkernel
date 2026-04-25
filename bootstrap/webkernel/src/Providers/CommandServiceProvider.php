@@ -3,7 +3,7 @@
 namespace Webkernel\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Webkernel\Commands\RunJobCommand;
+use Webkernel\Console\RunJobCommand;
 
 class CommandServiceProvider extends ServiceProvider
 {

@@ -7,7 +7,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use UnitEnum;
-use Webkernel\Databases\Models\DbConnection;
+use Webkernel\Base\Databases\Models\DbConnection;
 use Webkernel\CP\System\Presentation\Resources\DbConnections\Pages\CreateDbConnection;
 use Webkernel\CP\System\Presentation\Resources\DbConnections\Pages\EditDbConnection;
 use Webkernel\CP\System\Presentation\Resources\DbConnections\Pages\ListDbConnections;

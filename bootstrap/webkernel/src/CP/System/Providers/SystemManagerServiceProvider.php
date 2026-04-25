@@ -4,17 +4,17 @@ namespace Webkernel\CP\System\Providers;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
-use Webkernel\System\WebAppInterface;
-use Webkernel\System\Host\Contracts\Managers\{
+use Webkernel\Base\System\WebAppInterface;
+use Webkernel\Base\System\Host\Contracts\Managers\{
     HostManagerInterface, InstanceManagerInterface, OsManagerInterface,
     VersionManagerInterface};
-use Webkernel\System\Access\Contracts\Managers\{
+use Webkernel\Base\System\Access\Contracts\Managers\{
     AppManagerInterface, AuthManagerInterface, ContextManagerInterface,
     RuntimeManagerInterface, SecurityManagerInterface, UsersManagerInterface};
-use Webkernel\System\WebkernelAPI;
-use Webkernel\System\Host\Managers\{
+use Webkernel\Base\System\WebkernelAPI;
+use Webkernel\Base\System\Host\Managers\{
     VersionManager, HostManager, InstanceManager, OsManager};
-use Webkernel\System\Access\Managers\{
+use Webkernel\Base\System\Access\Managers\{
     AppManager, AuthManager, ContextManager, RuntimeManager,
     SecurityManager, UsersManager};
 /**

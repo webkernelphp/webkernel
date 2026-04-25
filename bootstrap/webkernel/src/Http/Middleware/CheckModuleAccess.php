@@ -4,9 +4,9 @@ namespace Webkernel\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Webkernel\Businesses\Models\Business;
-use Webkernel\Domains\Enum\PanelType;
-use Webkernel\Modules\Models\Module;
+use Webkernel\Base\Businesses\Models\Business;
+use Webkernel\Base\Users\Enums\PanelType;
+use Webkernel\Base\Arcanes\Modules\Models\Module;
 
 /**
  * CheckModuleAccess — gates access to a Module Panel.
@@ -21,7 +21,7 @@ class CheckModuleAccess
 {
     public function handle(Request $request, Closure $next): mixed
     {
-        /** @var \Webkernel\Domains\Models\Domain|null $domain */
+        /** @var \Webkernel\Base\Domains\Models\Domain|null $domain */
         $domain = $request->attributes->get('domain');
 
         if (! $domain || $domain->panel_type !== PanelType::MODULE) {

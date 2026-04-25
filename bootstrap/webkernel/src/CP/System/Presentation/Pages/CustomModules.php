@@ -18,10 +18,10 @@ use Filament\Support\Enums\Alignment;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Http;
 use UnitEnum;
-use Webkernel\Integration\ModuleInstaller;
+use Webkernel\Base\Integration\ModuleInstaller;
 use Webkernel\Registries;
-use Webkernel\Integration\RegistryCredentials;
-use Webkernel\Integration\Git\Exceptions\NetworkException;
+use Webkernel\Base\Integration\RegistryCredentials;
+use Webkernel\Base\Integration\Git\Exceptions\NetworkException;
 
 /**
  * CustomModules

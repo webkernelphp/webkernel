@@ -7,7 +7,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use UnitEnum;
-use Webkernel\Modules\Models\Module;
+use Webkernel\Base\Arcanes\Modules\Models\Module;
 use Webkernel\CP\System\Presentation\Resources\Modules\Pages\CreateModule;
 use Webkernel\CP\System\Presentation\Resources\Modules\Pages\EditModule;
 use Webkernel\CP\System\Presentation\Resources\Modules\Pages\ListModules;

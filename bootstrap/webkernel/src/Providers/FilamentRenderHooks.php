@@ -8,7 +8,7 @@ use Filament\Support\Facades\FilamentIcon;
 use Filament\View\PanelsIconAlias;
 use Filament\Forms\View\FormsIconAlias;
 use Webkernel\View\RenderHooks;
-use Webkernel\QuickTouch\QuickTouch;
+use Webkernel\Base\QuickTouch\QuickTouch;
 
 class FilamentRenderHooks
 {

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Webkernel\Traits;
 
-use Webkernel\Generators\UniqueId\UniqueIdGenerator;
+use Webkernel\Base\Generators\UniqueId\UniqueIdGenerator;
 
 /**
  * HasIdentifiers trait.

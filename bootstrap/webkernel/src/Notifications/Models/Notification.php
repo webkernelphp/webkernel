@@ -20,7 +20,7 @@ class Notification extends Model
     {
         return static::create([
             'type' => 'Webkernel\Notifications\BackgroundTaskNotification',
-            'notifiable_type' => 'Webkernel\Users\Models\User',
+            'notifiable_type' => 'Webkernel\Base\Users\Models\User',
             'notifiable_id' => $userId,
             'data' => [
                 'title' => $title,

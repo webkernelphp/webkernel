@@ -2,7 +2,7 @@
 namespace Webkernel;
 
 use Illuminate\Support\ServiceProvider as Laravel;
-use Webkernel\Commands\CommandReplacer;
+use Webkernel\Console\CommandReplacer;
 use Webkernel\Providers\FilamentRenderHooks;
 use Webkernel\Providers\ViewPathsAndComponents;
 
