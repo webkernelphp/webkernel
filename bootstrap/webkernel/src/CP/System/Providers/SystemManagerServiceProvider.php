@@ -86,11 +86,7 @@ final class SystemManagerServiceProvider extends ServiceProvider
         // ── Artisan commands ──────────────────────────────────────────────────
         // Registered unconditionally so Artisan::call() works from web requests
         // (e.g. the installer panel calling webkernel:install).
-        $this->commands([
-            \Webkernel\Base\System\Host\Console\DetectCapabilities::class,
-            \Webkernel\Base\System\Host\Console\Install::class,
-            \Webkernel\Base\System\Host\Console\RefreshPhpReleasesCache::class,
-        ]);
+        $this->commands([]);
 
         // ── Octane worker lifecycle hooks ─────────────────────────────────────
         // Rebuild CapabilityMap and flush static caches once per new worker,
