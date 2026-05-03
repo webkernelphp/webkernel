@@ -31,12 +31,12 @@ final class WebkernelToolRunner
     }
 
     public static function create(string $root = null, string $toolsDir = null): self
-    {
-        return new self(
-            $root     ?? (defined('BASE_PATH') ? BASE_PATH : dirname(__FILE__, 3)),
-            $toolsDir ?? __DIR__,
-        );
-    }
+        {
+            return new self(
+                $root     ?? (defined('BASE_PATH') ? BASE_PATH : dirname(__FILE__, 4)),
+                $toolsDir ?? __DIR__,
+            );
+        }
 
     // -- Bootstrap ------------------------------------------------------------
 
