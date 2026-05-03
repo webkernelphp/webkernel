@@ -631,7 +631,7 @@ final class Modules extends ServiceProvider
 
     private function bootBlaze(string $root, array $entry): void
     {
-        if (!class_exists(Blaze::class)) {
+        if (! $this->app->bound('blaze')) {
             return;
         }
 

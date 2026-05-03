@@ -104,7 +104,7 @@ final class WebApp extends Application
      */
     public function resourcePath($path = '')
     {
-        return $this->joinPaths($this->basePath('platform/resources'), $path);
+        return $this->joinPaths(WEBKERNEL_PATH . '/resources', $path);
     }
 
 
@@ -174,9 +174,9 @@ final class WebApp extends Application
             ])
             ->withCommands()
             ->withRouting(
-                web: WEBKERNEL_PATH . '/platform/routes/web.php',
-                api: WEBKERNEL_PATH . '/platform/routes/api.php',
-                commands: WEBKERNEL_PATH . '/platform/routes/console.php',
+                web: WEBKERNEL_PATH . '/routes/web.php',
+                api: WEBKERNEL_PATH . '/routes/api.php',
+                commands: WEBKERNEL_PATH . '/routes/console.php',
                 health: '/up',
             )
             ->withMiddleware(function (Middleware $m): void {

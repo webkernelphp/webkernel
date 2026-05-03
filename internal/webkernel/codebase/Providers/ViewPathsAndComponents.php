@@ -51,9 +51,11 @@ class ViewPathsAndComponents
         });
 
         // --- Blaze Optimization ---
-        Blaze::optimize()
-            ->in($svgExportPath, compile: true, memo: false, fold: false)
-            ->in($webkernelComponentsPath, compile: true, memo: false, fold: false);
+        if ($this->app->bound('blaze')) {
+            Blaze::optimize()
+                ->in($svgExportPath, compile: true, memo: false, fold: false)
+                ->in($webkernelComponentsPath, compile: true, memo: false, fold: false);
+        }
 
        // Blaze::debug();
     }
