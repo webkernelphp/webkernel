@@ -1,0 +1,65 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Seitenersteller-Oberflaeche
+    |--------------------------------------------------------------------------
+    |
+    | Werkzeugleiste, Arbeitsflaeche, Widget-Auswahl und Zeilen-/Spaltenaktionen.
+    |
+    */
+
+    // Werkzeugleiste
+    'saving' => 'Speichern...',
+    'saved' => 'Gespeichert',
+    'undo' => 'Rückgängig (Strg+Z)',
+    'redo' => 'Wiederholen (Strg+Umschalt+Z)',
+    'show_ruler' => 'Lineal anzeigen',
+    'hide_ruler' => 'Lineal ausblenden',
+
+    // Zeilenaktionen
+    'add_row' => 'Zeile hinzufügen',
+    'add_row_label' => 'Zeile hinzufügen',
+    'choose_layout' => 'Layout auswählen:',
+    'drag_to_reorder' => 'Ziehen zum Neuanordnen',
+    'row_label' => 'Zeile :number',
+    'add_column' => 'Spalte hinzufügen',
+    'duplicate_row' => 'Zeile duplizieren',
+    'row_settings' => 'Zeileneinstellungen',
+    'delete_row' => 'Zeile löschen',
+    'drag_to_resize' => 'Ziehen zum Ändern der Spaltenbreite',
+
+    // Spaltenaktionen
+    'col_label' => 'Spalte :number',
+    'move_left' => 'Nach links verschieben',
+    'move_right' => 'Nach rechts verschieben',
+    'column_settings' => 'Spalteneinstellungen',
+    'delete_column' => 'Spalte löschen',
+
+    // Widget-Aktionen
+    'add_widget' => 'Widget hinzufügen',
+    'edit' => 'Bearbeiten',
+    'duplicate' => 'Duplizieren',
+    'delete' => 'Löschen',
+
+    // Widget-Auswahl
+    'search_widgets' => 'Widgets suchen...',
+    'recently_used' => 'Kürzlich verwendet',
+    'no_widgets_match' => 'Keine Widgets entsprechen Ihrer Suche.',
+
+    // Leerer Zustand
+    'empty_state' => 'Noch keine Zeilen. Klicken Sie auf <strong>+ Zeile hinzufügen</strong>, um zu beginnen.',
+
+    // Versionsgeschichte
+    'no_revisions' => 'Keine Versionsgeschichte verfügbar',
+    'restore' => 'Wiederherstellen',
+    'restoring' => 'Wird wiederhergestellt...',
+    'restore_confirm' => 'Sind Sie sicher, dass Sie diese Version wiederherstellen möchten? Dies ersetzt den aktuellen Seiteninhalt.',
+    'showing_last_revisions' => 'Zeige die letzten 50 Versionen',
+    'by' => 'Von: :name',
+    'rows_count' => ':count Zeile(n)',
+];

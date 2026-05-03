@@ -1,0 +1,25 @@
+<div @if(!empty($data['id']))id="{{ $data['id'] }}"@endif class="border-l-4 border-blue-500 pl-6 py-2 {{ \Webkernel\Builders\Website\View\BaseView::visibilityClasses($data['hide_on'] ?? []) }} {{ $data['class'] ?? '' }}" style="{{ \Webkernel\Builders\Website\View\BaseView::buildInlineStyles($data) }}" {!! \Webkernel\Builders\Website\View\BaseView::animationAttributes($data) !!}>
+    @if(!empty($data['rating']))
+        <div class="text-yellow-400 mb-2">@for($i = 0; $i < (int)$data['rating']; $i++)★@endfor</div>
+    @endif
+    @if(!empty($data['quote']))
+        <blockquote class="text-lg italic text-gray-700 dark:text-gray-200 mb-4">"{{ $data['quote'] }}"</blockquote>
+    @endif
+    <div class="flex items-center gap-3">
+        @if(!empty($data['photo']))
+            <img src="{{ asset('storage/' . $data['photo']) }}" alt="{{ $data['author'] ?? '' }}" class="w-10 h-10 rounded-full object-cover" />
+        @endif
+        <div>
+            @if(!empty($data['author']))
+                <p class="font-semibold text-sm">
+                    @if(!empty($data['url']))<a href="{{ $data['url'] }}" class="hover:underline">@endif
+                    {{ $data['author'] }}
+                    @if(!empty($data['url']))</a>@endif
+                </p>
+            @endif
+            @if(!empty($data['role']) || !empty($data['company']))
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ $data['role'] ?? '' }}@if(!empty($data['role']) && !empty($data['company'])), @endif{{ $data['company'] ?? '' }}</p>
+            @endif
+        </div>
+    </div>
+</div>

@@ -1,0 +1,40 @@
+{
+    "name": "About Page",
+    "description": "Company info with team section and stats",
+    "thumbnail": null,
+    "content": {
+        "rows": [
+            {
+                "id": "intro",
+                "settings": {},
+                "columns": [{
+                    "id": "intro-col", "span": {"sm": 12, "md": 8, "lg": 8, "xl": 8}, "settings": {},
+                    "widgets": [
+                        {"id": "about-heading", "type": "heading", "data": {"content": "About Us", "level": "h1"}},
+                        {"id": "about-text", "type": "text", "data": {"content": "<p>We're a team passionate about building great products. Our mission is to make technology accessible and delightful for everyone.</p><p>Founded in 2024, we've grown from a small startup to a trusted partner for businesses worldwide.</p>"}}
+                    ]
+                }]
+            },
+            {
+                "id": "stats",
+                "settings": {},
+                "columns": [
+                    {"id": "stat-1", "span": {"sm": 12, "md": 3, "lg": 3, "xl": 3}, "settings": {}, "widgets": [{"id": "counter-1", "type": "number-counter", "data": {"number": 500, "suffix": "+", "title": "Customers", "animate": true}}]},
+                    {"id": "stat-2", "span": {"sm": 12, "md": 3, "lg": 3, "xl": 3}, "settings": {}, "widgets": [{"id": "counter-2", "type": "number-counter", "data": {"number": 50, "suffix": "+", "title": "Countries", "animate": true}}]},
+                    {"id": "stat-3", "span": {"sm": 12, "md": 3, "lg": 3, "xl": 3}, "settings": {}, "widgets": [{"id": "counter-3", "type": "number-counter", "data": {"number": 99, "suffix": "%", "title": "Uptime", "animate": true}}]},
+                    {"id": "stat-4", "span": {"sm": 12, "md": 3, "lg": 3, "xl": 3}, "settings": {}, "widgets": [{"id": "counter-4", "type": "number-counter", "data": {"number": 24, "suffix": "/7", "title": "Support", "animate": true}}]}
+                ]
+            },
+            {
+                "id": "team",
+                "settings": {},
+                "columns": [
+                    {"id": "team-heading-col", "span": {"sm": 12, "md": 12, "lg": 12, "xl": 12}, "settings": {}, "widgets": [{"id": "team-heading", "type": "heading", "data": {"content": "Meet the Team", "level": "h2", "text_align": "center"}}]},
+                    {"id": "team-1", "span": {"sm": 12, "md": 4, "lg": 4, "xl": 4}, "settings": {}, "widgets": [{"id": "person-1", "type": "person", "data": {"name": "Jane Smith", "role": "CEO & Founder", "bio": "Visionary leader with 15+ years in tech."}}]},
+                    {"id": "team-2", "span": {"sm": 12, "md": 4, "lg": 4, "xl": 4}, "settings": {}, "widgets": [{"id": "person-2", "type": "person", "data": {"name": "John Doe", "role": "CTO", "bio": "Full-stack engineer and architecture expert."}}]},
+                    {"id": "team-3", "span": {"sm": 12, "md": 4, "lg": 4, "xl": 4}, "settings": {}, "widgets": [{"id": "person-3", "type": "person", "data": {"name": "Emily Brown", "role": "Head of Design", "bio": "Award-winning designer focused on user experience."}}]}
+                ]
+            }
+        ]
+    }
+}

@@ -1,0 +1,27 @@
+/vendor/
+/node_modules/
+composer.lock
+
+# Testing
+.phpunit.result.cache
+.phpunit.cache/
+coverage/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.fleet/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build / Debug
+*.cache
+phpstan.neon
+testbench.yaml
+
+# AI-generated plans
+docs/superpowers/

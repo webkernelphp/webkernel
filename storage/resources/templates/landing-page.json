@@ -1,0 +1,63 @@
+{
+    "name": "Landing Page",
+    "description": "Hero section, features, CTA, and testimonials",
+    "thumbnail": null,
+    "content": {
+        "rows": [
+            {
+                "id": "hero",
+                "settings": {"full_width": true, "background_color": "#1e3a5f"},
+                "columns": [{
+                    "id": "hero-col",
+                    "span": {"sm": 12, "md": 12, "lg": 12, "xl": 12},
+                    "settings": {},
+                    "widgets": [
+                        {"id": "hero-heading", "type": "heading", "data": {"content": "Welcome to Our Platform", "level": "h1", "text_color": "#ffffff", "text_align": "center"}},
+                        {"id": "hero-text", "type": "text", "data": {"content": "<p style=\"text-align:center;color:#cbd5e1\">Build something amazing with our powerful tools and beautiful components.</p>"}},
+                        {"id": "hero-btn", "type": "button", "data": {"label": "Get Started", "url": "#features", "style": "primary", "size": "lg"}}
+                    ]
+                }]
+            },
+            {
+                "id": "features",
+                "settings": {},
+                "columns": [
+                    {
+                        "id": "feat-1", "span": {"sm": 12, "md": 4, "lg": 4, "xl": 4}, "settings": {},
+                        "widgets": [{"id": "blurb-1", "type": "blurb", "data": {"title": "Fast", "content": "<p>Lightning-fast performance out of the box.</p>", "media_type": "none", "layout": "top"}}]
+                    },
+                    {
+                        "id": "feat-2", "span": {"sm": 12, "md": 4, "lg": 4, "xl": 4}, "settings": {},
+                        "widgets": [{"id": "blurb-2", "type": "blurb", "data": {"title": "Flexible", "content": "<p>Customize every aspect to match your brand.</p>", "media_type": "none", "layout": "top"}}]
+                    },
+                    {
+                        "id": "feat-3", "span": {"sm": 12, "md": 4, "lg": 4, "xl": 4}, "settings": {},
+                        "widgets": [{"id": "blurb-3", "type": "blurb", "data": {"title": "Reliable", "content": "<p>Built on solid foundations you can trust.</p>", "media_type": "none", "layout": "top"}}]
+                    }
+                ]
+            },
+            {
+                "id": "cta-row",
+                "settings": {},
+                "columns": [{
+                    "id": "cta-col", "span": {"sm": 12, "md": 12, "lg": 12, "xl": 12}, "settings": {},
+                    "widgets": [{"id": "cta-1", "type": "cta", "data": {"title": "Ready to get started?", "content": "<p>Join thousands of happy customers today.</p>", "button_text": "Sign Up Free", "button_url": "#"}}]
+                }]
+            },
+            {
+                "id": "testimonials",
+                "settings": {},
+                "columns": [
+                    {
+                        "id": "test-1", "span": {"sm": 12, "md": 6, "lg": 6, "xl": 6}, "settings": {},
+                        "widgets": [{"id": "testimonial-1", "type": "testimonial", "data": {"quote": "This product changed how we work. Highly recommended!", "author": "Jane Smith", "role": "CEO", "company": "Acme Corp", "rating": "5", "style": "card"}}]
+                    },
+                    {
+                        "id": "test-2", "span": {"sm": 12, "md": 6, "lg": 6, "xl": 6}, "settings": {},
+                        "widgets": [{"id": "testimonial-2", "type": "testimonial", "data": {"quote": "The best tool we've ever used. Simple yet powerful.", "author": "John Doe", "role": "CTO", "company": "Tech Inc", "rating": "5", "style": "card"}}]
+                    }
+                ]
+            }
+        ]
+    }
+}

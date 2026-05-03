@@ -1,0 +1,114 @@
+# -----------------------------
+# Operating System and Editor Files
+# -----------------------------
+.DS_Store
+Thumbs.db
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
+.zed
+
+# -----------------------------
+# Logs
+# -----------------------------
+*.log
+app-errors.log
+
+# -----------------------------
+# Runtime Data
+# -----------------------------
+/auth.json
+Homestead.json
+Homestead.yaml
+
+# -----------------------------
+# Dependency Directories
+# -----------------------------
+/node_modules
+/third_party/composer
+! /third_party
+! /third_party/.gitkeep
+# -----------------------------
+# Dependency Locks
+# -----------------------------
+package-lock.json
+composer.lock
+
+# -----------------------------
+# Environment Files
+# -----------------------------
+.env
+.env.backup
+.env.production
+
+# -----------------------------
+# Cache Files
+# -----------------------------
+.phpunit.result.cache
+/.phpunit.cache
+
+# -----------------------------
+# Dev. Work Artifacts (El Moumen Yassine)
+# -----------------------------
+merge.txt
+merged-data-*.txt
+merged-data-*.md
+merged-data-*.zip
+merge-specs.txt
+elmouya.*
+webkernel-product-features.csv
+
+# -----------------------------
+# Storage and Build Artifacts
+# -----------------------------
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/storage/basix/*
+/storage/webkernel/cache/*
+/storage/webkernel/keys/*
+/storage/webkernel/logs/*
+/storage/webkernel/instance*
+merged.txt
+
+# -----------------------------
+# Application-Specific Ignores
+# -----------------------------
+**/caddy
+frankenphp
+frankenphp-worker.php
+.licence
+.licence*
+.licence-backup*
+software-specs-*
+webkernel-templates.png
+00-dev-docs-stubs/
+license-simulation-*
+.dev-tools.php
+
+# -----------------------------
+# Webkernel Config
+# -----------------------------
+web-sync.config
+
+# -----------------------------
+# Webkernel Deployment Profile
+# -----------------------------
+/deployment.php
+.deployment_setup_token
+
+# -----------------------------
+# Distribution Builds
+# -----------------------------
+*.AppImage
+
+# -----------------------------
+# Modules
+# -----------------------------
+modules/*
+!modules/.gitignore
+.claude/

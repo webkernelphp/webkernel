@@ -1,0 +1,60 @@
+{
+    "$schema": "https://getcomposer.org/schema.json",
+    "name": "webkernel/foundation",
+    "type": "project",
+    "description": "Webkernel — Modular application framework.",
+    "keywords": [
+        "webkernel",
+        "laravel",
+        "filament",
+        "modular"
+    ],
+    "require": {
+        "calebporzio/sushi": "^2.5",
+        "filament/filament": "^5.0",
+        "jeremykendall/php-domain-parser": "^6.4",
+        "laravel/framework": "^13.0",
+        "laravel/tinker": "^3.0",
+        "laravel/octane": "^2.12",
+        "laravel/pail": "^1.2.5",
+        "laravel/prompts": "^0.3.8",
+        "laravel/sanctum": "^4.0",
+        "livewire/blaze": "^1.0",
+        "nikic/php-parser": "^5.7"
+    },
+    "license": "EPL-2.0",
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        },
+        "files": []
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {}
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": []
+        },
+        "merge-plugin": {
+            "include": [],
+            "recurse": false,
+            "replace": false,
+            "ignore-duplicates": true,
+            "merge-dev": true,
+            "merge-extra": true,
+            "merge-extra-deep": true,
+            "merge-scripts": false
+        }
+    },
+    "suggest": {
+        "symfony/process": "Required for SymfonyProcessReader fallback on hosts where /proc is restricted but shell_exec is available (^6.0 or ^7.0)."
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

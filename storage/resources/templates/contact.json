@@ -1,0 +1,40 @@
+{
+    "name": "Contact Page",
+    "description": "Contact information with map and details",
+    "thumbnail": null,
+    "content": {
+        "rows": [
+            {
+                "id": "contact-header",
+                "settings": {},
+                "columns": [{
+                    "id": "header-col", "span": {"sm": 12, "md": 12, "lg": 12, "xl": 12}, "settings": {},
+                    "widgets": [
+                        {"id": "contact-heading", "type": "heading", "data": {"content": "Contact Us", "level": "h1", "text_align": "center"}},
+                        {"id": "contact-subtext", "type": "text", "data": {"content": "<p style=\"text-align:center\">We'd love to hear from you. Reach out anytime.</p>"}}
+                    ]
+                }]
+            },
+            {
+                "id": "contact-details",
+                "settings": {},
+                "columns": [
+                    {
+                        "id": "info-col", "span": {"sm": 12, "md": 6, "lg": 6, "xl": 6}, "settings": {},
+                        "widgets": [
+                            {"id": "info-heading", "type": "heading", "data": {"content": "Get in Touch", "level": "h3"}},
+                            {"id": "info-text", "type": "text", "data": {"content": "<p><strong>Email:</strong> hello@example.com</p><p><strong>Phone:</strong> (555) 123-4567</p><p><strong>Address:</strong> 123 Main St, Suite 100<br>Anytown, ST 12345</p>"}},
+                            {"id": "social", "type": "social-follow", "data": {"links": [{"network": "twitter", "url": "#"}, {"network": "linkedin", "url": "#"}, {"network": "github", "url": "#"}], "style": "icon", "new_tab": true}}
+                        ]
+                    },
+                    {
+                        "id": "map-col", "span": {"sm": 12, "md": 6, "lg": 6, "xl": 6}, "settings": {},
+                        "widgets": [
+                            {"id": "contact-map", "type": "map", "data": {"address": "123 Main St, Anytown", "height": "400px", "zoom": "15"}}
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}
