@@ -6,17 +6,6 @@
 $sub = $args[0] ?? '';
 
 match ($sub) {
-    'init-gitkeeps' => (static function (): void {
-        $dirs = ['node_modules', 'packages'];
-        foreach ($dirs as $dir) {
-            $path = BASE_PATH . '/' . $dir . '/.gitkeep';
-            if (!file_exists($path)) {
-                @mkdir(dirname($path), 0o2775, true);
-                @touch($path);
-                echo '[init-gitkeeps] Created: ' . $path . PHP_EOL;
-            }
-        }
-    })(),
     'fix-permissions'     => (static function (): void { _guardFixPermissions(); })(),
     'ensure-storage-dirs' => (static function (): void { _guardEnsureStorageDirs(BASE_PATH); })(),
     'run-as-owner'        => (static function (array $a): void { _guardRunAsOwner(array_slice($a, 1)); })($args),

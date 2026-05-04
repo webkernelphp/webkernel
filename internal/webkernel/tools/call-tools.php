@@ -42,7 +42,7 @@ final class WebkernelToolRunner
 
     public static function loadAutoload(): void
     {
-        require_once dirname(__FILE__, 3) . '/platform/third-party/packagist/autoload.php';
+        require_once dirname(__FILE__, 3) . '/packages/autoload.php';
     }
 
     public static function loadFastBoot(): void
@@ -107,7 +107,7 @@ final class WebkernelToolRunner
             return 0;
         }
 
-        if (!file_exists($this->root . '/bootstrap/app.php') || !file_exists($this->root . '/.env')) {
+        if (!file_exists($this->root . '/internal/app.php') || !file_exists($this->root . '/.env')) {
             return 0;
         }
 
