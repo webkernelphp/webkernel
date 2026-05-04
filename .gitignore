@@ -26,9 +26,13 @@ Homestead.yaml
 # -----------------------------
 # Dependency Directories
 # -----------------------------
-/node_modules
-/packages
-/vendor
+/node_modules/*
+/packages/*
+/vendor/*
+
+!/node_modules/
+!/packages/.gitkeep
+!/vendor/.gitkeep
 
 # -----------------------------
 # Dependency Locks
@@ -115,10 +119,6 @@ web-sync.config
 modules/*
 !modules/.gitignore
 .claude/
-
-# Packages
-internal/platform/third_party/packagist/
-node_modules/
 
 # IDE
 _ide_fixes.php
