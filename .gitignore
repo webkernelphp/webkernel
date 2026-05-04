@@ -30,7 +30,7 @@ Homestead.yaml
 /packages/*
 /vendor/*
 
-!/node_modules/
+!/node_modules/.gitkeep
 !/packages/.gitkeep
 !/vendor/.gitkeep
 
