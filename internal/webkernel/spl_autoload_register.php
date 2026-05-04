@@ -19,6 +19,7 @@ spl_autoload_register(static function (string $class): void {
 
                 /* Application Data Models */
                 'App\\Models\\'                => WEBKERNEL_PATH . '/support/boot/app-models',
+                'Webkernel\\Providers\\'                => WEBKERNEL_PATH . '/providers',
 
             ],
             WEBKERNEL_DEV_NAMESPACES,

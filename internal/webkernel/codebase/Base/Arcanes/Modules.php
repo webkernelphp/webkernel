@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 namespace Webkernel\Base\Arcanes;
 
 use Illuminate\Support\Facades\Route;
@@ -17,10 +18,19 @@ use Webkernel\Base\Query\Traits\LoggerTrait;
 /**
  * Sole owner of module and platform-capability discovery, caching, and booting.
  *
- * Responsibility boundary: this class knows nothing about platform integrity.
- * Core file verification is handled exclusively by Webkernel\System\Security\CoreManifest
- * (alongside SealEnforcer), and runs before any provider is registered.
- * Arcanes\Modules only runs after that gate has passed.
+ * Responsibility boundary
+ * -----------------------
+ * This class knows nothing about the webkernel core itself.  It only discovers
+ * and boots artifacts that come from the artifact catalog (external modules and
+ * internal platform capabilities declared via manifest files).
+ *
+ * Core asset booting (migrations under WEBKERNEL_PATH, core helpers, etc.) is
+ * the exclusive responsibility of Webkernel\Base\Arcanes\Platform.
+ *
+ * Platform integrity (manifest verification, SealEnforcer) is handled exclusively
+ * by Webkernel\Base\System\Security\CoreManifest and SealEnforcer, and runs
+ * before any provider is registered.  This class only runs after that gate has
+ * passed.
  *
  * Discovery sources
  * -----------------
@@ -44,7 +54,9 @@ use Webkernel\Base\Query\Traits\LoggerTrait;
  * id formats) are declared in support/constants/arcanes.php and read at
  * runtime through constants.  No kind name is hardcoded in this class.
  *
- * Cache lifecycle: SHA-256 fingerprint of all manifest mtime+size.
+ * Cache lifecycle
+ * ---------------
+ * SHA-256 fingerprint of all manifest mtime+size.
  * Stale or missing cache rebuilds synchronously under a file lock.
  * Cache invalidation is automatic -- no artisan command needed.
  *
@@ -58,17 +70,21 @@ final class Modules extends ServiceProvider
     // ServiceProvider lifecycle
     // -------------------------------------------------------------------------
 
+    /**
+     * @return void
+     */
     public function register(): void
     {
-        $this->ensureDirectory(dirname(WEBKERNEL_MODULES_CACHE));
+        $this->ensureDirectory(\dirname(WEBKERNEL_MODULES_CACHE));
 
         foreach ($this->catalog() as $entry) {
-            if (!($entry['active'] ?? false)) {
+            if (! ($entry['active'] ?? false)) {
                 continue;
             }
+
             foreach ($entry['providers'] ?? [] as $provider) {
                 try {
-                    if (class_exists($provider)) {
+                    if (\class_exists($provider)) {
                         $this->app->register($provider);
                     }
                 } catch (\Throwable $e) {
@@ -78,13 +94,18 @@ final class Modules extends ServiceProvider
         }
     }
 
+    /**
+     * @return void
+     */
     public function boot(): void
     {
         foreach ($this->catalog() as $entry) {
-            if (!($entry['active'] ?? false)) {
+            if (! ($entry['active'] ?? false)) {
                 continue;
             }
+
             $root = $entry['_root'];
+
             $this->bootHelpers($root, $entry);
             $this->bootRoutes($root, $entry);
             $this->bootConfig($root, $entry);
@@ -101,14 +122,23 @@ final class Modules extends ServiceProvider
     // Public API
     // -------------------------------------------------------------------------
 
+    /**
+     * @return non-empty-string
+     */
     public static function makeId(string $registry, string $vendor, string $slug): string
     {
         return NamingHelper::buildId('module', $registry, $vendor, $slug);
     }
 
+    /**
+     * @return non-empty-string
+     */
     public static function makePlatformId(string $slug, string $scope = ''): string
     {
-        $scope = $scope !== '' ? $scope : (defined('WEBKERNEL_PLATFORM_DEFAULT_SCOPE') ? WEBKERNEL_PLATFORM_DEFAULT_SCOPE : 'platform');
+        $scope = $scope !== ''
+            ? $scope
+            : (\defined('WEBKERNEL_PLATFORM_DEFAULT_SCOPE') ? WEBKERNEL_PLATFORM_DEFAULT_SCOPE : 'platform');
+
         return NamingHelper::buildId('platform', $scope, $slug);
     }
 
@@ -116,21 +146,23 @@ final class Modules extends ServiceProvider
     // Cache
     // -------------------------------------------------------------------------
 
-    /** @return list<array<string, mixed>> */
+    /**
+     * @return list<array<string, mixed>>
+     */
     private function catalog(): array
     {
         $path = WEBKERNEL_MODULES_CACHE;
 
-        if (is_file($path) && filesize($path) > 0) {
+        if (\is_file($path) && \filesize($path) > 0) {
             $cache   = require $path;
-            $entries = $cache['entries'] ?? null;
+            $entries = $cache['entries']     ?? null;
             $fp      = $cache['fingerprint'] ?? '';
 
-            if (is_array($entries) && is_string($fp) && $fp !== '' && hash_equals($fp, $this->fingerprint())) {
+            if (\is_array($entries) && \is_string($fp) && $fp !== '' && \hash_equals($fp, $this->fingerprint())) {
                 return $entries;
             }
 
-            $reason = (!is_array($entries) || $fp === '') ? 'malformed' : 'fingerprint_changed';
+            $reason = (! \is_array($entries) || $fp === '') ? 'malformed' : 'fingerprint_changed';
         } else {
             $reason = 'missing';
         }
@@ -138,18 +170,22 @@ final class Modules extends ServiceProvider
         return $this->rebuild($reason);
     }
 
-    /** @return list<array<string, mixed>> */
+    /**
+     * @return list<array<string, mixed>>
+     */
     private function rebuild(string $reason): array
     {
-        $start   = hrtime(true);
-        $all     = array_merge($this->discoverPlatform(), $this->discoverModules());
+        $start   = \hrtime(true);
+        $all     = \array_merge($this->discoverPlatform(), $this->discoverModules());
         $valid   = $this->validate($all);
         $ordered = $this->dependencyOrder($valid);
+
         $this->writeCache($ordered, $reason);
 
-        $ms     = round((hrtime(true) - $start) / 1_000_000, 2);
-        $active = count(array_filter($ordered, static fn ($e) => (bool) ($e['active'] ?? false)));
-        $this->warn("Cache rebuilt [{$reason}] in {$ms}ms -- {$active}/" . count($ordered) . " active.");
+        $ms     = \round((\hrtime(true) - $start) / 1_000_000, 2);
+        $active = \count(\array_filter($ordered, static fn ($e) => (bool) ($e['active'] ?? false)));
+
+        $this->warn("Cache rebuilt [{$reason}] in {$ms}ms -- {$active}/" . \count($ordered) . ' active.');
 
         return $ordered;
     }
@@ -173,7 +209,7 @@ final class Modules extends ServiceProvider
     {
         $locations    = WEBKERNEL_PLATFORM_LOCATIONS;
         $manifestFile = $this->manifestFile('platform');
-        $defaultScope = defined('WEBKERNEL_PLATFORM_DEFAULT_SCOPE')
+        $defaultScope = \defined('WEBKERNEL_PLATFORM_DEFAULT_SCOPE')
             ? WEBKERNEL_PLATFORM_DEFAULT_SCOPE
             : 'platform';
 
@@ -184,38 +220,38 @@ final class Modules extends ServiceProvider
         $found = [];
 
         foreach ($locations as $root) {
-            if (!is_dir($root)) {
+            if (! \is_dir($root)) {
                 continue;
             }
 
-            $dirs = array_merge(
-                glob($root . '/*', GLOB_ONLYDIR) ?: [],
-                glob($root . '/*/*', GLOB_ONLYDIR) ?: [],
-                glob($root . '/*/*/*', GLOB_ONLYDIR) ?: [],
+            $dirs = \array_merge(
+                \glob($root . '/*',     \GLOB_ONLYDIR) ?: [],
+                \glob($root . '/*/*',   \GLOB_ONLYDIR) ?: [],
+                \glob($root . '/*/*/*', \GLOB_ONLYDIR) ?: [],
             );
 
             foreach ($dirs as $path) {
                 $file = $path . '/' . $manifestFile;
-                if (!is_file($file)) {
+                if (! \is_file($file)) {
                     continue;
                 }
 
                 $manifest = require $file;
-                if (!is_array($manifest)) {
+                if (! \is_array($manifest)) {
                     continue;
                 }
 
-                $folder    = basename($path);
+                $folder    = \basename($path);
                 $slug      = NamingHelper::slugFromFolder($folder);
                 $scope     = (string) ($manifest['_scope'] ?? $defaultScope);
                 $id        = NamingHelper::buildId('platform', $scope, $slug);
                 $namespace = NamingHelper::normalizeNamespace(
                     (string) ($manifest['namespace'] ?? ''),
                     'platform',
-                    $slug
+                    $slug,
                 );
 
-                $found[$id] = ArtifactMatrix::normalize(array_merge($manifest, [
+                $found[$id] = ArtifactMatrix::normalize(\array_merge($manifest, [
                     'id'        => $id,
                     'slug'      => $slug,
                     '_root'     => $path,
@@ -230,44 +266,46 @@ final class Modules extends ServiceProvider
         return $found;
     }
 
-    /** @return array<string, array<string, mixed>> */
+    /**
+     * @return array<string, array<string, mixed>>
+     */
     private function discoverModules(): array
     {
         $root         = WEBKERNEL_MODULES_ROOT;
         $manifestFile = $this->manifestFile('module');
 
-        if (!is_dir($root)) {
+        if (! \is_dir($root)) {
             return [];
         }
 
         $found = [];
 
         foreach ($this->sortedRegistries($root) as $registryPath) {
-            $registry = basename($registryPath);
+            $registry = \basename($registryPath);
 
-            foreach (glob($registryPath . '/*', GLOB_ONLYDIR) ?: [] as $vendorPath) {
-                foreach (glob($vendorPath . '/*', GLOB_ONLYDIR) ?: [] as $modulePath) {
+            foreach (\glob($registryPath . '/*', \GLOB_ONLYDIR) ?: [] as $vendorPath) {
+                foreach (\glob($vendorPath . '/*', \GLOB_ONLYDIR) ?: [] as $modulePath) {
                     $file = $modulePath . '/' . $manifestFile;
-                    if (!is_file($file)) {
+                    if (! \is_file($file)) {
                         continue;
                     }
 
                     $manifest = require $file;
-                    if (!is_array($manifest)) {
+                    if (! \is_array($manifest)) {
                         continue;
                     }
 
-                    $vendor    = basename($vendorPath);
-                    $slug      = basename($modulePath);
+                    $vendor    = \basename($vendorPath);
+                    $slug      = \basename($modulePath);
                     $id        = NamingHelper::buildId('module', $registry, $vendor, $slug);
                     $namespace = NamingHelper::normalizeNamespace(
                         (string) ($manifest['namespace'] ?? ''),
                         'module',
                         $slug,
-                        $vendor
+                        $vendor,
                     );
 
-                    $found[$id] = ArtifactMatrix::normalize(array_merge($manifest, [
+                    $found[$id] = ArtifactMatrix::normalize(\array_merge($manifest, [
                         'id'        => $id,
                         '_root'     => $modulePath,
                         '_type'     => 'module',
@@ -283,24 +321,28 @@ final class Modules extends ServiceProvider
         return $found;
     }
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     private function sortedRegistries(string $root): array
     {
-        $all      = glob($root . '/*', GLOB_ONLYDIR) ?: [];
+        $all      = \glob($root . '/*', \GLOB_ONLYDIR) ?: [];
         $official = $root . '/' . WEBKERNEL_OFFICIAL_REGISTRY;
 
-        return in_array($official, $all, true)
-            ? array_merge([$official], array_filter($all, static fn ($d) => $d !== $official))
+        return \in_array($official, $all, true)
+            ? \array_merge([$official], \array_filter($all, static fn ($d) => $d !== $official))
             : $all;
     }
 
     /**
      * Return the manifest filename for a given artifact kind.
      * Falls back to '<type>.php' when the constant is not defined.
+     *
+     * @return non-empty-string
      */
     private function manifestFile(string $type): string
     {
-        $map = defined('WEBKERNEL_MANIFEST_FILES') ? WEBKERNEL_MANIFEST_FILES : [];
+        $map = \defined('WEBKERNEL_MANIFEST_FILES') ? WEBKERNEL_MANIFEST_FILES : [];
         return $map[$type] ?? ($type . '.php');
     }
 
@@ -314,27 +356,26 @@ final class Modules extends ServiceProvider
      */
     private function validate(array $all): array
     {
-        $nsRules = defined('WEBKERNEL_NAMESPACE_RULES') ? WEBKERNEL_NAMESPACE_RULES : [];
+        $nsRules = \defined('WEBKERNEL_NAMESPACE_RULES') ? WEBKERNEL_NAMESPACE_RULES : [];
         $valid   = [];
 
         foreach ($all as $id => $entry) {
             $type    = $entry['_type'] ?? 'module';
-            $missing = array_diff(ArtifactMatrix::required($type), array_keys($entry));
+            $missing = \array_diff(ArtifactMatrix::required($type), \array_keys($entry));
 
-            if (!empty($missing)) {
-                $this->warn("Entry [{$id}] rejected -- missing: " . implode(', ', $missing));
+            if (! empty($missing)) {
+                $this->warn("Entry [{$id}] rejected -- missing: " . \implode(', ', $missing));
                 continue;
             }
 
-            if (!is_bool($entry['active'])) {
+            if (! \is_bool($entry['active'])) {
                 $this->warn("Entry [{$id}] rejected -- 'active' must be boolean.");
                 continue;
             }
 
-            // Namespace prefix check -- driven entirely by WEBKERNEL_NAMESPACE_RULES.
             if (isset($nsRules[$type])) {
                 $required = $nsRules[$type];
-                if (!str_starts_with((string) ($entry['namespace'] ?? ''), $required)) {
+                if (! \str_starts_with((string) ($entry['namespace'] ?? ''), $required)) {
                     $this->warn("Entry [{$id}] rejected -- namespace must start with {$required}");
                     continue;
                 }
@@ -356,12 +397,12 @@ final class Modules extends ServiceProvider
      */
     private function dependencyOrder(array $entries): array
     {
-        $inDegree  = array_fill_keys(array_keys($entries), 0);
-        $adjacency = array_fill_keys(array_keys($entries), []);
+        $inDegree  = \array_fill_keys(\array_keys($entries), 0);
+        $adjacency = \array_fill_keys(\array_keys($entries), []);
 
         foreach ($entries as $id => $entry) {
             foreach ($entry['depends'] ?? [] as $dep) {
-                if (!isset($entries[$dep])) {
+                if (! isset($entries[$dep])) {
                     $this->warn("Entry [{$id}] depends on missing [{$dep}].");
                     continue;
                 }
@@ -370,11 +411,11 @@ final class Modules extends ServiceProvider
             }
         }
 
-        $queue   = array_keys(array_filter($inDegree, static fn ($d) => $d === 0));
+        $queue   = \array_keys(\array_filter($inDegree, static fn ($d) => $d === 0));
         $ordered = [];
 
-        while (!empty($queue)) {
-            $current   = array_shift($queue);
+        while (! empty($queue)) {
+            $current   = \array_shift($queue);
             $ordered[] = $current;
             foreach ($adjacency[$current] as $dep) {
                 if (--$inDegree[$dep] === 0) {
@@ -383,7 +424,7 @@ final class Modules extends ServiceProvider
             }
         }
 
-        foreach (array_diff(array_keys($entries), $ordered) as $id) {
+        foreach (\array_diff(\array_keys($entries), $ordered) as $id) {
             $this->warn("Entry [{$id}] has a circular dependency and will not be loaded.");
         }
 
@@ -401,15 +442,18 @@ final class Modules extends ServiceProvider
     // Cache write
     // -------------------------------------------------------------------------
 
-    /** @param list<array<string, mixed>> $ordered */
+    /**
+     * @param list<array<string, mixed>> $ordered
+     * @return void
+     */
     private function writeCache(array $ordered, string $reason): void
     {
-        $this->ensureDirectory(dirname(WEBKERNEL_MODULES_CACHE));
+        $this->ensureDirectory(\dirname(WEBKERNEL_MODULES_CACHE));
 
         $this->withLock(WEBKERNEL_MODULES_LOCK, function () use ($ordered, $reason): void {
-            $now    = date('c');
-            $total  = count($ordered);
-            $active = count(array_filter($ordered, static fn ($e) => (bool) ($e['active'] ?? false)));
+            $now    = \date('c');
+            $total  = \count($ordered);
+            $active = \count(\array_filter($ordered, static fn ($e) => (bool) ($e['active'] ?? false)));
 
             $payload = ArtifactMatrix::buildPayload([
                 'generated_at'    => $now,
@@ -422,10 +466,11 @@ final class Modules extends ServiceProvider
             ]);
 
             $content = "<?php\n/** Webkernel catalog -- {$now} | v" . ArtifactMatrix::CACHE_PROTOCOL_VERSION . " | {$reason} | {$active}/{$total} */\nreturn " . $this->phpExport($payload) . ";\n";
+
             $this->writeFile(WEBKERNEL_MODULES_CACHE, $content, true);
 
-            if (function_exists('opcache_invalidate')) {
-                opcache_invalidate(WEBKERNEL_MODULES_CACHE, true);
+            if (\function_exists('opcache_invalidate')) {
+                \opcache_invalidate(WEBKERNEL_MODULES_CACHE, true);
             }
         });
     }
@@ -437,79 +482,88 @@ final class Modules extends ServiceProvider
     private function buildPsr4Map(array $ordered): array
     {
         $map = [];
+
         foreach ($ordered as $entry) {
-            if (!($entry['active'] ?? false)) {
+            if (! ($entry['active'] ?? false)) {
                 continue;
             }
-            $ns = rtrim($entry['namespace'] ?? '', '\\') . '\\';
+
+            $ns = \rtrim($entry['namespace'] ?? '', '\\') . '\\';
             if ($ns !== '\\') {
                 $map[$ns] = $entry['_root'];
             }
         }
+
         return $map;
     }
 
+    /**
+     * @return non-empty-string
+     */
     private function fingerprint(): string
     {
         $paths        = [];
-        $manifestFiles = defined('WEBKERNEL_MANIFEST_FILES') ? WEBKERNEL_MANIFEST_FILES : [];
+        $manifestFiles = \defined('WEBKERNEL_MANIFEST_FILES') ? WEBKERNEL_MANIFEST_FILES : [];
 
-        // External modules: <registry>/<vendor>/<slug>/<manifestFile>
         $moduleManifest = $manifestFiles['module'] ?? 'module.php';
-        if (is_dir(WEBKERNEL_MODULES_ROOT)) {
-            $paths = array_merge(
+        if (\is_dir(WEBKERNEL_MODULES_ROOT)) {
+            $paths = \array_merge(
                 $paths,
-                glob(WEBKERNEL_MODULES_ROOT . '/*/*/*/' . $moduleManifest) ?: []
+                \glob(WEBKERNEL_MODULES_ROOT . '/*/*/*/' . $moduleManifest) ?: [],
             );
         }
 
-        // Platform capabilities: <location>/**/<manifestFile>
         $platformManifest = $manifestFiles['platform'] ?? 'platform.php';
         foreach (WEBKERNEL_PLATFORM_LOCATIONS as $root) {
-            if (is_dir($root)) {
-                $paths = array_merge($paths, glob($root . '/*/' . $platformManifest) ?: []);
-                $paths = array_merge($paths, glob($root . '/*/*/' . $platformManifest) ?: []);
-                $paths = array_merge($paths, glob($root . '/*/*/*/' . $platformManifest) ?: []);
+            if (\is_dir($root)) {
+                $paths = \array_merge($paths, \glob($root . '/*/'   . $platformManifest) ?: []);
+                $paths = \array_merge($paths, \glob($root . '/*/*/'  . $platformManifest) ?: []);
+                $paths = \array_merge($paths, \glob($root . '/*/*/*/' . $platformManifest) ?: []);
             }
         }
 
-        sort($paths);
+        \sort($paths);
 
-        return hash('sha256', implode("\n", array_map(
-            static fn ($p) => $p . '|' . (@filemtime($p) ?: 0) . '|' . (@filesize($p) ?: 0),
+        return \hash('sha256', \implode("\n", \array_map(
+            static fn ($p) => $p . '|' . (@\filemtime($p) ?: 0) . '|' . (@\filesize($p) ?: 0),
             $paths,
         )));
     }
 
     // -------------------------------------------------------------------------
-    // Boot steps
+    // Boot steps (catalog entries only -- no reference to WEBKERNEL_PATH)
     // -------------------------------------------------------------------------
 
+    /**
+     * @param string              $root
+     * @param array<string,mixed> $entry
+     * @return void
+     */
     private function bootHelpers(string $root, array $entry): void
     {
         foreach ($entry['helpers'] ?? [] as $rel) {
-            $file = $root . '/' . ltrim((string) $rel, '/');
-            if (is_file($file)) {
+            $file = $root . '/' . \ltrim((string) $rel, '/');
+            if (\is_file($file)) {
                 require_once $file;
             }
         }
 
         foreach ($entry['helpers_paths'] ?? [] as $spec) {
-            $rel   = is_array($spec) ? (string) ($spec['path'] ?? '') : (string) $spec;
-            $depth = is_array($spec) ? (int) ($spec['depth'] ?? 0) : 0;
-            $dir   = $root . '/' . ltrim($rel, '/');
+            $rel   = \is_array($spec) ? (string) ($spec['path'] ?? '') : (string) $spec;
+            $depth = \is_array($spec) ? (int) ($spec['depth'] ?? 0) : 0;
+            $dir   = $root . '/' . \ltrim($rel, '/');
 
-            if (!is_dir($dir)) {
+            if (! \is_dir($dir)) {
                 continue;
             }
 
-            foreach (glob($dir . '/*.php') ?: [] as $f) {
+            foreach (\glob($dir . '/*.php') ?: [] as $f) {
                 require_once $f;
             }
 
             if ($depth >= 1) {
-                foreach (glob($dir . '/*', GLOB_ONLYDIR) ?: [] as $sub) {
-                    foreach (glob($sub . '/*.php') ?: [] as $f) {
+                foreach (\glob($dir . '/*', \GLOB_ONLYDIR) ?: [] as $sub) {
+                    foreach (\glob($sub . '/*.php') ?: [] as $f) {
                         require_once $f;
                     }
                 }
@@ -517,14 +571,20 @@ final class Modules extends ServiceProvider
         }
     }
 
+    /**
+     * @param string              $root
+     * @param array<string,mixed> $entry
+     * @return void
+     */
     private function bootRoutes(string $root, array $entry): void
     {
         foreach ($entry['route_groups'] ?? [] as $group => $files) {
             foreach ((array) $files as $rel) {
                 $file = $root . '/' . $rel;
-                if (!is_file($file)) {
+                if (! \is_file($file)) {
                     continue;
                 }
+
                 match ($group) {
                     'api'   => Route::middleware('api')->group($file),
                     'web'   => Route::middleware('web')->group($file),
@@ -535,100 +595,143 @@ final class Modules extends ServiceProvider
 
         foreach ($entry['route_paths'] ?? [] as $rel) {
             $dir = $root . '/' . $rel;
-            if (!is_dir($dir)) {
+            if (! \is_dir($dir)) {
                 continue;
             }
-            foreach (glob($dir . '/*.php') ?: [] as $file) {
+            foreach (\glob($dir . '/*.php') ?: [] as $file) {
                 Route::group([], $file);
             }
         }
     }
 
+    /**
+     * @param string              $root
+     * @param array<string,mixed> $entry
+     * @return void
+     */
     private function bootConfig(string $root, array $entry): void
     {
         foreach ($entry['config_paths'] ?? [] as $rel) {
-            $dir = $root . '/' . ltrim((string) $rel, '/');
-            if (!is_dir($dir)) {
+            $dir = $root . '/' . \ltrim((string) $rel, '/');
+            if (! \is_dir($dir)) {
                 continue;
             }
-            foreach (glob($dir . '/*.php') ?: [] as $file) {
-                $key = pathinfo($file, PATHINFO_FILENAME);
-                if (!$this->app['config']->has($key)) {
+            foreach (\glob($dir . '/*.php') ?: [] as $file) {
+                $key = \pathinfo($file, \PATHINFO_FILENAME);
+                if (! $this->app['config']->has($key)) {
                     $this->mergeConfigFrom($file, $key);
                 }
             }
         }
     }
 
+    /**
+     * @param string              $root
+     * @param array<string,mixed> $entry
+     * @return void
+     */
     private function bootViews(string $root, array $entry): void
     {
         foreach ($entry['view_namespaces'] ?? [] as $handle => $rel) {
-            $dir = $root . '/' . ltrim((string) $rel, '/');
-            if (is_dir($dir)) {
+            $dir = $root . '/' . \ltrim((string) $rel, '/');
+            if (\is_dir($dir)) {
                 $this->loadViewsFrom($dir, (string) $handle);
             }
         }
     }
 
+    /**
+     * @param string              $root
+     * @param array<string,mixed> $entry
+     * @return void
+     */
     private function bootLang(string $root, array $entry): void
     {
         foreach ($entry['lang_paths'] ?? [] as $handle => $rel) {
-            $dir = $root . '/' . ltrim((string) $rel, '/');
-            if (is_dir($dir)) {
+            $dir = $root . '/' . \ltrim((string) $rel, '/');
+            if (\is_dir($dir)) {
                 $this->loadTranslationsFrom($dir, (string) $handle);
                 $this->loadJsonTranslationsFrom($dir);
             }
         }
     }
 
+    /**
+     * Boot migrations declared in the catalog entry.
+     *
+     * This method only loads paths coming from the entry manifest.
+     * The webkernel core migration path (WEBKERNEL_PATH/database/migrations)
+     * is exclusively handled by Webkernel\Base\Arcanes\Platform::bootMigrations().
+     *
+     * @param string              $root
+     * @param array<string,mixed> $entry
+     * @return void
+     */
     private function bootMigrations(string $root, array $entry): void
     {
-        foreach ($entry['migration_paths'] ?? [] as $rel) {
-            $dir = $root . '/' . ltrim((string) $rel, '/');
-            if (is_dir($dir)) {
-                $this->loadMigrationsFrom($dir);
+        $paths = \array_map(
+            fn ($rel) => $root . '/' . \ltrim((string) $rel, '/'),
+            $entry['migration_paths'] ?? [],
+        );
+
+        foreach (\array_unique($paths) as $path) {
+            if (\is_dir($path)) {
+                $this->loadMigrationsFrom($path);
             }
         }
     }
 
+    /**
+     * @param string              $root
+     * @param array<string,mixed> $entry
+     * @return void
+     */
     private function bootLivewire(string $root, array $entry): void
     {
-        if (empty($entry['livewire_paths']) || !class_exists(Livewire::class)) {
+        if (empty($entry['livewire_paths']) || ! \class_exists(Livewire::class)) {
             return;
         }
 
-        $namespace = rtrim((string) ($entry['namespace'] ?? ''), '\\');
+        $namespace = \rtrim((string) ($entry['namespace'] ?? ''), '\\');
 
         foreach ($entry['livewire_paths'] as $rel) {
-            $dir = $root . '/' . ltrim((string) $rel, '/');
-            if (!is_dir($dir)) {
+            $dir = $root . '/' . \ltrim((string) $rel, '/');
+            if (! \is_dir($dir)) {
                 continue;
             }
 
             $it = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS)
+                new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS),
             );
 
             foreach ($it as $file) {
                 if ($file->getExtension() !== 'php') {
                     continue;
                 }
-                $class = str_replace(
-                    [DIRECTORY_SEPARATOR, '.php'],
+
+                $class = \str_replace(
+                    [\DIRECTORY_SEPARATOR, '.php'],
                     ['\\', ''],
-                    str_replace($dir . DIRECTORY_SEPARATOR, '', $file->getPathname())
+                    \str_replace($dir . \DIRECTORY_SEPARATOR, '', $file->getPathname()),
                 );
+
                 $fqcn = $namespace . '\\' . $class;
-                if (class_exists($fqcn)) {
+
+                if (\class_exists($fqcn)) {
                     Livewire::component(
-                        str_replace(['\\', '_'], ['.', '-'], strtolower($class)),
-                        $fqcn
+                        \str_replace(['\\', '_'], ['.', '-'], \strtolower($class)),
+                        $fqcn,
                     );
                 }
             }
         }
     }
 
+    /**
+     * @param string              $root
+     * @param array<string,mixed> $entry
+     * @return void
+     */
     private function bootBlaze(string $root, array $entry): void
     {
         if (! $this->app->bound('blaze')) {
@@ -636,6 +739,7 @@ final class Modules extends ServiceProvider
         }
 
         $specs = ArtifactMatrix::blazeSpecs($entry);
+
         if (empty($specs)) {
             return;
         }
@@ -643,39 +747,41 @@ final class Modules extends ServiceProvider
         $optimizer = Blaze::optimize();
 
         foreach ($specs as $spec) {
-            $dir = $root . '/' . ltrim($spec['path'], '/');
-            if (!is_dir($dir)) {
+            $dir = $root . '/' . \ltrim($spec['path'], '/');
+            if (! \is_dir($dir)) {
                 continue;
             }
 
-            if (!$spec['compile']) {
+            if (! $spec['compile']) {
                 $optimizer->in($dir, compile: false);
                 continue;
             }
+
             if ($spec['fold']) {
-                $optimizer->in($dir, true, ...array_filter([
+                $optimizer->in($dir, true, ...\array_filter([
                     'safe'   => $spec['safe']   ?: null,
                     'unsafe' => $spec['unsafe'] ?: null,
                 ]));
                 continue;
             }
+
             if ($spec['memo']) {
                 $optimizer->in($dir, memo: true);
                 continue;
             }
+
             $optimizer->in($dir);
         }
     }
 
     /**
-     * Boot and register console commands defined in the given entry.
-     *
-     * @param string              $root  Root path of the module or platform capability
-     * @param array<string,mixed> $entry Manifest entry containing configuration
+     * @param string              $root
+     * @param array<string,mixed> $entry
+     * @return void
      */
     private function bootCommands(string $root, array $entry): void
     {
-        if (empty($entry['command_paths']) || !$this->app->runningInConsole()) {
+        if (empty($entry['command_paths']) || ! $this->app->runningInConsole()) {
             return;
         }
 
@@ -683,27 +789,29 @@ final class Modules extends ServiceProvider
         $commands = [];
 
         foreach ($entry['command_paths'] as $rel) {
-            $dir = $root . '/' . ltrim((string) $rel, '/');
-            if (!is_dir($dir)) {
+            $dir = $root . '/' . \ltrim((string) $rel, '/');
+            if (! \is_dir($dir)) {
                 continue;
             }
 
             $it = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS)
+                new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS),
             );
 
             foreach ($it as $file) {
                 if ($file->getExtension() !== 'php') {
                     continue;
                 }
+
                 $fqcn = extractClassFromFile($file->getPathname());
-                if ($fqcn !== null && is_subclass_of($fqcn, \Illuminate\Console\Command::class)) {
+
+                if ($fqcn !== null && \is_subclass_of($fqcn, \Illuminate\Console\Command::class)) {
                     $commands[] = $fqcn;
                 }
             }
         }
 
-        if (!empty($commands)) {
+        if (! empty($commands)) {
             $this->commands($commands);
         }
     }

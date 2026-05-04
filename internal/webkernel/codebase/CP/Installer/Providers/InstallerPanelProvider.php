@@ -29,6 +29,13 @@ use Closure;
  */
 final class InstallerNoCacheMiddleware
 {
+    /**
+     * Description
+     *
+     * @param type $request
+     * @param type $next
+     * @return type mixed
+     */
     public function handle(Request $request, Closure $next): mixed
     {
         $response = $next($request);

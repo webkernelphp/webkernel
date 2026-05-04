@@ -27,7 +27,7 @@ Homestead.yaml
 # Dependency Directories
 # -----------------------------
 /node_modules
-/dependencies
+/packages
 /vendor
 
 # -----------------------------

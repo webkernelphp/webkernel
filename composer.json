@@ -151,7 +151,7 @@
             "php-http/discovery": true,
             "webkernel/composer-merger": true
         },
-        "vendor-dir": "dependencies"
+        "vendor-dir": "packages"
     },
     "minimum-stability": "stable",
     "prefer-stable": true

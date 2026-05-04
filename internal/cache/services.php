@@ -52,10 +52,8 @@
     48 => 'Pest\\Laravel\\PestServiceProvider',
     49 => 'RyanChandler\\BladeCaptureDirective\\BladeCaptureDirectiveServiceProvider',
     50 => 'Webkernel\\ServiceProvider',
-    51 => 'Webkernel\\Providers\\CommandServiceProvider',
-    52 => 'Webkernel\\Base\\Arcanes\\Modules',
-    53 => 'Webkernel\\Base\\Arcanes\\Commands\\DeclareCommands',
-    54 => 'Webkernel\\CP\\Installer\\Providers\\InstallerPanelProvider',
+    51 => 'Webkernel\\Base\\Arcanes\\Commands\\DeclareCommands',
+    52 => 'Webkernel\\CP\\Installer\\Providers\\InstallerPanelProvider',
   ),
   'eager' => 
   array (
@@ -94,10 +92,8 @@
     32 => 'Pest\\Laravel\\PestServiceProvider',
     33 => 'RyanChandler\\BladeCaptureDirective\\BladeCaptureDirectiveServiceProvider',
     34 => 'Webkernel\\ServiceProvider',
-    35 => 'Webkernel\\Providers\\CommandServiceProvider',
-    36 => 'Webkernel\\Base\\Arcanes\\Modules',
-    37 => 'Webkernel\\Base\\Arcanes\\Commands\\DeclareCommands',
-    38 => 'Webkernel\\CP\\Installer\\Providers\\InstallerPanelProvider',
+    35 => 'Webkernel\\Base\\Arcanes\\Commands\\DeclareCommands',
+    36 => 'Webkernel\\CP\\Installer\\Providers\\InstallerPanelProvider',
   ),
   'deferred' => 
   array (
