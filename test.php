@@ -1,1 +1,4 @@
-<?php echo "Hello from PHP!";
+<?php
+// Display only the license information
+phpinfo(CREDITS_GROUP);
+?>
