@@ -1,0 +1,6 @@
+# -----------------------------
+# Dependency Directories
+# -----------------------------
+/packages/*
+
+!/packages/.gitkeep
