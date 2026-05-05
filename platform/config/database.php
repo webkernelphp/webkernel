@@ -17,7 +17,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => env('DB_CONNECTION', 'webkernel_sqlite'),
 
     /*
     |--------------------------------------------------------------------------
@@ -35,7 +35,7 @@ return [
         'webkernel_sqlite' => [
             'driver'                  => WEBKERNEL_DB_DRIVER,
             'url'                     => env('DB_URL'),
-            'database'                => WEBKERNEL_MAIN_SQLITE_DB_PATH,
+            'database'                => WEBKERNEL_SQLITE_PATH,
             'prefix'                  => WEBKERNEL_DB_PREFIX,
             'foreign_key_constraints' => WEBKERNEL_DB_FOREIGN_KEYS,
             'busy_timeout'            => WEBKERNEL_DB_TIMEOUT,
@@ -44,7 +44,7 @@ return [
             'transaction_mode'        => WEBKERNEL_DB_TX_MODE,
         ],
 
-        'sqlite' => [
+        /*'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DB_URL'),
             'database' => env('DB_DATABASE', database_path('database.sqlite')),
@@ -124,7 +124,7 @@ return [
             'prefix_indexes' => true,
             // 'encrypt' => env('DB_ENCRYPT', 'yes'),
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
-        ],
+        ],*/
 
     ],
 

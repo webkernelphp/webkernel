@@ -13,6 +13,10 @@ use Webkernel\Base\System\Security\CoreManifest;
 use Webkernel\Base\System\Security\SealEnforcer;
 use Webkernel\CP\Installer\Presentation\Installer\InstallationState;
 
+
+/**
+ * @see \Illuminate\Foundation\Application
+ */
 final class WebApp extends Application
 {
     private static bool    $integrityBooted        = false;
@@ -52,20 +56,20 @@ final class WebApp extends Application
     public static function bootstrapCoreIntegrity(string $basePath): void
     {
         /** @var array{fingerprint?: string} $status */
-        $status      = CoreManifest::verify(basePath: $basePath, manifestPath: WEBKERNEL_CACHE_PATH_MANIFEST);
+        $status      = CoreManifest::verify(basePath: $basePath, manifestPath: WEBKERNEL_CACHE_MANIFEST);
         $fingerprint = $status['fingerprint'] ?? null;
 
         if (! self::$integrityBooted) {
             class_exists(SealEnforcer::class);
             spl_autoload_register(static fn(string $c) => SealEnforcer::inspect($c), prepend: true);
-            SealEnforcer::boot(paranoid: true, trustedBasePath: WEBKERNEL_PATH);
+            SealEnforcer::boot(paranoid: true, trustedBasePath: WEBKERNEL_UPPERPATH);
             self::$integrityBooted        = true;
             self::$lastManifestFingerprint = $fingerprint;
             return;
         }
 
         if (is_string($fingerprint) && self::$lastManifestFingerprint !== $fingerprint) {
-            SealEnforcer::reload(paranoid: true, trustedBasePath: WEBKERNEL_PATH);
+            SealEnforcer::reload(paranoid: true, trustedBasePath: WEBKERNEL_UPPERPATH);
             self::$lastManifestFingerprint = $fingerprint;
         }
     }

@@ -127,8 +127,9 @@ return [
     'include_helpers' => true,
 
     'helper_files' => [
-        base_path() . '/vendor/laravel/framework/src/Illuminate/Support/helpers.php',
-        base_path() . '/vendor/laravel/framework/src/Illuminate/Foundation/helpers.php',
+        base_path() . '/platform/packages/laravel/framework/src/Illuminate/Support/helpers.php',
+        base_path() . '/platform/packages/laravel/framework/src/Illuminate/Foundation/helpers.php',
+        base_path() . '/platform/packages/laravel/framework/src/Illuminate/Collections/helpers.php',
         base_path() . '/bootstrap/webkernel/fast-boot.php',
     ],
 

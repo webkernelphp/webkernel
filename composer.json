@@ -117,7 +117,7 @@
             "@php internal/webkernel/tools/call-tools.php cache/cache"
         ],
         "ide-helper": [
-            "@php internal/webkernel/tools/call-tools.php ide-helper:clear-compiled",
+            "@php internal/webkernel/tools/call-tools.php clear-compiled",
             "@php internal/webkernel/tools/call-tools.php ide-helper:eloquent",
             "@php internal/webkernel/tools/call-tools.php ide-helper:generate",
             "@php internal/webkernel/tools/call-tools.php ide-helper:models -M",

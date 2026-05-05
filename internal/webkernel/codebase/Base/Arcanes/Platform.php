@@ -2,7 +2,7 @@
 
 namespace Webkernel\Base\Arcanes;
 
-use Illuminate\Contracts\Foundation\Application;
+use Webkernel\WebApp as Application;
 use Illuminate\Support\Facades\Route;
 use Livewire\Blaze\Blaze;
 use Livewire\Livewire;

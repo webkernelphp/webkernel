@@ -39,6 +39,11 @@ use Stringable;
 
 use function Illuminate\Support\enum_value;
 
+/**
+ * @mixin \Eloquent
+ * @mixin \Illuminate\Database\Eloquent\Builder
+ * @mixin \Illuminate\Database\Query\Builder
+ */
 abstract class Model implements Arrayable, ArrayAccess, CanBeEscapedWhenCastToString, HasBroadcastChannel, Jsonable, JsonSerializable, QueueableEntity, Stringable, UrlRoutable
 {
     use Concerns\HasAttributes,
