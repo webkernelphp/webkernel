@@ -101,10 +101,14 @@ final class WebkernelToolRunner
         if ($level === 'INFO') {
             fwrite(STDOUT, PHP_EOL);
         }
+
+        if ($level === 'DONE' || $level === 'ERROR' || $level === 'FAIL') {
+            fwrite(STDOUT, PHP_EOL);
+        }
         
         fwrite(STDOUT, sprintf("%s%s CALL-TOOLS %s %s" . PHP_EOL, $bg, $text, $reset, $message));
 
-        if ($level === 'DONE' || $level === 'ERROR' || $level === 'FAIL') {
+        if ($level === 'INFO' || $level === 'DONE' || $level === 'ERROR' || $level === 'FAIL') {
             fwrite(STDOUT, PHP_EOL);
         }
     }

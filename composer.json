@@ -51,7 +51,8 @@
     "scripts": {
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php internal/webkernel/tools/call-tools.php installer/guard package:discover"
+            "@php internal/webkernel/tools/call-tools.php installer/guard package:discover",
+            "@php internal/webkernel/tools/call-tools.php installer/init-gitkeeps"
         ],
         "post-create-project-cmd": [
             "@php internal/webkernel/tools/call-tools.php key:generate --ansi",
