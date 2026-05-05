@@ -4,7 +4,7 @@
 /** @phpstan-constant BASE_PATH string */
 
 (static function (): void {
-    $dirs = ['node_modules', 'packages'];
+    $dirs = ['node_modules', 'platform/packages'];
     foreach ($dirs as $dir) {
         $path = BASE_PATH . '/' . $dir . '/.gitkeep';
         if (!file_exists($path)) {

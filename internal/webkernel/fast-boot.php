@@ -6,7 +6,7 @@ defined('WEBKERNEL_PATH')         || define('WEBKERNEL_PATH', __DIR__);
 defined('WEBKERNEL_SUPPORT_PATH') || define('WEBKERNEL_SUPPORT_PATH', WEBKERNEL_PATH . '/support');
 
 // Ensure Framework's PackageManifest finds the renamed vendor directory
-putenv('COMPOSER_VENDOR_DIR=' . BASE_PATH . '/dependencies');
+putenv('COMPOSER_VENDOR_DIR=' . BASE_PATH . '/platform/packages');
 
 // -- Release data -- stamped by Makefile release|patch|minor|major|info -------
 defined('WEBKERNEL_VERSION')      || define('WEBKERNEL_VERSION','0.11.3');

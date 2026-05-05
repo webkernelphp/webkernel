@@ -97,7 +97,7 @@ final class WebkernelToolRunner
         };
         $reset = "\e[0m";
         $text  = ($level === 'WARN' || $level === 'DONE') ? "" : "\e[97m";
-        
+
         if ($level === 'INFO') {
             fwrite(STDOUT, PHP_EOL);
         }
@@ -105,7 +105,7 @@ final class WebkernelToolRunner
         if ($level === 'DONE' || $level === 'ERROR' || $level === 'FAIL') {
             fwrite(STDOUT, PHP_EOL);
         }
-        
+
         fwrite(STDOUT, sprintf("%s%s CALL-TOOLS %s %s" . PHP_EOL, $bg, $text, $reset, $message));
 
         if ($level === 'INFO' || $level === 'DONE' || $level === 'ERROR' || $level === 'FAIL') {
@@ -143,7 +143,7 @@ final class WebkernelToolRunner
 
         [$cat, $name] = explode('/', $command, 2);
 
-        if ($cat !== 'installer' && (!file_exists($this->root . '/internal/app.php') || !file_exists($this->root . '/.env'))) {
+        if ($cat !== 'installer' && (!file_exists($this->root . '/internal/app.php'))) {
             $this->log('WARN', "Skipping tool [{$command}] (missing environment)");
             return 0;
         }

@@ -31,6 +31,10 @@
  */
 
 (static function (): void {
+    if (php_sapi_name() === 'cli') {
+        // We are in a CLI environment (e.g., artisan), so skip the SetupFlow.
+        return;
+    }
 
     $envPath     = BASE_PATH . '/storage/.env';
     $dbPath      = BASE_PATH . '/storage/database.sqlite';

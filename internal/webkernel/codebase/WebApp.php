@@ -155,10 +155,10 @@ final class WebApp extends Application
         self::bootstrapCoreIntegrity($basePath);
 
         $app = new static($basePath);
-        $app->useConfigPath($basePath . '/settings');
-        //$app->useStoragePath($basePath . '/platform/storage');
+        $app->useConfigPath($basePath . '/platform/config');
+        $app->useStoragePath($basePath . '/platform/storage');
         $app->useBootstrapPath($basePath . '/internal');
-        $app->useEnvironmentPath($basePath . '/storage');
+        $app->useEnvironmentPath($basePath . '/platform/storage');
 
         $app->rebinding('request', static fn() => self::bootstrapCoreIntegrity($basePath));
 
@@ -177,8 +177,10 @@ final class WebApp extends Application
                 commands: WEBKERNEL_PATH . '/routes/console.php',
                 health: '/up',
             )
-            ->withMiddleware(function (Middleware $m): void {
-                $m->prepend(InstallationGuard::class);
+            ->withMiddleware(function (Middleware $m) use ($app): void {
+                if (! $app->runningInConsole()) {
+                    $m->prepend(InstallationGuard::class);
+                }
             })
             ->withExceptions(function (Exceptions $exceptions): void {
                 // Forces the 'errors' view namespace to our custom pages directory
@@ -218,12 +220,9 @@ final class WebApp extends Application
     }
 
     /**
-     * Reads and caches the instance metadata JSON file that identifies this
-     * specific Webkernel installation (licence info, instance ID, etc.).
+     * Reads and caches the instance metadata from the deployment file.
      * The file path is taken from the WEBKERNEL_INSTANCE_FILE constant when
-     * defined, otherwise it defaults to storage/webkernel/instance.json.
-     * Result is cached in a static property so the file is only read once
-     * per process.
+     * defined, otherwise it defaults to storage/deployment.php.
      *
      * @return array<string, mixed>
      */
@@ -232,13 +231,14 @@ final class WebApp extends Application
         if (self::$instanceData === null) {
             $file = defined('WEBKERNEL_INSTANCE_FILE')
                 ? WEBKERNEL_INSTANCE_FILE
-                : $this->storagePath('webkernel/instance.json');
-
-            self::$instanceData = is_file($file)
-                ? (json_decode(file_get_contents($file), true) ?? [])
-                : [];
+                : $this->storagePath('deployment.php');
+            if (is_file($file)) {
+                $data = include $file;
+                self::$instanceData = is_array($data) ? $data : [];
+            } else {
+                self::$instanceData = [];
+            }
         }
-
         return self::$instanceData;
     }
 
