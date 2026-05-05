@@ -28,6 +28,10 @@ final class WebkernelToolRunner
     {
         $this->root     = $root;
         $this->toolsDir = $toolsDir;
+
+        if (!defined('BASE_PATH')) {
+            define('BASE_PATH', $root);
+        }
     }
 
     public static function create(string $root = null, string $toolsDir = null): self
@@ -42,12 +46,13 @@ final class WebkernelToolRunner
 
     public static function loadAutoload(): void
     {
-        require_once dirname(__FILE__, 3) . '/packages/autoload.php';
+        $root = defined('BASE_PATH') ? BASE_PATH : dirname(__FILE__, 4);
+        require_once $root . '/packages/autoload.php';
     }
 
     public static function loadFastBoot(): void
     {
-        defined('BASE_PATH') || require_once __DIR__ . '/fast-boot.php';
+        defined('BASE_PATH') || require_once dirname(__DIR__) . '/fast-boot.php';
     }
 
     // -- Registry -------------------------------------------------------------
@@ -80,6 +85,30 @@ final class WebkernelToolRunner
 
     // -- Dispatch -------------------------------------------------------------
 
+    private function log(string $level, string $message): void
+    {
+        $bg = match ($level) {
+            'INFO'  => "\e[44m",
+            'WARN'  => "\e[43m\e[30m",
+            'ERROR' => "\e[41m",
+            'FAIL'  => "\e[41m",
+            'DONE'  => "\e[42m\e[30m",
+            default => "\e[44m",
+        };
+        $reset = "\e[0m";
+        $text  = ($level === 'WARN' || $level === 'DONE') ? "" : "\e[97m";
+        
+        if ($level === 'INFO') {
+            fwrite(STDOUT, PHP_EOL);
+        }
+        
+        fwrite(STDOUT, sprintf("%s%s CALL-TOOLS %s %s" . PHP_EOL, $bg, $text, $reset, $message));
+
+        if ($level === 'DONE' || $level === 'ERROR' || $level === 'FAIL') {
+            fwrite(STDOUT, PHP_EOL);
+        }
+    }
+
     /**
      * Run a tool or artisan command.
      *
@@ -103,27 +132,37 @@ final class WebkernelToolRunner
     private function tool(string $command, array $args): int
     {
         if (isset($this->tools[$command])) {
+            $this->log('INFO', "Running registered tool [{$command}]");
             ($this->tools[$command])($args);
             return 0;
         }
 
-        if (!file_exists($this->root . '/internal/app.php') || !file_exists($this->root . '/.env')) {
+        [$cat, $name] = explode('/', $command, 2);
+
+        if ($cat !== 'installer' && (!file_exists($this->root . '/internal/app.php') || !file_exists($this->root . '/.env'))) {
+            $this->log('WARN', "Skipping tool [{$command}] (missing environment)");
             return 0;
         }
 
-        [$cat, $name] = explode('/', $command, 2);
-        $dir          = $this->toolsDir . '/' . $cat;
+        $dir = $this->toolsDir . '/' . $cat;
 
         if ($name === 'all') {
             $files = glob($dir . '/*.php') ?: [];
             sort($files);
+            $this->log('INFO', "Running all tools in category [{$cat}] (" . count($files) . " found)");
             foreach ($files as $f) $this->exec($f, $args);
             return 0;
         }
 
         $file = $dir . '/' . $name . '.php';
-        if (file_exists($file)) { $this->exec($file, $args); return 0; }
+        if (file_exists($file)) {
+            $this->log('INFO', "Executing tool [{$command}]");
+            $this->exec($file, $args);
+            $this->log('DONE', "Tool [{$command}] completed.");
+            return 0;
+        }
 
+        $this->log('WARN', "Tool [{$command}] not found, falling back to Artisan...");
         return $this->artisan($command, $args);
     }
 

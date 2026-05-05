@@ -11,6 +11,8 @@
             @mkdir(dirname($path), 0o2775, true);
             @touch($path);
             echo '[init-gitkeeps] Created: ' . $path . PHP_EOL;
+        } else {
+            echo '[init-gitkeeps] Already exists: ' . $path . PHP_EOL;
         }
     }
 })();
