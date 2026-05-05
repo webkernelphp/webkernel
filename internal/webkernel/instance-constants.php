@@ -266,13 +266,13 @@ define('WEBKERNEL_COMMAND_PATHS', [
  */
 define('WEBKERNEL_BLAZE_PATHS', [
     [
-        'path'    => WEBKERNEL_SUPPORT_PATH . '/views/components',
+        'path'    => WEBKERNEL_UPPERPATH . '/resources/views/components',
         'compile' => true,
         'memo'    => false,
         'fold'    => false,
     ],
     [
-        'path'    => WEBKERNEL_PATH . '/resources/export-svg',
+        'path'    => WEBKERNEL_UPPERPATH . '/resources/export-svg',
         'compile' => true,
         'memo'    => false,
         'fold'    => false,
@@ -281,9 +281,9 @@ define('WEBKERNEL_BLAZE_PATHS', [
 
 defined('SVG_COLLECTION_PATHS')
     || define('SVG_COLLECTION_PATHS', [
-        WEBKERNEL_SUPPORT_PATH . '/resources/export-svg/custom',
-        WEBKERNEL_SUPPORT_PATH . '/resources/export-svg/lucide',
-        WEBKERNEL_SUPPORT_PATH . '/resources/export-svg/simple-icons',
+        WEBKERNEL_UPPERPATH . '/resources/export-svg/custom',
+        WEBKERNEL_UPPERPATH . '/resources/export-svg/lucide',
+        WEBKERNEL_UPPERPATH . '/resources/export-svg/simple-icons',
     ]);
 
 /**
