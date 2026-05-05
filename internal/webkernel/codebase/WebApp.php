@@ -9,9 +9,9 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Support\Facades\View;
 use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
-use Webkernel\CP\Installer\Presentation\Installer\InstallationState;
 use Webkernel\Base\System\Security\CoreManifest;
 use Webkernel\Base\System\Security\SealEnforcer;
+use Webkernel\CP\Installer\Presentation\Installer\InstallationState;
 
 final class WebApp extends Application
 {
