@@ -18,9 +18,9 @@ class ViewPathsAndComponents
 
         // --- Load Views ---
         $quickTouchViewsPath     = WEBKERNEL_PATH . '/src/Base/QuickTouch';
-        $webkernelViewsPath      = WEBKERNEL_MAIN_SUPPORT_PATH . '/views';
+        $webkernelViewsPath      = WEBKERNEL_PATH . '/resources/views';
         $webkernelComponentsPath = $webkernelViewsPath . '/components';
-        $svgExportPath           = WEBKERNEL_MAIN_SUPPORT_PATH . '/_dist/export-svg';
+        $svgExportPath           = WEBKERNEL_PATH . '/resources/export-svg';
         $layupViewsPath          = resource_path('views');
 
         app('view')->addNamespace('webkernel', $webkernelViewsPath);

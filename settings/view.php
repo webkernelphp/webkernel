@@ -14,7 +14,7 @@ return [
     */
 
     'paths' => [
-        resource_path('views'),
+        WEBKERNEL_PATH . '/resources/views',
     ],
 
     /*

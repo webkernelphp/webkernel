@@ -9,6 +9,9 @@ use Webkernel\Console\CommandReplacer;
 use Webkernel\Console\RunJobCommand;
 use Webkernel\Providers\FilamentRenderHooks;
 use Webkernel\Providers\ViewPathsAndComponents;
+use Webkernel\Base\System\Host\Console\DetectCapabilities;
+use Webkernel\Base\System\Host\Console\Install;
+use Webkernel\Base\System\Host\Console\RefreshPhpReleasesCache;
 
 /**
  * Root webkernel service provider.
@@ -74,6 +77,9 @@ final class ServiceProvider extends Laravel
 
         $this->commands([
             RunJobCommand::class,
+            DetectCapabilities::class,
+            Install::class,
+            RefreshPhpReleasesCache::class,
         ]);
     }
 }

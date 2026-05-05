@@ -55,7 +55,7 @@ return [
     |
     */
 
-    'assets_path' => 'public',
+    'assets_path' => 'packages/filament',
 
     /*
     |--------------------------------------------------------------------------
@@ -69,7 +69,7 @@ return [
     |
     */
 
-    'cache_path' => base_path('bootstrap/cache/filament'),
+    'cache_path' => base_path('internal/cache/filament'),
 
     /*
     |--------------------------------------------------------------------------

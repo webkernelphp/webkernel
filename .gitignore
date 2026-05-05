@@ -73,6 +73,7 @@ phpstan.neon
 /public/build
 /public/hot
 /public/storage
+/public/packages
 /storage/*.key
 /storage/pail
 /storage/basix/*

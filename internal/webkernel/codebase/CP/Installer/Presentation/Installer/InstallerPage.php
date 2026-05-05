@@ -476,7 +476,7 @@ class InstallerPage extends Page
             ['id' => 'ctype',    'label' => 'Ctype extension',           'ok' => extension_loaded('ctype'),                   'value' => ''],
             ['id' => 'bcmath',   'label' => 'BCMath extension',          'ok' => extension_loaded('bcmath'),                  'value' => ''],
             ['id' => 'storage',  'label' => 'storage/ writable',         'ok' => is_writable(storage_path()),                 'value' => ''],
-            ['id' => 'cache',    'label' => 'bootstrap/cache/ writable', 'ok' => is_writable(base_path('bootstrap/cache')),   'value' => ''],
+            ['id' => 'cache',    'label' => 'bootstrap/cache/ writable', 'ok' => is_writable(base_path('internal/cache')),   'value' => ''],
         ];
     }
 }

@@ -155,7 +155,7 @@ final class WebApp extends Application
         self::bootstrapCoreIntegrity($basePath);
 
         $app = new static($basePath);
-        //$app->useConfigPath($basePath . '/platform/config');
+        $app->useConfigPath($basePath . '/settings');
         //$app->useStoragePath($basePath . '/platform/storage');
         $app->useBootstrapPath($basePath . '/internal');
         $app->useEnvironmentPath($basePath . '/storage');
