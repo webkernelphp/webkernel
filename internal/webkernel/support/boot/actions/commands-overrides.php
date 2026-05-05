@@ -11,5 +11,5 @@ declare(strict_types=1);
  */
 return [
     // ── Filament panel commands ────────────────────────────────
-    \Webkernel\Console\Commands\Panel::class => ['filament:panel', 'make:filament-panel', 'filament:make-panel'],
+    //  \Webkernel\Console\Commands\Panel::class => ['filament:panel', 'make:filament-panel', 'filament:make-panel'],
 ];
