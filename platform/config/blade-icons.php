@@ -16,9 +16,7 @@ return [
     'sets' => [
 
         'default' => [
-                'path' => array_map(function($path) {
-                    return str_replace(base_path() . DIRECTORY_SEPARATOR, '', $path);
-                }, (array) SVG_COLLECTION_PATHS),
+                'path' => SVG_COLLECTION_PATHS,
 
 
              /*
