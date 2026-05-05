@@ -71,10 +71,6 @@ final class ServiceProvider extends Laravel
      */
     private function registerCoreCommands(): void
     {
-        if (! $this->app->runningInConsole()) {
-            return;
-        }
-
         $this->commands([
             RunJobCommand::class,
             DetectCapabilities::class,

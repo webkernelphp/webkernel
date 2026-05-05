@@ -5,7 +5,10 @@ use Illuminate\View\FileViewFinder;
 
 class IndexAwareViewFinder extends FileViewFinder
 {
-    public function find($name)
+    /**
+     * @return string
+     */
+    public function find($name):string
     {
         try {
             return parent::find($name);
