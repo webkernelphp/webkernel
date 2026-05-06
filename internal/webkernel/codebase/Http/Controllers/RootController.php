@@ -4,27 +4,23 @@ namespace Webkernel\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
-use Webkernel\CP\Installer\Presentation\Installer\InstallationState;
+use Webkernel\CP\Installer\States\InstallationState;
+use Webkernel\CP\Installer\States\InstallationConstants;
 
 /**
- * Handles the application root (/).
+ * Handles requests to the application root (/).
  *
- * Resolution order:
- *   NOT_INSTALLED -> /installer         (run the full wizard)
- *   MISSING_ADMIN -> /installer         (resume at create_user)
- *   INSTALLED     -> /system            (normal boot)
- *
- * Both NOT_INSTALLED and MISSING_ADMIN land on /installer.
- * The InstallerPage::mount() method reads InstallationState itself and
- * sets the correct phase, so no state needs to be passed in the URL.
+ * Routes based on installation state:
+ *   NOT_INSTALLED / MISSING_ADMIN  => /installer (run or resume the wizard)
+ *   INSTALLED                       => /system (normal application boot)
  */
 final class RootController extends Controller
 {
     public function __invoke(): RedirectResponse
     {
         return match (InstallationState::resolve()) {
-            InstallationState::INSTALLED => redirect(filament()->getPanel('system')->getUrl()),
-            default                      => redirect('/installer'),
+            InstallationConstants::STATE_INSTALLED => redirect(filament()->getPanel('system')->getUrl()),
+            default => redirect(InstallationConstants::ROUTE_URL),
         };
     }
 }

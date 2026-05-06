@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Webkernel\CP\Installer\Presentation\Installer;
+namespace Webkernel\CP\Installer\Presentation;
 
 use BackedEnum;
 use Filament\Actions\Action;
@@ -17,28 +17,31 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
+use Throwable;
 use Webkernel\Base\Businesses\Models\Business;
 use Webkernel\Base\Connectors\Mailer;
-use Webkernel\CP\Installer\Constants\InstallerConfig;
-use Webkernel\CP\Installer\Constants\InstallationPhase;
-use Webkernel\CP\Installer\Presentation\Installer\InstallationState;
 use Webkernel\Base\System\Host\Support\CapabilityMap;
 use Webkernel\Base\Users\Enums\UserPrivilegeLevel;
 use Webkernel\Base\Users\Models\User;
-use Throwable;
-use RuntimeException;
+use Webkernel\CP\Installer\Config\InstallerConfig;
+use Webkernel\CP\Installer\States\InstallationPhase;
+use Webkernel\CP\Installer\States\InstallationState;
+use Webkernel\CP\Installer\States\InstallationConstants;
 
 /**
- * First-run installation wizard.
+ * First-run installation wizard page.
+ *
+ * Orchestrates the complete installation workflow from pre-flight checks
+ * through infrastructure setup and user/business configuration.
  */
 final class InstallerPage extends Page
 {
     protected string $view = 'webkernel-installer::filament.pages.installer';
     protected static string $layout = 'filament-panels::components.layout.simple';
 
-    // ─────────────────────────────────────────────────────────────────
+    // =========================================================================
     // STATE
-    // ─────────────────────────────────────────────────────────────────
+    // =========================================================================
 
     public string $phase = 'pre';
     public string $errorMessage = '';
@@ -49,6 +52,7 @@ final class InstallerPage extends Page
     public string $name = '';
     public string $email = '';
     public string $password = '';
+
     public string $smtp_host = '';
     public string $smtp_port = '';
     public string $smtp_username = '';
@@ -56,16 +60,17 @@ final class InstallerPage extends Page
     public string $smtp_encryption = '';
     public string $smtp_from_name = '';
     public string $smtp_from_email = '';
+
     public string $biz_name = '';
     public string $biz_slug = '';
     public string $biz_admin_email = '';
 
-    // ─────────────────────────────────────────────────────────────────
+    // =========================================================================
     // LIFECYCLE
-    // ─────────────────────────────────────────────────────────────────
+    // =========================================================================
 
     /**
-     * Mount the installer page.
+     * Mount the installer page and resolve installation state.
      */
     public function mount(): void
     {
@@ -76,18 +81,18 @@ final class InstallerPage extends Page
 
             $state = InstallationState::resolve();
 
-            if ($state === InstallationState::INSTALLED) {
-                $this->redirect('/system');
+            if ($state === InstallationConstants::STATE_INSTALLED) {
+                $this->redirectRoute('filament.system.pages.dashboard');
                 return;
             }
 
-            if ($state === InstallationState::MISSING_ADMIN) {
-                $this->phase = $this->resolvePostInstallPhase();
+            $this->phase = InstallationState::nextPhase()->value;
 
-                if ($this->phase === InstallationPhase::VERIFY_TOKEN->value) {
-                    $this->setupTokenInput = $this->resolveSetupToken();
-                }
+            if ($this->phase === InstallationPhase::VERIFY_TOKEN->value) {
+                $this->setupTokenInput = InstallationState::resolveToken();
+            }
 
+            if ($state === InstallationConstants::STATE_MISSING_ADMIN) {
                 Notification::make()
                     ->title(InstallerConfig::NOTIFICATION_INSTALLATION_RESUMED)
                     ->body(InstallerConfig::SUCCESS_INSTALLATION_RESUMED)
@@ -101,13 +106,10 @@ final class InstallerPage extends Page
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // FORM
-    // ─────────────────────────────────────────────────────────────────
+    // =========================================================================
+    // FORM SCHEMA
+    // =========================================================================
 
-    /**
-     * Build the form schema based on current phase.
-     */
     public function form(Schema $schema): Schema
     {
         return match ($this->phase) {
@@ -117,9 +119,6 @@ final class InstallerPage extends Page
         };
     }
 
-    /**
-     * Build token verification form.
-     */
     private function buildTokenForm(Schema $schema): Schema
     {
         return $schema->components([
@@ -132,9 +131,6 @@ final class InstallerPage extends Page
         ]);
     }
 
-    /**
-     * Build setup wizard form.
-     */
     private function buildSetupForm(Schema $schema): Schema
     {
         return $schema->components([
@@ -152,6 +148,7 @@ final class InstallerPage extends Page
                             ->live()
                             ->extraAttributes(['class' => 'wds-claim-radio']),
                     ]),
+
                 Step::make('Your Account')
                     ->icon('heroicon-o-user-circle')
                     ->description('Mandatory')
@@ -178,6 +175,7 @@ final class InstallerPage extends Page
                             ->maxLength(InstallerConfig::PASSWORD_MAX_LENGTH)
                             ->columnSpanFull(),
                     ]),
+
                 Step::make('Mailer')
                     ->icon('heroicon-o-envelope')
                     ->description('Optional')
@@ -207,6 +205,7 @@ final class InstallerPage extends Page
                             ->label('From Name')
                             ->columnSpanFull(),
                     ]),
+
                 Step::make('Business')
                     ->icon('heroicon-o-building-office')
                     ->description('Optional')
@@ -255,15 +254,10 @@ final class InstallerPage extends Page
         ]);
     }
 
-    // ─────────────────────────────────────────────────────────────────
+    // =========================================================================
     // ACTIONS
-    // ─────────────────────────────────────────────────────────────────
+    // =========================================================================
 
-    /**
-     * Get header actions.
-     *
-     * @return array<Action>
-     */
     protected function getHeaderActions(): array
     {
         return [
@@ -273,9 +267,6 @@ final class InstallerPage extends Page
         ];
     }
 
-    /**
-     * Build install button action.
-     */
     private function buildInstallAction(): Action
     {
         return Action::make('install')
@@ -285,8 +276,8 @@ final class InstallerPage extends Page
             ->size('sm')
             ->color('primary')
             ->visible(fn (): bool => $this->phase === InstallationPhase::PRE->value)
-            ->disabled(fn (): bool => !collect($this->buildRequirements())->every(fn (array $r): bool => $r['ok']))
-            ->tooltip(fn (): string|null => collect($this->buildRequirements())->every(fn (array $r): bool => $r['ok'])
+            ->disabled(fn (): bool => !InstallerConfig::allRequirementsMet())
+            ->tooltip(fn (): string|null => InstallerConfig::allRequirementsMet()
                 ? null
                 : 'Fix failing requirements first'
             )
@@ -299,9 +290,6 @@ final class InstallerPage extends Page
             ->action('runInstall');
     }
 
-    /**
-     * Build validate token button action.
-     */
     private function buildValidateTokenAction(): Action
     {
         return Action::make('validateToken')
@@ -313,9 +301,6 @@ final class InstallerPage extends Page
             ->action('runValidateToken');
     }
 
-    /**
-     * Build retry button action.
-     */
     private function buildRetryAction(): Action
     {
         return Action::make('retry')
@@ -327,12 +312,12 @@ final class InstallerPage extends Page
             ->action('resetToPreFlight');
     }
 
-    // ─────────────────────────────────────────────────────────────────
+    // =========================================================================
     // PHASE HANDLERS
-    // ─────────────────────────────────────────────────────────────────
+    // =========================================================================
 
     /**
-     * Run the installation process.
+     * Execute the installation command (artisan webkernel:install).
      */
     public function runInstall(): void
     {
@@ -340,7 +325,7 @@ final class InstallerPage extends Page
             return;
         }
 
-        if (!collect($this->buildRequirements())->every(fn (array $r): bool => $r['ok'])) {
+        if (!InstallerConfig::allRequirementsMet()) {
             Notification::make()
                 ->title(InstallerConfig::NOTIFICATION_REQUIREMENTS_NOT_MET)
                 ->body(InstallerConfig::ERROR_REQUIREMENTS_NOT_MET)
@@ -350,16 +335,17 @@ final class InstallerPage extends Page
         }
 
         try {
-            $this->validateWritableDirectories();
+            InstallerConfig::validateDirectories();
 
             $this->phase = InstallationPhase::INSTALLING->value;
 
             Artisan::call('webkernel:install');
             $this->artisanOutput = Artisan::output();
-            $this->phase = $this->resolvePostInstallPhase();
+
+            $this->phase = InstallationState::nextPhase()->value;
 
             if ($this->phase === InstallationPhase::VERIFY_TOKEN->value) {
-                $this->setupTokenInput = $this->resolveSetupToken();
+                $this->setupTokenInput = InstallationState::resolveToken();
             }
 
             Notification::make()
@@ -370,6 +356,7 @@ final class InstallerPage extends Page
         } catch (Throwable $e) {
             $this->phase = InstallationPhase::ERROR->value;
             $this->errorMessage = $e->getMessage();
+
             Notification::make()
                 ->title(InstallerConfig::NOTIFICATION_INSTALLATION_FAILED)
                 ->body(InstallerConfig::ERROR_INSTALLATION_FAILED)
@@ -379,7 +366,7 @@ final class InstallerPage extends Page
     }
 
     /**
-     * Validate the setup token.
+     * Validate the setup token and proceed to the setup wizard.
      */
     public function runValidateToken(): void
     {
@@ -387,24 +374,29 @@ final class InstallerPage extends Page
             return;
         }
 
-        if (!hash_equals($this->resolveSetupToken(), (string)$this->setupTokenInput)) {
-            Notification::make()
-                ->title(InstallerConfig::NOTIFICATION_INVALID_TOKEN)
-                ->body(InstallerConfig::ERROR_INVALID_TOKEN)
-                ->danger()
-                ->send();
-            return;
-        }
+        try {
+            $correctToken = InstallationState::resolveToken();
 
-        if (file_exists(InstallerConfig::TOKEN_FILE)) {
-            @unlink(InstallerConfig::TOKEN_FILE);
-        }
+            if (!hash_equals($correctToken, (string) $this->setupTokenInput)) {
+                Notification::make()
+                    ->title(InstallerConfig::NOTIFICATION_INVALID_TOKEN)
+                    ->body(InstallerConfig::ERROR_INVALID_TOKEN)
+                    ->danger()
+                    ->send();
+                return;
+            }
 
-        $this->phase = InstallationPhase::SETUP->value;
+            InstallationState::invalidateToken();
+
+            $this->phase = InstallationPhase::SETUP->value;
+        } catch (Throwable $e) {
+            $this->phase = InstallationPhase::ERROR->value;
+            $this->errorMessage = $e->getMessage();
+        }
     }
 
     /**
-     * Complete the setup process.
+     * Complete the setup wizard by creating the user, business, and sending invitations.
      */
     public function runCompleteSetup(): void
     {
@@ -413,8 +405,8 @@ final class InstallerPage extends Page
         }
 
         try {
-            // Create user
             $role = UserPrivilegeLevel::tryFrom($this->deployer_role) ?? UserPrivilegeLevel::APP_OWNER;
+
             $user = webkernel()->users()->createWithPrivilege(
                 name: $this->name,
                 email: $this->email,
@@ -422,67 +414,8 @@ final class InstallerPage extends Page
                 level: $role,
             );
 
-            // Configure mailer (non-critical)
-            if (filled($this->smtp_host)) {
-                try {
-                    Mailer::configure([
-                        'host' => $this->smtp_host,
-                        'port' => $this->smtp_port,
-                        'username' => $this->smtp_username,
-                        'password' => $this->smtp_password,
-                        'encryption' => $this->smtp_encryption,
-                        'from_name' => $this->smtp_from_name,
-                        'from_email' => $this->smtp_from_email,
-                    ]);
-                } catch (Throwable $e) {
-                    Notification::make()
-                        ->title(InstallerConfig::NOTIFICATION_MAILER_NOT_SAVED)
-                        ->body($e->getMessage())
-                        ->warning()
-                        ->send();
-                }
-            }
-
-            // Create business (non-critical)
-            if (filled($this->biz_name)) {
-                try {
-                    $slug = filled($this->biz_slug) ? $this->biz_slug : Str::slug($this->biz_name);
-                    $business = Business::create([
-                        'name' => $this->biz_name,
-                        'slug' => $slug,
-                        'admin_email' => $this->biz_admin_email,
-                        'created_by' => $user->getKey(),
-                    ]);
-
-                    // Send invitation (non-critical)
-                    if (Mailer::isConfigured() && filled($this->biz_admin_email)) {
-                        try {
-                            Mailer::sendHtml(
-                                to: $this->biz_admin_email,
-                                subject: sprintf(InstallerConfig::EMAIL_SUBJECT_INVITATION, e($business->name)),
-                                html: sprintf(
-                                    InstallerConfig::EMAIL_BODY_INVITATION,
-                                    e($business->name),
-                                    url('/'),
-                                    url('/'),
-                                ),
-                            );
-                        } catch (Throwable $e) {
-                            Notification::make()
-                                ->title(InstallerConfig::NOTIFICATION_INVITATION_NOT_SENT)
-                                ->body($e->getMessage())
-                                ->warning()
-                                ->send();
-                        }
-                    }
-                } catch (Throwable $e) {
-                    Notification::make()
-                        ->title(InstallerConfig::NOTIFICATION_BUSINESS_NOT_CREATED)
-                        ->body($e->getMessage())
-                        ->warning()
-                        ->send();
-                }
-            }
+            $this->configureMailer();
+            $this->createBusiness($user);
 
             Notification::make()
                 ->title(sprintf(InstallerConfig::SUCCESS_SETUP_COMPLETE, $user->name))
@@ -501,7 +434,7 @@ final class InstallerPage extends Page
     }
 
     /**
-     * Reset to pre-flight checks.
+     * Reset the installer to the pre-flight checks phase.
      */
     public function resetToPreFlight(): void
     {
@@ -510,23 +443,108 @@ final class InstallerPage extends Page
         $this->artisanOutput = '';
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // VIEW DATA
-    // ─────────────────────────────────────────────────────────────────
+    // =========================================================================
+    // SETUP HELPERS
+    // =========================================================================
 
     /**
-     * Get view data.
-     *
-     * @return array<string, mixed>
+     * Configure the mailer if SMTP credentials are provided.
      */
+    private function configureMailer(): void
+    {
+        if (!filled($this->smtp_host)) {
+            return;
+        }
+
+        try {
+            Mailer::configure([
+                'host' => $this->smtp_host,
+                'port' => $this->smtp_port,
+                'username' => $this->smtp_username,
+                'password' => $this->smtp_password,
+                'encryption' => $this->smtp_encryption,
+                'from_name' => $this->smtp_from_name,
+                'from_email' => $this->smtp_from_email,
+            ]);
+        } catch (Throwable $e) {
+            Notification::make()
+                ->title(InstallerConfig::NOTIFICATION_MAILER_NOT_SAVED)
+                ->body($e->getMessage())
+                ->warning()
+                ->send();
+        }
+    }
+
+    /**
+     * Create a business and send an invitation email if configured.
+     */
+    private function createBusiness(User $user): void
+    {
+        if (!filled($this->biz_name)) {
+            return;
+        }
+
+        try {
+            $slug = filled($this->biz_slug) ? $this->biz_slug : Str::slug($this->biz_name);
+
+            $business = Business::create([
+                'name' => $this->biz_name,
+                'slug' => $slug,
+                'admin_email' => $this->biz_admin_email,
+                'created_by' => $user->getKey(),
+            ]);
+
+            $this->sendBusinessInvitation($business);
+        } catch (Throwable $e) {
+            Notification::make()
+                ->title(InstallerConfig::NOTIFICATION_BUSINESS_NOT_CREATED)
+                ->body($e->getMessage())
+                ->warning()
+                ->send();
+        }
+    }
+
+    /**
+     * Send an invitation email to the business admin if mailer is configured.
+     */
+    private function sendBusinessInvitation(Business $business): void
+    {
+        if (!Mailer::isConfigured() || !filled($this->biz_admin_email)) {
+            return;
+        }
+
+        try {
+            Mailer::sendHtml(
+                to: $this->biz_admin_email,
+                subject: sprintf(InstallerConfig::EMAIL_SUBJECT_INVITATION, e($business->name)),
+                html: sprintf(
+                    InstallerConfig::EMAIL_BODY_INVITATION,
+                    e($business->name),
+                    url('/'),
+                    url('/'),
+                ),
+            );
+        } catch (Throwable $e) {
+            Notification::make()
+                ->title(InstallerConfig::NOTIFICATION_INVITATION_NOT_SENT)
+                ->body($e->getMessage())
+                ->warning()
+                ->send();
+        }
+    }
+
+    // =========================================================================
+    // VIEW DATA
+    // =========================================================================
+
     public function getViewData(): array
     {
         $cap = CapabilityMap::get();
-        $requirements = $this->buildRequirements();
+        $requirements = InstallerConfig::buildRequirements();
 
         return [
             'requirements' => $requirements,
-            'allRequirementsMet' => collect($requirements)->every(fn (array $r): bool => $r['ok']),
+            'allRequirementsMet' => InstallerConfig::allRequirementsMet(),
             'capabilities' => [
                 ['id' => 'proc_fs', 'label' => '/proc filesystem', 'ok' => $cap->hasProcFs, 'help' => 'CPU load, RAM, uptime, FPM workers'],
                 ['id' => 'opcache', 'label' => 'OPcache', 'ok' => $cap->hasOpcache, 'help' => 'PHP bytecode caching'],
@@ -540,37 +558,25 @@ final class InstallerPage extends Page
         ];
     }
 
-    // ─────────────────────────────────────────────────────────────────
+    // =========================================================================
     // NAVIGATION
-    // ─────────────────────────────────────────────────────────────────
+    // =========================================================================
 
-    /**
-     * Get navigation icon.
-     */
     public static function getNavigationIcon(): string|BackedEnum|Htmlable|null
     {
         return 'heroicon-o-wrench-screwdriver';
     }
 
-    /**
-     * Get navigation label.
-     */
     public static function getNavigationLabel(): string
     {
         return 'Setup';
     }
 
-    /**
-     * Get page title.
-     */
     public function getTitle(): string|Htmlable
     {
         return 'Webkernel Setup';
     }
 
-    /**
-     * Get page heading.
-     */
     public function getHeading(): string|Htmlable
     {
         return new HtmlString(
@@ -579,168 +585,8 @@ final class InstallerPage extends Page
         );
     }
 
-    /**
-     * Get page subheading.
-     */
     public function getSubheading(): ?string
     {
-        return match ($this->phase) {
-            InstallationPhase::PRE->value => InstallerConfig::SUBHEADING_PRE,
-            InstallationPhase::INSTALLING->value => InstallerConfig::SUBHEADING_INSTALLING,
-            InstallationPhase::VERIFY_TOKEN->value => InstallerConfig::SUBHEADING_VERIFY_TOKEN,
-            InstallationPhase::SETUP->value => InstallerConfig::SUBHEADING_SETUP,
-            InstallationPhase::ERROR->value => InstallerConfig::SUBHEADING_ERROR,
-            default => null,
-        };
-    }
-
-    // ─────────────────────────────────────────────────────────────────
-    // PRIVATE HELPERS
-    // ─────────────────────────────────────────────────────────────────
-
-    /**
-     * Resolve post-installation phase.
-     */
-    private function resolvePostInstallPhase(): string
-    {
-        $envToken = config('webkernel.setup_token') ?? env('WEBKERNEL_SETUP_TOKEN');
-        return empty($envToken) ? InstallationPhase::SETUP->value : InstallationPhase::VERIFY_TOKEN->value;
-    }
-
-    /**
-     * Resolve or generate setup token.
-     *
-     * @throws RuntimeException
-     */
-    private function resolveSetupToken(): string
-    {
-        $envToken = config('webkernel.setup_token') ?? env('WEBKERNEL_SETUP_TOKEN');
-
-        if (!empty($envToken)) {
-            return (string)$envToken;
-        }
-
-        if (!file_exists(InstallerConfig::TOKEN_FILE)) {
-            if (!is_dir(InstallerConfig::TOKEN_DIR)) {
-                if (!@mkdir(InstallerConfig::TOKEN_DIR, InstallerConfig::TOKEN_DIR_PERMISSIONS, true)) {
-                    throw new RuntimeException(
-                        sprintf(InstallerConfig::ERROR_TOKEN_DIR_CREATE_FAILED, InstallerConfig::TOKEN_DIR)
-                    );
-                }
-            }
-
-            $token = Str::random(InstallerConfig::TOKEN_LENGTH);
-
-            if (!@file_put_contents(InstallerConfig::TOKEN_FILE, $token, LOCK_EX)) {
-                throw new RuntimeException(
-                    sprintf(InstallerConfig::ERROR_TOKEN_FILE_CREATE_FAILED, InstallerConfig::TOKEN_FILE)
-                );
-            }
-
-            @chmod(InstallerConfig::TOKEN_FILE, InstallerConfig::TOKEN_FILE_PERMISSIONS);
-        }
-
-        $content = @file_get_contents(InstallerConfig::TOKEN_FILE);
-
-        if ($content === false) {
-            throw new RuntimeException(
-                sprintf(InstallerConfig::ERROR_TOKEN_FILE_READ_FAILED, InstallerConfig::TOKEN_FILE)
-            );
-        }
-
-        return trim($content);
-    }
-
-    /**
-     * Validate that required directories exist and are writable.
-     *
-     * @throws RuntimeException
-     */
-    private function validateWritableDirectories(): void
-    {
-        foreach (InstallerConfig::REQUIRED_DIRECTORIES as $path => $name) {
-            if (!is_dir($path)) {
-                throw new RuntimeException(
-                    sprintf(InstallerConfig::ERROR_DIRECTORY_NOT_EXIST, $path)
-                );
-            }
-
-            if (!is_writable($path)) {
-                throw new RuntimeException(
-                    sprintf(InstallerConfig::ERROR_DIRECTORY_NOT_WRITABLE, $path)
-                );
-            }
-        }
-    }
-
-    /**
-     * Build system requirements list.
-     *
-     * @return array<int, array{id: string, label: string, ok: bool, value: string}>
-     */
-    private function buildRequirements(): array
-    {
-        return [
-            [
-                'id' => 'php',
-                'label' => 'PHP >= 8.4',
-                'ok' => version_compare(PHP_VERSION, '8.4.0', '>='),
-                'value' => PHP_VERSION,
-            ],
-            [
-                'id' => 'openssl',
-                'label' => 'OpenSSL extension',
-                'ok' => extension_loaded('openssl'),
-                'value' => '',
-            ],
-            [
-                'id' => 'pdo',
-                'label' => 'PDO extension',
-                'ok' => extension_loaded('pdo'),
-                'value' => '',
-            ],
-            [
-                'id' => 'mbstring',
-                'label' => 'Mbstring extension',
-                'ok' => extension_loaded('mbstring'),
-                'value' => '',
-            ],
-            [
-                'id' => 'xml',
-                'label' => 'XML / DOM extension',
-                'ok' => extension_loaded('xml'),
-                'value' => '',
-            ],
-            [
-                'id' => 'json',
-                'label' => 'JSON extension',
-                'ok' => extension_loaded('json'),
-                'value' => '',
-            ],
-            [
-                'id' => 'ctype',
-                'label' => 'Ctype extension',
-                'ok' => extension_loaded('ctype'),
-                'value' => '',
-            ],
-            [
-                'id' => 'bcmath',
-                'label' => 'BCMath extension',
-                'ok' => extension_loaded('bcmath'),
-                'value' => '',
-            ],
-            [
-                'id' => 'storage',
-                'label' => 'storage/ writable',
-                'ok' => is_writable(storage_path()),
-                'value' => '',
-            ],
-            [
-                'id' => 'cache',
-                'label' => 'cache/ writable',
-                'ok' => is_writable(base_path('internal/cache')),
-                'value' => '',
-            ],
-        ];
+        return InstallationPhase::tryFrom($this->phase)?->label();
     }
 }

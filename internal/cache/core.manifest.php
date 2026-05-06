@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-// Webkernel core manifest — generated 2026-05-06 05:46:35 — 7045 files
+// Webkernel core manifest — generated 2026-05-06 06:16:17 — 7047 files
 // DO NOT EDIT MANUALLY.
 
 return [
-    'generated_at' => '2026-05-06 05:46:35',
-    'count'        => 7045,
-    'fingerprint'  => 'b2e783ca1827dff9cfb93ec8f217d2fc0e2036ebbf83c1d363a595f311ba0f29',
+    'generated_at' => '2026-05-06 06:16:17',
+    'count'        => 7047,
+    'fingerprint'  => '38028b5f98688430acf806d5089ede9bd792749c4a4fb491cb92642882519dda',
     'base_path'    => '/home/yassine/Projects/Webkernel',
     'includes'     => [
     '/home/yassine/Projects/Webkernel/internal',
@@ -384,12 +384,14 @@ return [
     'internal/webkernel/codebase/CP/Businesses/Presentation/Resources/Domains/Pages/ListBusinessDomains.php' => 'c1b26e06727365a96197e22e26cfbcc17576701467a2926e56849ec35a7d8ca1',
     'internal/webkernel/codebase/CP/Businesses/Providers/BusinessPanelProvider.php' => '7d9ae9ce3807599e47f2ce52350e446cfc650f01f0f38d8b4d8c93bc7cf29200',
     'internal/webkernel/codebase/CP/Businesses/platform.php' => '57e7561af73d70e7437e07c6c916ec00e6854edface91f18ed8b0b62016b8aed',
-    'internal/webkernel/codebase/CP/Installer/Constants/InstallationPhase.php' => '926ad6773ce47e3e2e990a6abe3644a359a9f70864c4a5aaeeed014321772f77',
-    'internal/webkernel/codebase/CP/Installer/Constants/InstallerConfig.php' => '3a2b120aee623047922eb040c0e1c931ca1ff6c12c925e255880c3e48b102ded',
-    'internal/webkernel/codebase/CP/Installer/Presentation/Installer/InstallationState.php' => 'c455130419f77aff955981fb9720fbb1c3cce6cacacb06537d1b1812c4af0305',
-    'internal/webkernel/codebase/CP/Installer/Presentation/Installer/InstallerPage.php' => '3d9ac317dc6c1449bf3712fbe14b08edfd0446c18f8beb6e690abd95f17a973a',
-    'internal/webkernel/codebase/CP/Installer/Providers/InstallerPanelProvider.php' => '0997ac391a2aedea32a68d5e42e7e3b42fd3d23f461dee672f046ba9d9854650',
+    'internal/webkernel/codebase/CP/Installer/Config/InstallerConfig.php' => 'a57a9df602acf1b51b6352ae3e28a48aa5fd76024a1f0041fcdc2b8d4072a688',
+    'internal/webkernel/codebase/CP/Installer/Presentation/InstallationState.php' => 'c455130419f77aff955981fb9720fbb1c3cce6cacacb06537d1b1812c4af0305',
+    'internal/webkernel/codebase/CP/Installer/Presentation/InstallerPage.php' => '6ed70168ab01ccdd0e348c664b045f22d4508c24dc7980d3fd93757932dfddb6',
+    'internal/webkernel/codebase/CP/Installer/Providers/InstallerPanelProvider.php' => '24aef56ab42296ee2689eb316383e9f80dfef4c4ccfc4b168c3b522e769a3133',
     'internal/webkernel/codebase/CP/Installer/Resources/Views/filament/pages/installer.blade.php' => '9eef792c750c6d4f42f5f1ad02fcb91a8f9fc27b55a53f5e401e97cb8a4a73cb',
+    'internal/webkernel/codebase/CP/Installer/States/InstallationConstants.php' => 'b19890138f0a2d3110783528280e77f4012d2032d7536bd62acb368e2df16811',
+    'internal/webkernel/codebase/CP/Installer/States/InstallationPhase.php' => '926ad6773ce47e3e2e990a6abe3644a359a9f70864c4a5aaeeed014321772f77',
+    'internal/webkernel/codebase/CP/Installer/States/InstallationState.php' => '1e02a596b1600fd6da8ea0d426263a4167fac2792d9152643bc0ad243ca53908',
     'internal/webkernel/codebase/CP/Installer/platform.php' => '42847ca096b06fc2989695205b217123e5ed685da334b80afaa235e70db19dbb',
     'internal/webkernel/codebase/CP/System/Config/system-manager.php' => '6afaac8eaa8ce7d159ae95417ce082b5ff118dd52e23785cd3798f1bb5cf836d',
     'internal/webkernel/codebase/CP/System/Config/webkernel-auth.php' => 'f485f625a88fe64db1dee22372c4def3c4ce06442f3096616974cd049138513c',
@@ -526,7 +528,7 @@ return [
     'internal/webkernel/codebase/Console/RunJobCommand.php' => 'ccb772a5b49dce012251439059e7906a007d3db489b6e92661da95c0f6eb32da',
     'internal/webkernel/codebase/CryptData.php' => '9a42a764064861abd06bcdac07b848b924ba80382875c33f38bd5ad5cabaa65b',
     'internal/webkernel/codebase/FSEngine.php' => 'e995b29462853420ee4b53892d4491d7d574ca14bd4cf729bf88b07a68e4ec82',
-    'internal/webkernel/codebase/Http/Controllers/RootController.php' => '755b14b124b169abdb2380d37ed6dadd9858539dbf10faed8b7894afbc5c5ac6',
+    'internal/webkernel/codebase/Http/Controllers/RootController.php' => '0b84845d4d4827c15dfa532c773701a5d4df85f2a5b0afe6636b2eb1a8a4fc7f',
     'internal/webkernel/codebase/Http/Middleware/CheckBusinessAccess.php' => 'bb415f41fadc7bb73b0fccfa822c34ee63125b9c41ebea23135438ab0b3bdd62',
     'internal/webkernel/codebase/Http/Middleware/CheckModuleAccess.php' => '772e2615b7fe5d4f37fb6751edfd1c7c54b147dc838def24c4ceec59eeafc6e2',
     'internal/webkernel/codebase/Http/Middleware/CheckSystemAccess.php' => 'feeb1b742fa3d7ca0673cbc5909758fdc77ae6a09ec8376590dd9a45d77f1ef8',
@@ -560,7 +562,7 @@ return [
     'internal/webkernel/codebase/UI/Forms/Card.php' => 'cfea561d308558bf15eee51d6e22ada36f2c356ab960b4d1e3979b0b80f3b9e5',
     'internal/webkernel/codebase/View/Components/Card.php' => '1c66ec244425b7237af635a365f4042573a6f15f489e1690bf1ce6bcde3a8ef0',
     'internal/webkernel/codebase/View/RenderHooks.php' => 'ef6de800a867dcf73f15d40faf722378c3c23ae3b87744360c1af699443199e7',
-    'internal/webkernel/codebase/WebApp.php' => '13fae666d6ca2b587398f01a4a2f6554c24aa068436112989a703d569289bd7e',
+    'internal/webkernel/codebase/WebApp.php' => 'fbe617ad79110a3b0c097bf3a0e9d669672240a2246e72ab695f7d6c516e2ff5',
     'internal/webkernel/database/factories/UserFactory.php' => '50bdc543f1b09d1a57260be55ad0e1a68aee4b34f63e1109dc94d9bcd3080526',
     'internal/webkernel/database/migrations/0001_01_01_000000_create_web_base_tables.php' => '77f78e01fdb7d88fdcbd276920e4fe5da215193566eefe64d046b6447dd9ef63',
     'internal/webkernel/database/migrations/0001_01_01_000010_create_web_standard_tables.php' => 'd56c40ae05e10b578dedcd424a2a81b197170c579f082d6aaa81807965e769ee',
@@ -8085,23 +8087,32 @@ return [
     'Webkernel\\CP\\Businesses\\Providers\\BusinessPanelProvider' => [
         'internal/webkernel/codebase/CP/Businesses/Providers/BusinessPanelProvider.php',
     ],
-    'Webkernel\\CP\\Installer\\Constants\\InstallationPhase' => [
-        'internal/webkernel/codebase/CP/Installer/Constants/InstallationPhase.php',
+    'Webkernel\\CP\\Installer\\Config\\InstallerConfig' => [
+        'internal/webkernel/codebase/CP/Installer/Config/InstallerConfig.php',
     ],
-    'Webkernel\\CP\\Installer\\Constants\\InstallerConfig' => [
-        'internal/webkernel/codebase/CP/Installer/Constants/InstallerConfig.php',
+    'Webkernel\\CP\\Installer\\Constants\\InstallationPhase' => [
+        'internal/webkernel/codebase/CP/Installer/States/InstallationPhase.php',
+    ],
+    'Webkernel\\CP\\Installer\\Presentation\\InstallerPage' => [
+        'internal/webkernel/codebase/CP/Installer/Presentation/InstallerPage.php',
     ],
     'Webkernel\\CP\\Installer\\Presentation\\Installer\\InstallationState' => [
-        'internal/webkernel/codebase/CP/Installer/Presentation/Installer/InstallationState.php',
-    ],
-    'Webkernel\\CP\\Installer\\Presentation\\Installer\\InstallerPage' => [
-        'internal/webkernel/codebase/CP/Installer/Presentation/Installer/InstallerPage.php',
+        'internal/webkernel/codebase/CP/Installer/Presentation/InstallationState.php',
     ],
     'Webkernel\\CP\\Installer\\Providers\\InstallerNoCacheMiddleware' => [
         'internal/webkernel/codebase/CP/Installer/Providers/InstallerPanelProvider.php',
     ],
     'Webkernel\\CP\\Installer\\Providers\\InstallerPanelProvider' => [
         'internal/webkernel/codebase/CP/Installer/Providers/InstallerPanelProvider.php',
+    ],
+    'Webkernel\\CP\\Installer\\States\\InstallationConstants' => [
+        'internal/webkernel/codebase/CP/Installer/States/InstallationConstants.php',
+    ],
+    'Webkernel\\CP\\Installer\\States\\InstallationPhase' => [
+        'internal/webkernel/codebase/CP/Installer/States/InstallationState.php',
+    ],
+    'Webkernel\\CP\\Installer\\States\\InstallationState' => [
+        'internal/webkernel/codebase/CP/Installer/States/InstallationState.php',
     ],
     'Webkernel\\CP\\System\\Contracts\\UpgradeOperation' => [
         'internal/webkernel/codebase/CP/System/Contracts/UpgradeOperation.php',

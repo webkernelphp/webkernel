@@ -12,7 +12,7 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Illuminate\Session\Middleware\StartSession;
-use Webkernel\CP\Installer\Presentation\Installer\InstallerPage;
+use Webkernel\CP\Installer\Presentation\InstallerPage;
 use Filament\Support\Enums\Width;
 use Filament\Support\Colors\Color;
 

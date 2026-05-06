@@ -1,6 +1,8 @@
 <?php declare(strict_types=1);
 namespace Webkernel;
 
+use Closure;
+use Illuminate\Http\Request;
 use Illuminate\Config\Repository as ConfigRepository;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\ApplicationBuilder;
@@ -11,8 +13,8 @@ use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Webkernel\Base\System\Security\CoreManifest;
 use Webkernel\Base\System\Security\SealEnforcer;
-use Webkernel\CP\Installer\Presentation\Installer\InstallationState;
-
+use Webkernel\CP\Installer\States\InstallationState;
+use Webkernel\CP\Installer\States\InstallationConstants;
 
 /**
  * @see \Illuminate\Foundation\Application
@@ -314,39 +316,29 @@ final class WebApp extends Application
 
 // -----------------------------------------------------------------------------
 
+/**
+ * Installation guard middleware.
+ *
+ * Intercepts all incoming HTML requests and redirects to the installer
+ * when the application has not yet been fully installed.
+ */
 final class InstallationGuard
 {
-    /**
-     * Intercepts every incoming HTML request and redirects to the installer
-     * when the application has not yet been fully installed. API requests,
-     * installer routes, and the health check endpoint are always let through
-     * so they never get caught in the redirect loop.
-     *
-     * @param \Illuminate\Http\Request $request The incoming HTTP request.
-     * @param \Closure                 $next    The next middleware in the pipeline.
-     * @return mixed                            A redirect response or the result
-     *                                          of the next middleware.
-     */
-    public function handle(\Illuminate\Http\Request $request, \Closure $next): mixed
+    public function handle(Request $request, Closure $next): mixed
     {
-        $isHtmlRequest   = str_starts_with($request->header('Accept', ''), 'text/html');
-        $isInstallerPath = str_starts_with($request->decodedPath(), WEBKERNEL_INSTALLER_PATH_PREFIX);
-        $isHealthPath    = $request->decodedPath() === WEBKERNEL_HEALTH_PATH;
+        $isHtmlRequest = str_starts_with($request->header('Accept', ''), 'text/html');
+        $isInstallerPath = str_starts_with($request->decodedPath(), InstallationConstants::ROUTE_PREFIX);
+        $isHealthPath = $request->decodedPath() === InstallationConstants::HEALTH_PATH;
+        $isInstalled = InstallationState::resolve() === InstallationConstants::STATE_INSTALLED;
 
-        $state = InstallationState::resolve();
-        $isInstalled = $state === InstallationState::INSTALLED;
-
-        if ($isHtmlRequest && ! $isInstallerPath && ! $isHealthPath && ! $isInstalled) {
-            // We send the response and exit immediately to avoid any
-            // termination logic that might depend on an APP_KEY which
-            // is often missing at this stage of the installation.
-            redirect(WEBKERNEL_INSTALLER_URL)->send();
+        if ($isHtmlRequest && !$isInstallerPath && !$isHealthPath && !$isInstalled) {
+            redirect(InstallationConstants::ROUTE_URL)->send();
             exit(0);
         }
 
         $response = $next($request);
 
-        if (! $isInstalled && $response instanceof \Illuminate\Http\RedirectResponse) {
+        if (!$isInstalled && $response instanceof \Illuminate\Http\RedirectResponse) {
             $response->send();
             exit(0);
         }
