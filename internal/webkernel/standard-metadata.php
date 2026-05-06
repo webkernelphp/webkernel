@@ -8,7 +8,9 @@
  * by remote Webkernel instances via the GitHub API.
  * After release, we clear notes and video back to ''.
  */
+
 return [
+    'video' => 'https://www.youtube.com/watch?v=w7jKcbVcI54',   // https:// URL — YouTube, CDN, or any direct link
     'notes' => 'First Webkernel Release
 
     This first Webkernel Release will be ...',
@@ -52,5 +54,4 @@ return [
             'body'  => 'Progress is saved to disk. Close the browser mid-install and it resumes exactly where it stopped.',
         ],
     ],
-    'video' => 'https://www.youtube.com/watch?v=w7jKcbVcI54',   // https:// URL — YouTube, CDN, or any direct link
 ];

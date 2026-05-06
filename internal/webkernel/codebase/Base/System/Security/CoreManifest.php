@@ -24,15 +24,14 @@ final class CoreManifest
 
     // Default include/exclude paths (relative to BASE_PATH).
     private const DEFAULT_INCLUDE_REL = [
-        'bootstrap',
+        'internal',
     ];
 
     private const DEFAULT_EXCLUDE_REL = [
         '.git',
-        'bootstrap/.git',
-        'bootstrap/cache',
+        'internal/.git',
+        'internal/cache',
         'modules',
-        'storage/webkernel/cache',
     ];
 
     private static ?self $instance = null;

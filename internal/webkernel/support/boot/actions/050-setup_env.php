@@ -36,9 +36,9 @@
         return;
     }
 
-    $envPath     = BASE_PATH . '/storage/.env';
-    $dbPath      = BASE_PATH . '/storage/database.sqlite';
-    $examplePath = BASE_PATH . '/internal/.env.example';
+    $envPath     = ENV_PATH;
+    $dbPath      = WEBKERNEL_SQLITE_PATH;
+    $examplePath = ENV_PATH_TEMPLATE;
     $dbDir       = dirname($dbPath);
 
     // ── Devmode detection ─────────────────────────────────────────────────

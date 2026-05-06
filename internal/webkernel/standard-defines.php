@@ -30,7 +30,7 @@ defineIf('PLATFORM_PACKAGES_PATH', PLATFORM_DIR . '/packages');
 /**
  * @const string ENV_PATH — Environment file location
  */
-defineIf('ENV_PATH', PLATFORM_STORAGE_PATH . '/.env');
+defineIf('ENV_PATH', PLATFORM_DIR . '/.env');
 /**
  * @const string ENV_PATH_TEMPLATE — Template for .env.example (read-once)
  */
@@ -48,7 +48,7 @@ defineIf('ENV_PATH_TEMPLATE', (static function (): string {
 /**
  * @const string WEBKERNEL_SQLITE_PATH — Primary SQLite database
  */
-defineIf('WEBKERNEL_SQLITE_PATH', PLATFORM_STORAGE_PATH . '/database.sqlite');
+defineIf('WEBKERNEL_SQLITE_PATH', PLATFORM_DIR . '/database.sqlite');
 // Webkernel Configuration Constants
 defineIf('WEBKERNEL_DB_DRIVER',       'sqlite');
 defineIf('WEBKERNEL_DB_PREFIX',       '');

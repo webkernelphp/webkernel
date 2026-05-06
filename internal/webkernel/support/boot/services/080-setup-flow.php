@@ -93,7 +93,7 @@ final class SetupFlow
     private function __construct(string $basePath)
     {
         $this->basePath  = rtrim($basePath, '/\\');
-        $this->tokenFile = BASE_PATH . '/storage/.deployment_setup_token';
+        $this->tokenFile = PLATFORM_DIR . '/.deployment_setup_token';
         $this->logoLight = defined('WEBKERNEL_BRAND_LOGO_LIGHT') ? (string) WEBKERNEL_BRAND_LOGO_LIGHT : null;
         $this->logoDark  = defined('WEBKERNEL_BRAND_LOGO_DARK')  ? (string) WEBKERNEL_BRAND_LOGO_DARK  : null;
     }

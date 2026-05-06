@@ -46,7 +46,7 @@ defineIf('WEBKERNEL_COMPATIBLE_WITH', [
 // -- Ensure Framework's PackageManifest finds the renamed vendor directory -----
 putenv('COMPOSER_VENDOR_DIR=' . COMPOSER_VENDOR_PATH);
 // -- Load Master Constants File ------------------------------------------------
-require WEBKERNEL_UPPERPATH . '/instance-constants.php';
+require WEBKERNEL_UPPERPATH . '/standard-defines.php';
 // -- Dev Mode Detection -------------------------------------------------------
 (static function (): void {
     $devFile = DEVMODE_FILE;
@@ -86,7 +86,7 @@ require_once "{$_bs}080-setup-flow.php";
 require_once "{$_bs}090-global-helpers.php";
 unset($_bs);
 // -- Environment & Database Bootstrap -----------------------------------------
-//require "{$_support}/boot/actions/050-setup_env.php";
+require "{$_support}/boot/actions/050-setup_env.php";
 // -- Platform Helpers Loader --------------------------------------------------
 require "{$_support}/boot/actions/060-load-helpers.php";
 // Cleanup

@@ -1,10 +1,10 @@
 <?php
-/** Webkernel catalog -- 2026-05-04T23:23:21+00:00 | v2 | fingerprint_changed | 4/4 */
+/** Webkernel catalog -- 2026-05-06T04:12:35+00:00 | v2 | missing | 4/4 */
 return [
     'wk_version' => 2,
-    'generated_at' => '2026-05-04T23:23:21+00:00',
+    'generated_at' => '2026-05-06T04:12:35+00:00',
     'fingerprint' => '56d650d09eef9b3af0f6b0d1c8c1d8f01235057879459305de87a87c11e2ef18',
-    'rebuilt_because' => 'fingerprint_changed',
+    'rebuilt_because' => 'missing',
     'total' => 4,
     'active' => 4,
     'psr4_map' => [
@@ -15,7 +15,7 @@ return [
     ],
     'entries' => [
         [
-            'id' => 'webkernel::aptitudes/businesses',
+            'id' => 'webkernel::platform/businesses',
             'label' => 'Business Panel',
             'description' => 'Multi-tenant business management back-office',
             'version' => '2.0.0',
@@ -69,10 +69,10 @@ return [
             '_registry' => '',
             '_vendor' => '',
             '_slug' => 'businesses',
-            '_scope' => 'aptitudes',
+            '_scope' => 'platform',
         ],
         [
-            'id' => 'webkernel::aptitudes/installer',
+            'id' => 'webkernel::platform/installer',
             'label' => 'Installer Panel',
             'description' => 'First-run installation wizard and setup flow',
             'version' => '2.0.0',
@@ -123,10 +123,10 @@ return [
             '_registry' => '',
             '_vendor' => '',
             '_slug' => 'installer',
-            '_scope' => 'aptitudes',
+            '_scope' => 'platform',
         ],
         [
-            'id' => 'webkernel::aptitudes/system',
+            'id' => 'webkernel::platform/system',
             'label' => 'System Manager',
             'description' => 'Core System Management Aptitudes',
             'version' => '2.0.0',
@@ -205,7 +205,7 @@ return [
             '_registry' => '',
             '_vendor' => '',
             '_slug' => 'system',
-            '_scope' => 'aptitudes',
+            '_scope' => 'platform',
         ],
         [
             'id' => 'github-com::tamazight-education/test-webkernel-module',
