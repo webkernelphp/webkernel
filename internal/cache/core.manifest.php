@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-// Webkernel core manifest — generated 2026-05-06 04:32:54 — 7043 files
+// Webkernel core manifest — generated 2026-05-06 04:49:23 — 7043 files
 // DO NOT EDIT MANUALLY.
 
 return [
-    'generated_at' => '2026-05-06 04:32:54',
+    'generated_at' => '2026-05-06 04:49:23',
     'count'        => 7043,
-    'fingerprint'  => '0a9fb223dd7ef664154d703307f8b9bde2172c583582438c922cd722df79f66c',
+    'fingerprint'  => '8e3c64261b92b7facc9110745627a76a8bee45a808252128a78bb266a35685e5',
     'base_path'    => '/home/yassine/Projects/Webkernel',
     'includes'     => [
     '/home/yassine/Projects/Webkernel/internal',
@@ -279,7 +279,7 @@ return [
     'internal/webkernel/codebase/Base/Query/Traits/CacheLock.php' => '86ae342efda5eaa3b2935ca8ac722027717050e0bb1360bd4d0476de8a4f5f0b',
     'internal/webkernel/codebase/Base/Query/Traits/Exportable.php' => '06170eba5892c627cd37b86878822385353b5cb2d11d56080261a97fa1b7e0c3',
     'internal/webkernel/codebase/Base/Query/Traits/FileSystemHelpers.php' => '3687a09c432e7674a3afd950cd4de3216f9699b83665704aa7b598a501665287',
-    'internal/webkernel/codebase/Base/Query/Traits/LoggerTrait.php' => '1181962dd6b0103d97db257911be7458d61daad445927ff42b1ed2bb0a800c7f',
+    'internal/webkernel/codebase/Base/Query/Traits/LoggerTrait.php' => 'a4caa456c94480d8e37ff1dca0fe25996e02129e61cbd4aae0adbb91399a64c2',
     'internal/webkernel/codebase/Base/QuickTouch/Concerns/InteractsWithQuickTouch.php' => '6ef5a2ecfa5d051553b9aca5c388fbe7129119379b372065186586e17f4a874d',
     'internal/webkernel/codebase/Base/QuickTouch/ContextMenuItem.php' => '3c3bdf5c9b745b0b8d97f8a9bd0221987710d4f2f3ea92fd298c693b2fcf1759',
     'internal/webkernel/codebase/Base/QuickTouch/QuickTouch.php' => '8934997c3679466e3f7b96044fc8263e033b8b16e3db252bd69e8cf291ccc997',
@@ -370,7 +370,7 @@ return [
     'internal/webkernel/codebase/Base/System/Ops/Providers/DatabaseProvider.php' => 'c1c62c96bbf75b000810ec0880bb526e1a39a2a6d9ecefb869cf05a6518f0ed1',
     'internal/webkernel/codebase/Base/System/Ops/Providers/FileProvider.php' => '3f6a64d56c79833c62414f72c706af606e23ccba59ef47215b2748e902375206',
     'internal/webkernel/codebase/Base/System/Security/CoreManifest.php' => 'ee42da65e1d7fc09a20268acfe4cc0b611463d6ee00644c7f10ae09a54effc9e',
-    'internal/webkernel/codebase/Base/System/Security/SealEnforcer.php' => 'f07430ebbc883ca132d950aa7be9b4bf35e8500520f472c96425b1871d37f0c0',
+    'internal/webkernel/codebase/Base/System/Security/SealEnforcer.php' => 'db79d920b232142fbec6031132cfa1e6b9b6a0e0fdd909ca4b0f2e390f9682c9',
     'internal/webkernel/codebase/Base/System/WebAppInterface.php' => '0326da9cbbb9a083503c291f32c77228a00bf4c1193d7a275da1e4345dd0c923',
     'internal/webkernel/codebase/Base/System/WebkernelAPI.php' => 'b6ce0bc7910411dd40d53edb22616738abf1c3df5ff02e58475d3f1819272c77',
     'internal/webkernel/codebase/Base/Users/Enums/UserOrigin.php' => 'ccaf097809f8f7fd5380f1876f025ad1f1ed6b211d536f69fd45034a5b522d65',
@@ -545,7 +545,7 @@ return [
     'internal/webkernel/codebase/Query/Traits/CacheLock.php' => '82045a1a9a2cf042329fa5b0e80e3aa74ab8f1dcfec7491d9107935b017e408e',
     'internal/webkernel/codebase/Query/Traits/Exportable.php' => '3b81c2c0173222ad7d0d1dbccfc97c1508115360dda9c2726f464de114dee0ee',
     'internal/webkernel/codebase/Query/Traits/FileSystemHelpers.php' => 'c842433d072d914c623931eb673f20f93ca2f6b16ab6188d724314315647a022',
-    'internal/webkernel/codebase/Query/Traits/LoggerTrait.php' => '98e56d3e0a72fe1fdf414d0abc6d7f3e8f73a26ae95223586bc7ea17cf28f0d1',
+    'internal/webkernel/codebase/Query/Traits/LoggerTrait.php' => 'cc47deb8805f255727eb7b70a709ac0c919e9794a86d6e934b6650b48575dec1',
     'internal/webkernel/codebase/Registries.php' => 'df3f64db434b197aa990107d82fa9c4d293f6cc867093e9a91f5c68010c93cda',
     'internal/webkernel/codebase/Registries/Providers.php' => '6e0c8df46ac4edc53a40ec87fe22ccaf1c030607274278f92757d586bd05053f',
     'internal/webkernel/codebase/Registries/Source.php' => 'e9217fdd05d2acb8088be75af004a33fc5e2a0a753ec233ddd8cfb3c0520665e',
@@ -558,7 +558,7 @@ return [
     'internal/webkernel/codebase/UI/Forms/Card.php' => 'cfea561d308558bf15eee51d6e22ada36f2c356ab960b4d1e3979b0b80f3b9e5',
     'internal/webkernel/codebase/View/Components/Card.php' => '1c66ec244425b7237af635a365f4042573a6f15f489e1690bf1ce6bcde3a8ef0',
     'internal/webkernel/codebase/View/RenderHooks.php' => 'ef6de800a867dcf73f15d40faf722378c3c23ae3b87744360c1af699443199e7',
-    'internal/webkernel/codebase/WebApp.php' => '15f1618efd894d6053ac5e5a1fbe10eb63fc2aa1ab84375f665e90fed5685376',
+    'internal/webkernel/codebase/WebApp.php' => '2d3bd90b1117b416924787d5e8674b1011754536d4755c5a129edf63be15e79b',
     'internal/webkernel/database/factories/UserFactory.php' => '50bdc543f1b09d1a57260be55ad0e1a68aee4b34f63e1109dc94d9bcd3080526',
     'internal/webkernel/database/migrations/0001_01_01_000000_create_web_base_tables.php' => '77f78e01fdb7d88fdcbd276920e4fe5da215193566eefe64d046b6447dd9ef63',
     'internal/webkernel/database/migrations/0001_01_01_000010_create_web_standard_tables.php' => 'd56c40ae05e10b578dedcd424a2a81b197170c579f082d6aaa81807965e769ee',
@@ -7008,7 +7008,7 @@ return [
     'internal/webkernel/routes/console.php' => '9adccc33e7dd400683e434774077c7fdb2f299c5712cedf16a43fdf56f2850fa',
     'internal/webkernel/routes/web.php' => '3ab1d3f7593213710c07113b8e3639b7808103f36399d61cda0314b98def9c07',
     'internal/webkernel/spl_autoload_register.php' => '23dc405cd5889107c49a39ee61ce6e5d4f7491d020db2eb78d2c483f51971096',
-    'internal/webkernel/standard-defines.php' => 'cf26ee8cb1ada00baf94a7e3d844b6425e84b21d9ca7ffcdf78c1fbc2805ce42',
+    'internal/webkernel/standard-defines.php' => '0a2b84edd3faaf10740af144126d802dce5354becc46a519610d1df4178de1fe',
     'internal/webkernel/standard-metadata.php' => '62cc5027058ce8131bbc2a6b3b642503dc081d56756eb33348ac875afdf206b6',
     'internal/webkernel/standard-settings.php' => '705a3c01061c5437681d8bc13161fc94236c864197be935b0adf27c8669449d1',
     'internal/webkernel/support/.build-number' => 'eeca91fd439b6d5e827e8fda7fee35046f2def93508637483f6be8a2df7a4392',
@@ -7028,7 +7028,7 @@ return [
     'internal/webkernel/support/boot/services/010-hmac-signer.php' => 'd8813618a0ecca8c8d670cda7a0401c4dab8c1b210166abfe9c70fd817f879ff',
     'internal/webkernel/support/boot/services/020-webkernel-session.php' => '7e72bb3a5a1b1613dd1b57179a95c956ccd51fd9cbcc43d8c4d76ac39cc5a27b',
     'internal/webkernel/support/boot/services/030-webkernel-router.php' => '06abb4ac94584ba536cb8eb17d5e1c882704edc119464a7eb7b64f7c9d419c9c',
-    'internal/webkernel/support/boot/services/040-branding.php' => '895c0f028ad6997638452d7a4dc6ff45ca5617f085466d3a893f6ba6a948cd1f',
+    'internal/webkernel/support/boot/services/040-branding.php' => '8aadc5b124572a93694e14d21a658c11fd29db0a3aa6543fc74ef5054a956225',
     'internal/webkernel/support/boot/services/050-emergency-page-builder.php' => '08f4118dc8ac47264f680f7234071f0f8ddbf5bdc0a91d39497efeb41dcb38ab',
     'internal/webkernel/support/boot/services/060-server-side-validator.php' => '3f5feef15b14e6a00a4d516a07300b26e9490cd9311b262995ad10f15a5a2dc3',
     'internal/webkernel/support/boot/services/070-http-client.php' => '48e9c71bb4b51e3d1833629c280b9f614410ff1b66f903e1acf95456889dad46',

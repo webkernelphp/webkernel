@@ -10,7 +10,7 @@ trait LoggerTrait
 
     private function log(string $message, string $level = 'info'): void
     {
-        if (PHP_SAPI === 'cli') {
+        if (PHP_SAPI === 'cli' || PHP_SAPI === 'cli-server') {
             fwrite(STDERR, "[Webkernel] {$message}\n");
             return;
         }

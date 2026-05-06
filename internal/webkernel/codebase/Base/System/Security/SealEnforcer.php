@@ -54,7 +54,7 @@ use EmergencyPageBuilder;
 final class SealEnforcer
 {
     private static bool  $booted          = false;
-    private static bool  $paranoid        = false;
+    private static bool  $paranoid        = true;
     private static ?string $trustedBase   = null;
 
     public static function boot(bool $paranoid = false, ?string $trustedBasePath = null): void

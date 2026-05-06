@@ -330,13 +330,17 @@ final class InstallationGuard
     public function handle(\Illuminate\Http\Request $request, \Closure $next): mixed
     {
         $isHtmlRequest   = str_starts_with($request->header('Accept', ''), 'text/html');
-        $isInstallerPath = str_starts_with($request->decodedPath(), \WEBKERNEL_INSTALLER_PATH_PREFIX);
+        $isInstallerPath = str_starts_with($request->decodedPath(), WEBKERNEL_INSTALLER_PATH_PREFIX);
         $isHealthPath    = $request->decodedPath() === WEBKERNEL_HEALTH_PATH;
 
         if ($isHtmlRequest && ! $isInstallerPath && ! $isHealthPath) {
             $state = InstallationState::resolve();
             if ($state !== InstallationState::INSTALLED) {
-                return redirect(WEBKERNEL_INSTALLER_URL);
+                // We send the response and exit immediately to avoid any
+                // termination logic that might depend on an APP_KEY which
+                // is often missing at this stage of the installation.
+                redirect(WEBKERNEL_INSTALLER_URL)->send();
+                exit(0);
             }
         }
 

@@ -13,7 +13,7 @@
  *
  * @return array<string, array<string, array{format: string, data: string}>>
  */
-function &_wkBrandingStore(): array
+function _wkBrandingStore(): array
 {
     static $store = [];
     return $store;
@@ -28,7 +28,7 @@ if (! function_exists('webkernelAddBrandingSource')) {
         string $format,
         string $base64
     ): string {
-        $store           = &_wkBrandingStore();
+        $store           = _wkBrandingStore();
         $store[$brand][$key] = ['format' => $format, 'data' => $base64];
 
         return "data:image/{$format};base64,{$base64}";
@@ -56,7 +56,7 @@ if (! function_exists('webkernelBrandingUrl')) {
     function webkernelBrandingUrl(string $key): string
     {
         $brand = explode('-', $key, 2)[0];
-        $store = &_wkBrandingStore();
+        $store = _wkBrandingStore();
         $asset = $store[$brand][$key] ?? null;
 
         if (! $asset) {
@@ -72,7 +72,7 @@ if (! function_exists('webkernelBrandingUrl')) {
 if (! function_exists('webkernelRegisterBrandingRoutes')) {
     function webkernelRegisterBrandingRoutes(): void
     {
-        $store = &_wkBrandingStore();
+        $store = _wkBrandingStore();
 
         foreach ($store as $brand => $assets) {
             foreach ($assets as $key => $asset) {
