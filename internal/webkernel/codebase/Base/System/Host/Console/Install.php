@@ -31,14 +31,14 @@ final class Install extends Command
         $this->newLine();
 
         // 1. .env
-        $envPath = base_path('.env');
+        $envPath = ENV_PATH;
         if (! is_file($envPath)) {
             $example = base_path('.env.example');
             if (is_file($example)) {
                 copy($example, $envPath);
-                $this->line('  ✓ Created .env from .env.example');
+                $this->line('  [GOOD] Created .env from .env.example');
             } else {
-                $this->warn('  ! .env.example not found — skipping .env creation');
+                $this->warn('  [ERROR] .env.example not found — skipping .env creation');
             }
         } else {
             $this->line('  · .env already exists');
@@ -53,10 +53,10 @@ final class Install extends Command
         }
 
         // 3. SQLite
-        $db = database_path('database.sqlite');
+        $db = WEBKERNEL_SQLITE_PATH;
         if (! is_file($db)) {
             touch($db);
-            $this->line('  ✓ Created database/database.sqlite');
+            $this->line('  [GOOD] Created database.sqlite');
         } else {
             $this->line('  · database.sqlite already exists');
         }

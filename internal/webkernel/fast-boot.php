@@ -14,29 +14,29 @@ function defineIf(string $name, mixed $value): void
     }
 }
 // -- Foundation paths ---------------------------------------------------------
-defineIf('BASE_PATH',              dirname(__DIR__, 2));
-defineIf('WEBKERNEL_UPPERPATH',    __DIR__);
-defineIf('WEBKERNEL_PATH',         WEBKERNEL_UPPERPATH . '/codebase');
-defineIf('WEBKERNEL_SUPPORT_PATH', WEBKERNEL_UPPERPATH . '/support');
-defineIf('COMPOSER_VENDOR_PATH',   BASE_PATH . '/platform/packages');
+define('BASE_PATH',              dirname(__DIR__, 2));
+define('WEBKERNEL_UPPERPATH',    __DIR__);
+define('WEBKERNEL_PATH',         WEBKERNEL_UPPERPATH . '/codebase');
+define('WEBKERNEL_SUPPORT_PATH', WEBKERNEL_UPPERPATH . '/support');
+define('COMPOSER_VENDOR_PATH',   BASE_PATH . '/platform/packages');
 // -- Release Metadata ---------------------------------------------------------
-defineIf('WEBKERNEL_VERSION',     '0.11.3');
-defineIf('WEBKERNEL_BUILD',       131);
-defineIf('WEBKERNEL_SEMVER',      '0.11.3+131');
-defineIf('WEBKERNEL_CODENAME',    'waterfall');
-defineIf('WEBKERNEL_CHANNEL',     'stable');
-defineIf('WEBKERNEL_RELEASED_AT', '2026-04-23');
-defineIf('WEBKERNEL_BRANCH',      'main');
-defineIf('WEBKERNEL_TAG',         'v0.11.3');
+define('WEBKERNEL_VERSION',     '0.11.3');
+define('WEBKERNEL_BUILD',       131);
+define('WEBKERNEL_SEMVER',      '0.11.3+131');
+define('WEBKERNEL_CODENAME',    'waterfall');
+define('WEBKERNEL_CHANNEL',     'stable');
+define('WEBKERNEL_RELEASED_AT', '2026-04-23');
+define('WEBKERNEL_BRANCH',      'main');
+define('WEBKERNEL_TAG',         'v0.11.3');
 // -- Release Requirements -----------------------------------------------------
-defineIf('WEBKERNEL_REQUIRES', [
+define('WEBKERNEL_REQUIRES', [
     'php'       => '8.4.19',
     'laravel'   => '13.6.0',
     'filament'  => '5.6.0',
     'livewire'  => '4.2.4',
     'composer'  => '2.9.5',
 ]);
-defineIf('WEBKERNEL_COMPATIBLE_WITH', [
+define('WEBKERNEL_COMPATIBLE_WITH', [
     'php'       => '8.3.0',
     'laravel'   => '13.0.0',
     'filament'  => '5.0.0',

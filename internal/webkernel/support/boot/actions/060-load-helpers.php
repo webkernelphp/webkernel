@@ -8,6 +8,6 @@
 | No constant definitions here.
 */
 
-foreach (glob(__DIR__ . '/../platform-helpers/0*-*.php') as $file) {
+foreach (glob(__DIR__ . '/../helpers/0*-*.php') as $file) {
     require_once $file;
 }
