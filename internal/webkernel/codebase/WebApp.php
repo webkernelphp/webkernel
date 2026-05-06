@@ -162,7 +162,7 @@ final class WebApp extends Application
         $app->useConfigPath($basePath . '/platform/config');
         $app->useStoragePath($basePath . '/platform/storage');
         $app->useBootstrapPath($basePath . '/internal');
-        $app->useEnvironmentPath($basePath . '/platform/storage');
+        $app->useEnvironmentPath($basePath . '/platform');
 
         $app->rebinding('request', static fn() => self::bootstrapCoreIntegrity($basePath));
 
@@ -333,17 +333,24 @@ final class InstallationGuard
         $isInstallerPath = str_starts_with($request->decodedPath(), WEBKERNEL_INSTALLER_PATH_PREFIX);
         $isHealthPath    = $request->decodedPath() === WEBKERNEL_HEALTH_PATH;
 
-        if ($isHtmlRequest && ! $isInstallerPath && ! $isHealthPath) {
-            $state = InstallationState::resolve();
-            if ($state !== InstallationState::INSTALLED) {
-                // We send the response and exit immediately to avoid any
-                // termination logic that might depend on an APP_KEY which
-                // is often missing at this stage of the installation.
-                redirect(WEBKERNEL_INSTALLER_URL)->send();
-                exit(0);
-            }
+        $state = InstallationState::resolve();
+        $isInstalled = $state === InstallationState::INSTALLED;
+
+        if ($isHtmlRequest && ! $isInstallerPath && ! $isHealthPath && ! $isInstalled) {
+            // We send the response and exit immediately to avoid any
+            // termination logic that might depend on an APP_KEY which
+            // is often missing at this stage of the installation.
+            redirect(WEBKERNEL_INSTALLER_URL)->send();
+            exit(0);
         }
 
-        return $next($request);
+        $response = $next($request);
+
+        if (! $isInstalled && $response instanceof \Illuminate\Http\RedirectResponse) {
+            $response->send();
+            exit(0);
+        }
+
+        return $response;
     }
 }

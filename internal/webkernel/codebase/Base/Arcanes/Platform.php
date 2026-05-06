@@ -197,7 +197,7 @@ final class Platform
     {
         $paths = [];
 
-        $core = WEBKERNEL_PATH . '/database/migrations';
+        $core = WEBKERNEL_UPPERPATH . '/database/migrations';
         if (\is_dir($core)) {
             $paths[] = $core;
         }

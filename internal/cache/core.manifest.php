@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-// Webkernel core manifest — generated 2026-05-06 04:49:23 — 7043 files
+// Webkernel core manifest — generated 2026-05-06 05:01:37 — 7043 files
 // DO NOT EDIT MANUALLY.
 
 return [
-    'generated_at' => '2026-05-06 04:49:23',
+    'generated_at' => '2026-05-06 05:01:37',
     'count'        => 7043,
-    'fingerprint'  => '8e3c64261b92b7facc9110745627a76a8bee45a808252128a78bb266a35685e5',
+    'fingerprint'  => 'e3c594f04dd4e9949152cf6001bbc51656cf487b3a1a75702efe83b2749251f3',
     'base_path'    => '/home/yassine/Projects/Webkernel',
     'includes'     => [
     '/home/yassine/Projects/Webkernel/internal',
@@ -23,7 +23,7 @@ return [
     'internal/README.md' => '459155fb4b200297da1bae22495342fe2c4766b4fa79018e0896cb178c3ea497',
     'internal/app.php' => 'd014fbcbf4218ba7a1030848c3397bd8e91603f50874242d458e3fded6f5ccfb',
     'internal/composer.json' => '0c9669e3185173780b1b62d8fe4bec9babc8179cfa524099ad4587099398acfa',
-    'internal/webkernel/.env.example' => '440c61f063278c94ed613c5c57ad2ca7bb1f7afec6abacc9ba63ed1c64126bdf',
+    'internal/webkernel/.env.example' => '2c32736f2023f2860609de343798a66411660ce86df08fb0f8a3e12e04f7a776',
     'internal/webkernel/.gitignore' => '9eac99278d3dba01e2fe1416af1940d2417dae5ff975d16001428775350286a2',
     'internal/webkernel/codebase/Async/Pool.php' => 'c7ec07d2016d377e601dc58e09492297628c0c1fcf168bf1ae527bd5ca49a68e',
     'internal/webkernel/codebase/Async/Promise.php' => 'cdf1e47d4b174e1f38c3b030b08a13849b12cf2dd2bdbf87fb3defc3cc3e8472',
@@ -35,7 +35,7 @@ return [
     'internal/webkernel/codebase/Base/Arcanes/Modules/Enums/ModuleStatus.php' => '3c1fac8809c7b2c382a972513012e0fd234a4842399322ed04c1cc2b8b8a02eb',
     'internal/webkernel/codebase/Base/Arcanes/Modules/Models/BusinessModuleMap.php' => 'adf67cff7e631948852a33cf7ec3e714cdb7102f68ed54e4a754df55af25af63',
     'internal/webkernel/codebase/Base/Arcanes/Modules/Models/Module.php' => '96cb0445fefebd1a15105aeb6d1019959433eb89d62fd32af71104a2d4d42580',
-    'internal/webkernel/codebase/Base/Arcanes/Platform.php' => '675ac51c1f432a88993e1d8b9e88293c8f5cbb37b4f95c72d12d33221faebc14',
+    'internal/webkernel/codebase/Base/Arcanes/Platform.php' => '9dc149eff58ec1325a651e14df8502d63196eb3e994028b27d4902da25410d7c',
     'internal/webkernel/codebase/Base/Arcanes/Scaffold/ScaffoldParams.php' => 'c5c6730301df7e5b89bdfe22e924dec049437e5e5ca4c3267107c6744f2d2a90',
     'internal/webkernel/codebase/Base/Arcanes/Scaffold/ScaffoldResult.php' => '4b376620eaefd88d860396a2006154c7d6c8fc6802a6fccc12f70123f7d3ade6',
     'internal/webkernel/codebase/Base/Arcanes/Scaffold/Scaffolder.php' => 'cc0a6fc7f86958cc5108c2879b7e9ff988f4d91b1129fd3b59ea7446c7707c89',
@@ -558,7 +558,7 @@ return [
     'internal/webkernel/codebase/UI/Forms/Card.php' => 'cfea561d308558bf15eee51d6e22ada36f2c356ab960b4d1e3979b0b80f3b9e5',
     'internal/webkernel/codebase/View/Components/Card.php' => '1c66ec244425b7237af635a365f4042573a6f15f489e1690bf1ce6bcde3a8ef0',
     'internal/webkernel/codebase/View/RenderHooks.php' => 'ef6de800a867dcf73f15d40faf722378c3c23ae3b87744360c1af699443199e7',
-    'internal/webkernel/codebase/WebApp.php' => '2d3bd90b1117b416924787d5e8674b1011754536d4755c5a129edf63be15e79b',
+    'internal/webkernel/codebase/WebApp.php' => '13fae666d6ca2b587398f01a4a2f6554c24aa068436112989a703d569289bd7e',
     'internal/webkernel/database/factories/UserFactory.php' => '50bdc543f1b09d1a57260be55ad0e1a68aee4b34f63e1109dc94d9bcd3080526',
     'internal/webkernel/database/migrations/0001_01_01_000000_create_web_base_tables.php' => '77f78e01fdb7d88fdcbd276920e4fe5da215193566eefe64d046b6447dd9ef63',
     'internal/webkernel/database/migrations/0001_01_01_000010_create_web_standard_tables.php' => 'd56c40ae05e10b578dedcd424a2a81b197170c579f082d6aaa81807965e769ee',
@@ -7008,7 +7008,7 @@ return [
     'internal/webkernel/routes/console.php' => '9adccc33e7dd400683e434774077c7fdb2f299c5712cedf16a43fdf56f2850fa',
     'internal/webkernel/routes/web.php' => '3ab1d3f7593213710c07113b8e3639b7808103f36399d61cda0314b98def9c07',
     'internal/webkernel/spl_autoload_register.php' => '23dc405cd5889107c49a39ee61ce6e5d4f7491d020db2eb78d2c483f51971096',
-    'internal/webkernel/standard-defines.php' => '0a2b84edd3faaf10740af144126d802dce5354becc46a519610d1df4178de1fe',
+    'internal/webkernel/standard-defines.php' => '515f05d85cc28320f5004415b45f839ca9648c2d1bbb559e90f4c1eded49b40a',
     'internal/webkernel/standard-metadata.php' => '62cc5027058ce8131bbc2a6b3b642503dc081d56756eb33348ac875afdf206b6',
     'internal/webkernel/standard-settings.php' => '705a3c01061c5437681d8bc13161fc94236c864197be935b0adf27c8669449d1',
     'internal/webkernel/support/.build-number' => 'eeca91fd439b6d5e827e8fda7fee35046f2def93508637483f6be8a2df7a4392',

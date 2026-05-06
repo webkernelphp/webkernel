@@ -192,7 +192,7 @@ defineIf('WEBKERNEL_CONFIG_PATH', WEBKERNEL_PATH . '/config');
  * @const string[] WEBKERNEL_VIEW_NAMESPACES — Blade view namespace mappings
  */
 defineIf('WEBKERNEL_VIEW_NAMESPACES', [
-    'webkernel'             => WEBKERNEL_SUPPORT_PATH . '/views',
+    'webkernel'             => WEBKERNEL_UPPERPATH . '/resources/views',
     'webkernel-quick-touch' => WEBKERNEL_PATH . '/Base/QuickTouch',
     'errors'                => WEBKERNEL_ERRORS_PAGES_PATH,
 ]);
