@@ -59,10 +59,7 @@ final class PhpReleasesService
 
     private function cachePath(): string
     {
-        return (string) config(
-            'webkernel-system.php_releases_cache',
-            storage_path('webkernel/php-releases.json'),
-        );
+        return (string) PLATFORM_DIR . '/php-releases.json';
     }
 
     private function ttl(): int

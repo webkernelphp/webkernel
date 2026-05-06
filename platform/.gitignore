@@ -6,3 +6,4 @@
 *.sqlite*
 deployment.php
 .env
+php-releases.json

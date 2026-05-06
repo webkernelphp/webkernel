@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-// Webkernel core manifest — generated 2026-05-06 06:47:21 — 7082 files
+// Webkernel core manifest — generated 2026-05-06 06:56:22 — 7082 files
 // DO NOT EDIT MANUALLY.
 
 return [
-    'generated_at' => '2026-05-06 06:47:21',
+    'generated_at' => '2026-05-06 06:56:22',
     'count'        => 7082,
-    'fingerprint'  => '2b1ee7610a3e530e38015f70633b53ab35f2ddb9bbc90489a510f80606b4a8f5',
+    'fingerprint'  => '0d600a5cfa47bda3078707f4cd7e9c338fd2fcf62deea410a45026344325dd37',
     'base_path'    => '/home/yassine/Projects/Webkernel',
     'includes'     => [
     '/home/yassine/Projects/Webkernel/internal',
@@ -20,7 +20,7 @@ return [
     '/home/yassine/Projects/Webkernel/modules',
 ],
     'files'        => [
-    'internal/README.md' => '459155fb4b200297da1bae22495342fe2c4766b4fa79018e0896cb178c3ea497',
+    'internal/README.md' => 'd14412c37ea832636c8ac03024ae2f8dffb630eaa42bc070cc638492fbd4a86c',
     'internal/app.php' => 'd014fbcbf4218ba7a1030848c3397bd8e91603f50874242d458e3fded6f5ccfb',
     'internal/composer.json' => '0c9669e3185173780b1b62d8fe4bec9babc8179cfa524099ad4587099398acfa',
     'internal/webkernel/.env.example' => '2c32736f2023f2860609de343798a66411660ce86df08fb0f8a3e12e04f7a776',
@@ -346,7 +346,7 @@ return [
     'internal/webkernel/codebase/Base/System/Host/Managers/OsManager.php' => 'dcc9389b76f8dabfcd5a61d872e575c5e5953053f9f44dcf00ab149cf6c96eb8',
     'internal/webkernel/codebase/Base/System/Host/Managers/VersionManager.php' => 'cc0a1bec12f6b35ccba908fc58ad337ab4aa1bd5793b3103f70ad37791164f0d',
     'internal/webkernel/codebase/Base/System/Host/Services/OsDetectionService.php' => 'bb0d43b55786bbd0e10175567a4f6853e5009103fde52909ac857ae2f627dbac',
-    'internal/webkernel/codebase/Base/System/Host/Services/PhpReleasesService.php' => '5af1995caaeec72d7ebcb118e722750db97c8b2c4713eb0d6fa99464cacca44d',
+    'internal/webkernel/codebase/Base/System/Host/Services/PhpReleasesService.php' => 'e212f7dcb6b1bbce2945e12a41f109d373c7e270d82d3daec5aa6db23560fdf0',
     'internal/webkernel/codebase/Base/System/Host/Support/ByteFormatter.php' => '1dc9340876fb5e33df4180a57549598cdb6b168a405ded25ab5d97be4026d276',
     'internal/webkernel/codebase/Base/System/Host/Support/CapabilityMap.php' => 'fc08547036cd0d72949a700977a563f837e2359a20a4b356d132a92f313660e0',
     'internal/webkernel/codebase/Base/System/Host/Support/HostMetricsCache.php' => '364b35ed3b1b7c19bf5b69ef4368c5e40586bc4eb4e791dc6dcb1927000f0fb2',
