@@ -147,10 +147,6 @@ defineIf('WEBKERNEL_INSTANCE_FILE', PLATFORM_DIR . '/deployment.php');
  */
 defineIf('WEBKERNEL_HELPERS_ROOT', WEBKERNEL_SUPPORT_PATH . '/platform-helpers');
 /**
- * @const string WEBKERNEL_ERRORS_PAGES_PATH — Custom error page templates
- */
-defineIf('WEBKERNEL_ERRORS_PAGES_PATH', WEBKERNEL_SUPPORT_PATH . '/boot/_dist/error-pages');
-/**
  * @const string WEBKERNEL_DIST_ROOT — Distribution assets
  */
 defineIf('WEBKERNEL_DIST_ROOT', WEBKERNEL_SUPPORT_PATH . '/dist');
@@ -166,6 +162,12 @@ defineIf('WEBKERNEL_ARCANES_ROOT', WEBKERNEL_PATH . '/Arcanes');
  * @const string WEBKERNEL_PANELS_PATH — Built-in capabilities root
  */
 defineIf('WEBKERNEL_PANELS_PATH', WEBKERNEL_PATH . '/CP');
+
+/**
+ * @const string WEBKERNEL_ERRORS_PAGES_PATH — Custom error page templates
+ */
+defineIf('WEBKERNEL_ERRORS_PAGES_PATH', WEBKERNEL_UPPERPATH . '/resources/views/error-pages');
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // SECTION 7: BOOT ASSET PATHS (consumed by Platform class)
 // ═══════════════════════════════════════════════════════════════════════════════

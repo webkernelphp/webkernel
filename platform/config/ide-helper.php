@@ -131,6 +131,7 @@ return [
         base_path() . '/platform/packages/laravel/framework/src/Illuminate/Foundation/helpers.php',
         base_path() . '/platform/packages/laravel/framework/src/Illuminate/Collections/helpers.php',
         base_path() . '/bootstrap/webkernel/fast-boot.php',
+        base_path() . '/internal/webkernel/standard-defines.php',
     ],
 
     /*
@@ -148,7 +149,7 @@ return [
 
     'model_locations' => [
         'app',
-        'bootstrap/webkernel/aptitudes/instance/**/Models',
+        'internal/webkernel/aptitudes/instance/**/Models',
     ],
 
     /*
@@ -269,7 +270,7 @@ return [
     | or there is an import (use className) of the class.
     |
     */
-    'force_fqn' => false,
+    'force_fqn' => true,
 
     /*
     |--------------------------------------------------------------------------

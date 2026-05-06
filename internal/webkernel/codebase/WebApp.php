@@ -330,7 +330,7 @@ final class InstallationGuard
     public function handle(\Illuminate\Http\Request $request, \Closure $next): mixed
     {
         $isHtmlRequest   = str_starts_with($request->header('Accept', ''), 'text/html');
-        $isInstallerPath = str_starts_with($request->decodedPath(), WEBKERNEL_INSTALLER_PATH_PREFIX);
+        $isInstallerPath = str_starts_with($request->decodedPath(), \WEBKERNEL_INSTALLER_PATH_PREFIX);
         $isHealthPath    = $request->decodedPath() === WEBKERNEL_HEALTH_PATH;
 
         if ($isHtmlRequest && ! $isInstallerPath && ! $isHealthPath) {

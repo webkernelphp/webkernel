@@ -51,7 +51,7 @@ final class InstallationState
      */
     public static function infrastructureReady(): bool
     {
-        if (! is_file(base_path('.env'))) {
+        if (! is_file(ENV_PATH)) {
             return false;
         }
 
@@ -61,7 +61,7 @@ final class InstallationState
             return false;
         }
 
-        return is_file(base_path('deployment.php'));
+        return is_file(WEBKERNEL_INSTANCE_FILE);
     }
 
     /**

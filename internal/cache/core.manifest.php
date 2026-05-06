@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-// Webkernel core manifest — generated 2026-05-06 04:18:53 — 7043 files
+// Webkernel core manifest — generated 2026-05-06 04:32:54 — 7043 files
 // DO NOT EDIT MANUALLY.
 
 return [
-    'generated_at' => '2026-05-06 04:18:53',
+    'generated_at' => '2026-05-06 04:32:54',
     'count'        => 7043,
-    'fingerprint'  => 'fb06bdcd88f9fb7c575d32aff93548f64b31af96afc7a4ff068cff65a4887df8',
+    'fingerprint'  => '0a9fb223dd7ef664154d703307f8b9bde2172c583582438c922cd722df79f66c',
     'base_path'    => '/home/yassine/Projects/Webkernel',
     'includes'     => [
     '/home/yassine/Projects/Webkernel/internal',
@@ -384,7 +384,7 @@ return [
     'internal/webkernel/codebase/CP/Businesses/Presentation/Resources/Domains/Pages/ListBusinessDomains.php' => 'c1b26e06727365a96197e22e26cfbcc17576701467a2926e56849ec35a7d8ca1',
     'internal/webkernel/codebase/CP/Businesses/Providers/BusinessPanelProvider.php' => '7d9ae9ce3807599e47f2ce52350e446cfc650f01f0f38d8b4d8c93bc7cf29200',
     'internal/webkernel/codebase/CP/Businesses/platform.php' => '57e7561af73d70e7437e07c6c916ec00e6854edface91f18ed8b0b62016b8aed',
-    'internal/webkernel/codebase/CP/Installer/Presentation/Installer/InstallationState.php' => '05eff7634195d236f943697be73e4dabd3048997b3c7c89a924a3f50b007aeb6',
+    'internal/webkernel/codebase/CP/Installer/Presentation/Installer/InstallationState.php' => 'c455130419f77aff955981fb9720fbb1c3cce6cacacb06537d1b1812c4af0305',
     'internal/webkernel/codebase/CP/Installer/Presentation/Installer/InstallerPage.php' => 'fb16347c39bb0c1f320d66a99369410be69098770220d96311bc2484d843edb0',
     'internal/webkernel/codebase/CP/Installer/Providers/InstallerPanelProvider.php' => '0997ac391a2aedea32a68d5e42e7e3b42fd3d23f461dee672f046ba9d9854650',
     'internal/webkernel/codebase/CP/Installer/Resources/Views/filament/pages/installer.blade.php' => '9eef792c750c6d4f42f5f1ad02fcb91a8f9fc27b55a53f5e401e97cb8a4a73cb',
@@ -558,7 +558,7 @@ return [
     'internal/webkernel/codebase/UI/Forms/Card.php' => 'cfea561d308558bf15eee51d6e22ada36f2c356ab960b4d1e3979b0b80f3b9e5',
     'internal/webkernel/codebase/View/Components/Card.php' => '1c66ec244425b7237af635a365f4042573a6f15f489e1690bf1ce6bcde3a8ef0',
     'internal/webkernel/codebase/View/RenderHooks.php' => 'ef6de800a867dcf73f15d40faf722378c3c23ae3b87744360c1af699443199e7',
-    'internal/webkernel/codebase/WebApp.php' => '63c1bcf1e4dfae06e56089f6f223eb9d27925dbe1fbe00f086d3107d61936be3',
+    'internal/webkernel/codebase/WebApp.php' => '15f1618efd894d6053ac5e5a1fbe10eb63fc2aa1ab84375f665e90fed5685376',
     'internal/webkernel/database/factories/UserFactory.php' => '50bdc543f1b09d1a57260be55ad0e1a68aee4b34f63e1109dc94d9bcd3080526',
     'internal/webkernel/database/migrations/0001_01_01_000000_create_web_base_tables.php' => '77f78e01fdb7d88fdcbd276920e4fe5da215193566eefe64d046b6447dd9ef63',
     'internal/webkernel/database/migrations/0001_01_01_000010_create_web_standard_tables.php' => 'd56c40ae05e10b578dedcd424a2a81b197170c579f082d6aaa81807965e769ee',
@@ -7008,7 +7008,7 @@ return [
     'internal/webkernel/routes/console.php' => '9adccc33e7dd400683e434774077c7fdb2f299c5712cedf16a43fdf56f2850fa',
     'internal/webkernel/routes/web.php' => '3ab1d3f7593213710c07113b8e3639b7808103f36399d61cda0314b98def9c07',
     'internal/webkernel/spl_autoload_register.php' => '23dc405cd5889107c49a39ee61ce6e5d4f7491d020db2eb78d2c483f51971096',
-    'internal/webkernel/standard-defines.php' => '3e827e2207ee5dd8a02a3195b05bd55af7836532ea01979ef30e40135cef9341',
+    'internal/webkernel/standard-defines.php' => 'cf26ee8cb1ada00baf94a7e3d844b6425e84b21d9ca7ffcdf78c1fbc2805ce42',
     'internal/webkernel/standard-metadata.php' => '62cc5027058ce8131bbc2a6b3b642503dc081d56756eb33348ac875afdf206b6',
     'internal/webkernel/standard-settings.php' => '705a3c01061c5437681d8bc13161fc94236c864197be935b0adf27c8669449d1',
     'internal/webkernel/support/.build-number' => 'eeca91fd439b6d5e827e8fda7fee35046f2def93508637483f6be8a2df7a4392',
