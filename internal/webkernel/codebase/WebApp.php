@@ -233,9 +233,7 @@ final class WebApp extends Application
     public function webkernelInstance(): array
     {
         if (self::$instanceData === null) {
-            $file = defined('WEBKERNEL_INSTANCE_FILE')
-                ? WEBKERNEL_INSTANCE_FILE
-                : $this->storagePath('deployment.php');
+            $file = WEBKERNEL_INSTANCE_FILE;
             if (is_file($file)) {
                 $data = include $file;
                 self::$instanceData = is_array($data) ? $data : [];

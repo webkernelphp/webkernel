@@ -136,6 +136,9 @@ defineIf('WEBKERNEL_ARTIFACT_REQUIRED_KEYS', [
  * @const string WEBKERNEL_OFFICIAL_REGISTRY — Official module registry name
  */
 defineIf('WEBKERNEL_OFFICIAL_REGISTRY', 'webkernelphp-com');
+
+defineIf('WEBKERNEL_INSTANCE_FILE', PLATFORM_DIR . '/deployment.php');
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // SECTION 6: BOOTSTRAP & HELPER PATHS
 // ═══════════════════════════════════════════════════════════════════════════════
