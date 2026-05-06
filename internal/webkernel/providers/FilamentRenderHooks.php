@@ -75,7 +75,7 @@ class FilamentRenderHooks
                     return '';
                 }
 
-                return view('components.banner.floating-banner', [
+                return view('webkernel::components.banner.floating-banner', [
                     'banners' => $banners,
                 ])->render();
             }

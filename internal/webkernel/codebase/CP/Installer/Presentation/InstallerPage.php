@@ -26,7 +26,6 @@ use Webkernel\Base\Users\Models\User;
 use Webkernel\CP\Installer\Config\InstallerConfig;
 use Webkernel\CP\Installer\States\InstallationPhase;
 use Webkernel\CP\Installer\States\InstallationState;
-use Webkernel\CP\Installer\States\InstallationConstants;
 
 /**
  * First-run installation wizard page.
@@ -81,7 +80,7 @@ final class InstallerPage extends Page
 
             $state = InstallationState::resolve();
 
-            if ($state === InstallationConstants::STATE_INSTALLED) {
+            if ($state === InstallationState::INSTALLED) {
                 $this->redirectRoute('filament.system.pages.dashboard');
                 return;
             }
@@ -92,7 +91,7 @@ final class InstallerPage extends Page
                 $this->setupTokenInput = InstallationState::resolveToken();
             }
 
-            if ($state === InstallationConstants::STATE_MISSING_ADMIN) {
+            if ($state === InstallationState::MISSING_ADMIN) {
                 Notification::make()
                     ->title(InstallerConfig::NOTIFICATION_INSTALLATION_RESUMED)
                     ->body(InstallerConfig::SUCCESS_INSTALLATION_RESUMED)

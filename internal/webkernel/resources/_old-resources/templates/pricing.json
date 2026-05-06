@@ -1,0 +1,54 @@
+{
+    "name": "Pricing Page",
+    "description": "Three-tier pricing with FAQ",
+    "thumbnail": null,
+    "content": {
+        "rows": [
+            {
+                "id": "pricing-header",
+                "settings": {},
+                "columns": [{
+                    "id": "header-col", "span": {"sm": 12, "md": 12, "lg": 12, "xl": 12}, "settings": {},
+                    "widgets": [
+                        {"id": "pricing-heading", "type": "heading", "data": {"content": "Simple, Transparent Pricing", "level": "h1", "text_align": "center"}},
+                        {"id": "pricing-sub", "type": "text", "data": {"content": "<p style=\"text-align:center\">Choose the plan that's right for you. No hidden fees.</p>"}}
+                    ]
+                }]
+            },
+            {
+                "id": "pricing-cards",
+                "settings": {},
+                "columns": [
+                    {
+                        "id": "plan-1", "span": {"sm": 12, "md": 4, "lg": 4, "xl": 4}, "settings": {},
+                        "widgets": [{"id": "price-basic", "type": "pricing-table", "data": {"title": "Starter", "subtitle": "For individuals", "price": "9", "currency": "$", "period": "month", "features": [{"text": "5 Projects", "included": true}, {"text": "Basic Analytics", "included": true}, {"text": "Email Support", "included": true}, {"text": "Custom Domain", "included": false}, {"text": "Priority Support", "included": false}], "button_text": "Start Free Trial", "button_url": "#", "featured": false}}]
+                    },
+                    {
+                        "id": "plan-2", "span": {"sm": 12, "md": 4, "lg": 4, "xl": 4}, "settings": {},
+                        "widgets": [{"id": "price-pro", "type": "pricing-table", "data": {"title": "Professional", "subtitle": "For teams", "price": "29", "currency": "$", "period": "month", "features": [{"text": "Unlimited Projects", "included": true}, {"text": "Advanced Analytics", "included": true}, {"text": "Priority Support", "included": true}, {"text": "Custom Domain", "included": true}, {"text": "API Access", "included": false}], "button_text": "Start Free Trial", "button_url": "#", "featured": true, "badge_text": "Most Popular"}}]
+                    },
+                    {
+                        "id": "plan-3", "span": {"sm": 12, "md": 4, "lg": 4, "xl": 4}, "settings": {},
+                        "widgets": [{"id": "price-enterprise", "type": "pricing-table", "data": {"title": "Enterprise", "subtitle": "For organizations", "price": "99", "currency": "$", "period": "month", "features": [{"text": "Everything in Pro", "included": true}, {"text": "API Access", "included": true}, {"text": "SSO / SAML", "included": true}, {"text": "Dedicated Support", "included": true}, {"text": "SLA", "included": true}], "button_text": "Contact Sales", "button_url": "#", "featured": false}}]
+                    }
+                ]
+            },
+            {
+                "id": "faq",
+                "settings": {},
+                "columns": [{
+                    "id": "faq-col", "span": {"sm": 12, "md": 8, "lg": 8, "xl": 8}, "settings": {},
+                    "widgets": [
+                        {"id": "faq-heading", "type": "heading", "data": {"content": "Frequently Asked Questions", "level": "h2", "text_align": "center"}},
+                        {"id": "faq-accordion", "type": "accordion", "data": {"items": [
+                            {"title": "Can I switch plans later?", "content": "Yes! You can upgrade or downgrade your plan at any time. Changes take effect at the start of your next billing cycle."},
+                            {"title": "Is there a free trial?", "content": "All plans come with a 14-day free trial. No credit card required."},
+                            {"title": "What payment methods do you accept?", "content": "We accept all major credit cards, PayPal, and bank transfers for annual plans."},
+                            {"title": "Can I cancel anytime?", "content": "Absolutely. Cancel anytime from your dashboard. No cancellation fees."}
+                        ], "open_first": true}}
+                    ]
+                }]
+            }
+        ]
+    }
+}

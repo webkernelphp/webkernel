@@ -7,32 +7,6 @@ use RuntimeException;
 use Webkernel\Base\Users\Models\UserPrivilege;
 
 /**
- * Installation lifecycle phase enumeration.
- *
- * Defines the complete workflow from initial pre-flight checks
- * through final setup completion.
- */
-enum InstallationPhase: string
-{
-    case PRE = 'pre';
-    case INSTALLING = 'installing';
-    case VERIFY_TOKEN = 'verify_token';
-    case SETUP = 'setup';
-    case ERROR = 'error';
-
-    public function label(): string
-    {
-        return match ($this) {
-            self::PRE => 'Pre-flight checks — requirements and capabilities',
-            self::INSTALLING => 'Installation in progress...',
-            self::VERIFY_TOKEN => 'Enter your one-time Setup Token to continue',
-            self::SETUP => 'Complete the setup wizard',
-            self::ERROR => 'Installation encountered an error',
-        };
-    }
-}
-
-/**
  * Application installation state resolver.
  *
  * Three distinct states are recognized:
@@ -43,20 +17,24 @@ enum InstallationPhase: string
  */
 final class InstallationState
 {
+    public const string NOT_INSTALLED = InstallationConstants::STATE_NOT_INSTALLED;
+    public const string MISSING_ADMIN = InstallationConstants::STATE_MISSING_ADMIN;
+    public const string INSTALLED = InstallationConstants::STATE_INSTALLED;
+
     /**
      * Resolve the current installation state.
      */
     public static function resolve(): string
     {
         if (!static::infrastructureReady()) {
-            return InstallationConstants::STATE_NOT_INSTALLED;
+            return static::NOT_INSTALLED;
         }
 
         if (!static::hasPrivilegedUser()) {
-            return InstallationConstants::STATE_MISSING_ADMIN;
+            return static::MISSING_ADMIN;
         }
 
-        return InstallationConstants::STATE_INSTALLED;
+        return static::INSTALLED;
     }
 
     /**

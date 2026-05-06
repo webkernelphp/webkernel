@@ -29,7 +29,7 @@ final class DetectCapabilities extends Command
 
     public function handle(): int
     {
-        $path = base_path('deployment.php');
+        $path = WEBKERNEL_INSTANCE_FILE;
 
         if (is_file($path) && !$this->option('force')) {
             $this->line('deployment.php already exists. Use --force to regenerate.');
